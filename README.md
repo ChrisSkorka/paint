@@ -148,10 +148,11 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 #### 1.3 colors
 
-- [ ] primary & secondary colors, left click draws primary, right click draws secondary
-- [ ] swatches: greys (5), hues × brightness (12×5), recent colors (5)
-- [ ] rgba color picker dialog
-- [ ] color picker tool: sample pixel into primary / secondary
+- [x] primary & secondary colors, left click draws primary, right click draws secondary
+- [x] swatches: greys (5), hues × brightness (12×5), recent colors (5)
+- [x] rgba color picker dialog
+- [x] color picker tool: sample pixel into primary / secondary
+- [x] color picker dialog: hex input field
 
 ### phase 2: full editor, no files IO, clipboard, or animations
 
@@ -199,3 +200,5 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] interchangeable panes: move panes between top & right panels
 - [ ] keyboard shortcuts for tools
 - [ ] performance pass on large canvases (dirty-rect rendering)
+- [ ] color picker: better UI
+- [ ] transparent colors: blend mode

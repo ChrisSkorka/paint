@@ -197,6 +197,28 @@ void main() {
       });
     });
 
+    group('getter editedColor', () {
+      group('slots', () {
+        test('primary', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 1, height: 1),
+          );
+          final actual = editorController.editedColor;
+          const expected = PixelColor.black;
+          expect(actual, equals(expected));
+        });
+        test('secondary', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 1, height: 1),
+          );
+          editorController.editPrimary(primary: false);
+          final actual = editorController.editedColor;
+          const expected = PixelColor.white;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method pointerDown', () {
       group('buttons', () {
         test('primary', () {
@@ -311,6 +333,210 @@ void main() {
               [transparent, transparent, transparent],
             ],
           ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('color picker', () {
+        test('primary sample', () {
+          final document = Document.blank(
+            width: 2,
+            height: 1,
+            background: const PixelColor(argb: red),
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.colorPicker);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = [
+            editorController.primaryColor,
+            editorController.secondaryColor,
+          ];
+          const expected = [PixelColor(argb: red), PixelColor.white];
+          expect(actual, equals(expected));
+        });
+        test('secondary sample', () {
+          final document = Document.blank(
+            width: 2,
+            height: 1,
+            background: const PixelColor(argb: red),
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.colorPicker);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.secondary,
+          );
+          final actual = [
+            editorController.primaryColor,
+            editorController.secondaryColor,
+          ];
+          const expected = [PixelColor.black, PixelColor(argb: red)];
+          expect(actual, equals(expected));
+        });
+        test('transparent sample', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.selectTool(ToolKind.colorPicker);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = [
+            editorController.primaryColor,
+            editorController.secondaryColor,
+          ];
+          const expected = [PixelColor.transparent, PixelColor.white];
+          expect(actual, equals(expected));
+        });
+        test('outside layer', () {
+          final document = Document.blank(
+            width: 2,
+            height: 1,
+            background: const PixelColor(argb: red),
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.colorPicker);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 2, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = [
+            editorController.primaryColor,
+            editorController.secondaryColor,
+          ];
+          const expected = [PixelColor.black, PixelColor.white];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('recent colors', () {
+        test('none', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          final actual = editorController.recentColors;
+          const expected = <PixelColor>[];
+          expect(actual, equals(expected));
+        });
+        test('pen primary', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = editorController.recentColors;
+          const expected = [PixelColor.black];
+          expect(actual, equals(expected));
+        });
+        test('pen secondary', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.secondary,
+          );
+          final actual = editorController.recentColors;
+          const expected = [PixelColor.white];
+          expect(actual, equals(expected));
+        });
+        test('newest first', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.secondary,
+          );
+          final actual = editorController.recentColors;
+          const expected = [PixelColor.white, PixelColor.black];
+          expect(actual, equals(expected));
+        });
+        test('repeated color', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.secondary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = editorController.recentColors;
+          const expected = [PixelColor.black, PixelColor.white];
+          expect(actual, equals(expected));
+        });
+        test('limit', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          for (var argb = 0xFF000001; argb <= 0xFF000006; argb++) {
+            editorController.selectColor(PixelColor(argb: argb));
+            editorController.pointerDown(
+              point: const PixelPoint(x: 0, y: 0),
+              button: PointerButton.primary,
+            );
+            editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          }
+          final actual = editorController.recentColors;
+          const expected = [
+            PixelColor(argb: 0xFF000006),
+            PixelColor(argb: 0xFF000005),
+            PixelColor(argb: 0xFF000004),
+            PixelColor(argb: 0xFF000003),
+            PixelColor(argb: 0xFF000002),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('eraser', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.selectTool(ToolKind.eraser);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = editorController.recentColors;
+          const expected = <PixelColor>[];
+          expect(actual, equals(expected));
+        });
+        test('color picker', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.selectTool(ToolKind.colorPicker);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = editorController.recentColors;
+          const expected = <PixelColor>[];
           expect(actual, equals(expected));
         });
       });
@@ -517,6 +743,37 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
+        test('color picker drag', () {
+          final layer = Layer.filled(
+            width: 2,
+            height: 1,
+            color: const PixelColor(argb: red),
+          );
+          layer.setPixel(
+            point: const PixelPoint(x: 1, y: 0),
+            color: PixelColor.white,
+          );
+          final editorController = EditorController.forDocument(
+            document: Document(
+              width: 2,
+              height: 1,
+              layers: [layer],
+              activeLayerIndex: 0,
+            ),
+          );
+          editorController.selectTool(ToolKind.colorPicker);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.secondary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 0));
+          final actual = [
+            editorController.primaryColor,
+            editorController.secondaryColor,
+          ];
+          const expected = [PixelColor.black, PixelColor.white];
+          expect(actual, equals(expected));
+        });
       });
     });
 
@@ -564,6 +821,68 @@ void main() {
             ],
             1,
           ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('tool switch back', () {
+        test('default pen', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.selectTool(ToolKind.colorPicker);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          final actual = editorController.toolKind;
+          const expected = ToolKind.pen;
+          expect(actual, equals(expected));
+        });
+        test('eraser', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.selectTool(ToolKind.eraser);
+          editorController.selectTool(ToolKind.colorPicker);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          final actual = editorController.toolKind;
+          const expected = ToolKind.eraser;
+          expect(actual, equals(expected));
+        });
+        test('picker reselected', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.selectTool(ToolKind.eraser);
+          editorController.selectTool(ToolKind.colorPicker);
+          editorController.selectTool(ToolKind.colorPicker);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          final actual = editorController.toolKind;
+          const expected = ToolKind.eraser;
+          expect(actual, equals(expected));
+        });
+        test('drawing tool', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.selectTool(ToolKind.eraser);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          final actual = editorController.toolKind;
+          const expected = ToolKind.eraser;
           expect(actual, equals(expected));
         });
       });

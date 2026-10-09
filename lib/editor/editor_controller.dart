@@ -30,6 +30,7 @@ class EditorController extends ChangeNotifier {
   final Layer pointerLayer;
 
   var _toolKind = ToolKind.pen;
+  var _drawingToolKind = ToolKind.pen;
   var _penSize = 1;
   var _penTip = BrushTip.square;
   var _eraserSize = 1;
@@ -40,9 +41,12 @@ class EditorController extends ChangeNotifier {
   PixelPoint? _cursor;
   PixelPoint? _strokePoint;
   var _strokeColor = PixelColor.black;
+  var _strokeButton = PointerButton.primary;
   var _pointerArea = _noArea;
+  var _recentColors = const <PixelColor>[];
 
   static const _noArea = PixelRectangle(left: 0, top: 0, width: 0, height: 0);
+  static const recentColorLimit = 5;
 
   ToolKind get toolKind => _toolKind;
   int get penSize => _penSize;
@@ -53,6 +57,9 @@ class EditorController extends ChangeNotifier {
   PixelColor get secondaryColor => _secondaryColor;
   bool get editingPrimary => _editingPrimary;
   PixelPoint? get cursor => _cursor;
+  List<PixelColor> get recentColors => _recentColors;
+  PixelColor get editedColor =>
+      _editingPrimary ? _primaryColor : _secondaryColor;
 
   List<Layer> get visibleLayers => [...document.layers, pointerLayer];
 
@@ -64,6 +71,7 @@ class EditorController extends ChangeNotifier {
 
   void selectTool(ToolKind toolKind) {
     _toolKind = toolKind;
+    if (toolKind != ToolKind.colorPicker) _drawingToolKind = toolKind;
     notifyListeners();
   }
 
@@ -106,6 +114,9 @@ class EditorController extends ChangeNotifier {
       PointerButton.primary => _primaryColor,
       PointerButton.secondary => _secondaryColor,
     };
+    _strokeButton = button;
+    if (_toolKind == ToolKind.pen) _rememberColor(_strokeColor);
+    _sampleColor(point: point);
     _tool?.start(
       layer: document.activeLayer,
       point: point,
@@ -121,6 +132,7 @@ class EditorController extends ChangeNotifier {
       _movePointer(point: point, color: _primaryColor);
       return;
     }
+    _sampleColor(point: point);
     _tool?.stroke(
       layer: document.activeLayer,
       previous: strokePoint,
@@ -135,6 +147,7 @@ class EditorController extends ChangeNotifier {
     if (_strokePoint == null) return;
     _tool?.end(layer: document.activeLayer, point: point, color: _strokeColor);
     _strokePoint = null;
+    if (_toolKind == ToolKind.colorPicker) _toolKind = _drawingToolKind;
     notifyListeners();
   }
 
@@ -142,6 +155,25 @@ class EditorController extends ChangeNotifier {
     _clearPointer();
     _cursor = null;
     notifyListeners();
+  }
+
+  void _rememberColor(PixelColor color) {
+    _recentColors = [
+      color,
+      ..._recentColors.where((recent) => recent != color),
+    ].take(recentColorLimit).toList();
+  }
+
+  void _sampleColor({required PixelPoint point}) {
+    if (_toolKind != ToolKind.colorPicker) return;
+    if (!document.activeLayer.contains(point)) return;
+    final color = document.activeLayer.getPixel(point);
+    switch (_strokeButton) {
+      case PointerButton.primary:
+        _primaryColor = color;
+      case PointerButton.secondary:
+        _secondaryColor = color;
+    }
   }
 
   void _movePointer({required PixelPoint point, required PixelColor color}) {

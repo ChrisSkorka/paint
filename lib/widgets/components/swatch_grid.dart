@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
+import 'chess_grid.dart';
 import 'paint_style.dart';
 
 class SwatchGrid extends StatelessWidget {
   const SwatchGrid({super.key, required this.colors, required this.onSelect});
 
-  final List<List<Color>> colors;
+  final List<List<Color?>> colors;
   final ValueChanged<Color> onSelect;
 
   @override
@@ -55,7 +56,7 @@ class Swatch extends StatefulWidget {
     required this.borderRadius,
   });
 
-  final Color color;
+  final Color? color;
   final ValueChanged<Color> onSelect;
   final BorderRadius borderRadius;
 
@@ -72,7 +73,7 @@ class _SwatchState extends State<Swatch> {
     super.dispose();
   }
 
-  void _showHover() {
+  void _showHover({required Color color}) {
     final box = context.findRenderObject() as RenderBox;
     final overlay = Overlay.of(context);
     final origin = box.localToGlobal(
@@ -90,7 +91,7 @@ class _SwatchState extends State<Swatch> {
             scale: 1.8,
             child: Container(
               decoration: BoxDecoration(
-                color: widget.color,
+                color: color,
                 borderRadius: const BorderRadius.all(Radius.circular(4)),
                 border: Border.all(color: Colors.white, width: 2),
                 boxShadow: PaintStyle.focusShadow,
@@ -110,17 +111,28 @@ class _SwatchState extends State<Swatch> {
 
   @override
   Widget build(BuildContext context) {
+    final color = widget.color;
+    if (color == null) {
+      return Container(
+        width: PaintStyle.swatchSize,
+        height: PaintStyle.swatchSize,
+        decoration: BoxDecoration(
+          borderRadius: widget.borderRadius,
+          border: Border.all(color: PaintStyle.separatorColor),
+        ),
+      );
+    }
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      onEnter: (_) => _showHover(),
+      onEnter: (_) => _showHover(color: color),
       onExit: (_) => _removeHover(),
       child: GestureDetector(
-        onTap: () => widget.onSelect(widget.color),
+        onTap: () => widget.onSelect(color),
         child: Container(
           width: PaintStyle.swatchSize,
           height: PaintStyle.swatchSize,
           decoration: BoxDecoration(
-            color: widget.color,
+            color: color,
             borderRadius: widget.borderRadius,
           ),
         ),
@@ -160,15 +172,39 @@ class ColorWell extends StatelessWidget {
                   : Colors.transparent,
             ),
           ),
-          child: Container(
-            width: 40,
-            height: 26,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: PaintStyle.radius,
-              border: Border.all(color: Colors.black),
-            ),
-          ),
+          child: ColorPreview(color: color, width: 40, height: 26),
+        ),
+      ),
+    );
+  }
+}
+
+class ColorPreview extends StatelessWidget {
+  const ColorPreview({
+    super.key,
+    required this.color,
+    required this.width,
+    required this.height,
+  });
+
+  final Color color;
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      foregroundDecoration: BoxDecoration(
+        borderRadius: PaintStyle.radius,
+        border: Border.all(color: Colors.black),
+      ),
+      child: ClipRRect(
+        borderRadius: PaintStyle.radius,
+        child: CustomPaint(
+          painter: const ChessGridPainter(),
+          child: ColoredBox(color: color),
         ),
       ),
     );

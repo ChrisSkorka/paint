@@ -172,6 +172,85 @@ void main() {
       });
     });
 
+    group('method tryParseHex', () {
+      group('valid', () {
+        test('six digits', () {
+          final actual = PixelColor.tryParseHex('#123456');
+          const expected = PixelColor(argb: 0xff123456);
+          expect(actual, equals(expected));
+        });
+        test('eight digits', () {
+          final actual = PixelColor.tryParseHex('#12345678');
+          const expected = PixelColor(argb: 0x78123456);
+          expect(actual, equals(expected));
+        });
+        test('without hash', () {
+          final actual = PixelColor.tryParseHex('12345678');
+          const expected = PixelColor(argb: 0x78123456);
+          expect(actual, equals(expected));
+        });
+        test('lowercase', () {
+          final actual = PixelColor.tryParseHex('#abcdef');
+          const expected = PixelColor(argb: 0xffabcdef);
+          expect(actual, equals(expected));
+        });
+      });
+      group('invalid', () {
+        test('empty', () {
+          final actual = PixelColor.tryParseHex('');
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+        test('hash only', () {
+          final actual = PixelColor.tryParseHex('#');
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+        test('too short', () {
+          final actual = PixelColor.tryParseHex('#12345');
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+        test('seven digits', () {
+          final actual = PixelColor.tryParseHex('#1234567');
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+        test('too long', () {
+          final actual = PixelColor.tryParseHex('#123456789');
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+        test('non hex', () {
+          final actual = PixelColor.tryParseHex('#12345g');
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+        test('inner hash', () {
+          final actual = PixelColor.tryParseHex('12#456');
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter hex', () {
+      group('digits', () {
+        test('padded', () {
+          const pixelColor = PixelColor(argb: 0x01020304);
+          final actual = pixelColor.hex;
+          const expected = '#02030401';
+          expect(actual, equals(expected));
+        });
+        test('uppercase', () {
+          const pixelColor = PixelColor(argb: 0xffabcdef);
+          final actual = pixelColor.hex;
+          const expected = '#ABCDEFFF';
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method toString', () {
       group('hex digits', () {
         test('padded', () {

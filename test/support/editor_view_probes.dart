@@ -60,3 +60,6 @@ List<bool> selectedTips(WidgetTester tester) => [
       )
       .selected,
 ];
+
+List<List<Color?>> recentSwatches(WidgetTester tester) =>
+    tester.widgetList<SwatchGrid>(find.byType(SwatchGrid)).last.colors;

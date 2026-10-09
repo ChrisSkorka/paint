@@ -119,6 +119,30 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('empty slots', () {
+        testWidgets('mixed', (tester) async {
+          void stubOnSelect(Color color) {}
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: SwatchGrid(
+                  colors: const [
+                    [Color(0xFF111111)],
+                    [null],
+                  ],
+                  onSelect: stubOnSelect,
+                ),
+              ),
+            ),
+          );
+          final actual = tester
+              .widgetList<Swatch>(find.byType(Swatch))
+              .map((swatch) => swatch.color)
+              .toList();
+          const expected = [Color(0xFF111111), null];
+          expect(actual, equals(expected));
+        });
+      });
     });
 
     group('interactions', () {

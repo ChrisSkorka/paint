@@ -9,6 +9,7 @@ import '../../editor/editor_controller.dart';
 import '../../editor/tools/brush_tip.dart';
 import '../../editor/tools/color_palettes.dart';
 import '../../editor/tools/tool_kind.dart';
+import '../components/color_dialog.dart';
 import '../components/pixel_canvas.dart';
 import '../components/numeric_value_range.dart';
 import '../components/paint_bar.dart';
@@ -40,6 +41,24 @@ class _EditorViewState extends State<EditorView> {
 
   void _selectColor(Color color) =>
       controller.selectColor(PixelColor(argb: color.toARGB32()));
+
+  Future<void> _editColor() async {
+    final color = await showColorDialog(
+      context: context,
+      initialColor: controller.editedColor,
+    );
+    if (color != null) controller.selectColor(color);
+  }
+
+  List<List<Color?>> _recentSwatches() => [
+    for (var index = 0; index < EditorController.recentColorLimit; index++)
+      [
+        if (index < controller.recentColors.length)
+          Color(controller.recentColors[index].argb)
+        else
+          null,
+      ],
+  ];
 
   List<List<Color>> _toColors(List<List<PixelColor>> palette) => [
     for (final row in palette) [for (final color in row) Color(color.argb)],
@@ -204,6 +223,22 @@ class _EditorViewState extends State<EditorView> {
                                 colors: _toColors(huePalette),
                                 onSelect: _selectColor,
                               ),
+                            ),
+                            const SizedBox(width: 8),
+                            Center(
+                              child: SwatchGrid(
+                                colors: _recentSwatches(),
+                                onSelect: _selectColor,
+                              ),
+                            ),
+                            RibbonColumn(
+                              children: [
+                                PaintIconButton(
+                                  icon: FontAwesomeIcons.palette,
+                                  tooltip: 'Edit colors',
+                                  onPressed: _editColor,
+                                ),
+                              ],
                             ),
                           ],
                         ),

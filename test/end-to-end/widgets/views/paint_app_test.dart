@@ -5,6 +5,7 @@ import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/widgets/components/pixel_canvas.dart';
 import 'package:paint/widgets/views/paint_app.dart';
 
+import '../../../support/color_dialog_probes.dart';
 import '../../../support/desktop_view.dart';
 import '../../../support/view_probes.dart';
 
@@ -65,6 +66,29 @@ void main() {
             PixelColor.black,
             PixelColor.transparent,
           ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('colors', () {
+        testWidgets('edit color and draw', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(PaintApp(key: UniqueKey()));
+          await tester.tap(find.byTooltip('Create'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Edit colors'));
+          await tester.pumpAndSettle();
+          await tester.enterText(channelField('Red:'), '255');
+          await tester.pump();
+          await tester.enterText(channelField('Alpha:'), '128');
+          await tester.pump();
+          await tester.tap(find.byTooltip('OK'));
+          await tester.pumpAndSettle();
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          final documentLayer = canvasLayers(tester).first;
+          final actual = documentLayer.getPixel(const PixelPoint(x: 0, y: 0));
+          const expected = PixelColor(argb: 0x80FF0000);
           expect(actual, equals(expected));
         });
       });

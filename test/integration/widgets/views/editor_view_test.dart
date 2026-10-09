@@ -8,6 +8,7 @@ import 'package:paint/widgets/components/pixel_canvas.dart';
 import 'package:paint/widgets/components/swatch_grid.dart';
 import 'package:paint/widgets/views/editor_view.dart';
 
+import '../../../support/color_dialog_probes.dart';
 import '../../../support/desktop_view.dart';
 import '../../../support/editor_view_probes.dart';
 import '../../../support/hover.dart';
@@ -98,6 +99,25 @@ void main() {
           await tester.pumpAndSettle();
           final actual = selectedTips(tester);
           const expected = [true, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('recent colors', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          final actual = recentSwatches(tester);
+          const expected = [
+            [null],
+            [null],
+            [null],
+            [null],
+            [null],
+          ];
           expect(actual, equals(expected));
         });
       });
@@ -405,6 +425,194 @@ void main() {
           await tester.pump();
           final actual = wellColors(tester);
           const expected = [Color(0xFF808080), Color(0xFFFFFFFF)];
+          expect(actual, equals(expected));
+        });
+      });
+      group('recent colors', () {
+        testWidgets('after stroke', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          final actual = recentSwatches(tester);
+          const expected = [
+            [Color(0xFF000000)],
+            [null],
+            [null],
+            [null],
+            [null],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('select recent', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          await tester.tap(find.byType(Swatch).at(2));
+          await tester.pump();
+          await tester.tap(
+            find
+                .descendant(
+                  of: find.byType(SwatchGrid).last,
+                  matching: find.byType(Swatch),
+                )
+                .first,
+          );
+          await tester.pump();
+          final actual = wellColors(tester);
+          const expected = [Color(0xFF000000), Color(0xFFFFFFFF)];
+          expect(actual, equals(expected));
+        });
+      });
+      group('color picker tool', () {
+        testWidgets('primary sample', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  document: Document.blank(
+                    width: 2,
+                    height: 2,
+                    background: const PixelColor(argb: 0xFFFF0000),
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Color picker'));
+          await tester.pump();
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          final actual = wellColors(tester);
+          const expected = [Color(0xFFFF0000), Color(0xFFFFFFFF)];
+          expect(actual, equals(expected));
+        });
+        testWidgets('secondary sample', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  document: Document.blank(
+                    width: 2,
+                    height: 2,
+                    background: const PixelColor(argb: 0xFFFF0000),
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Color picker'));
+          await tester.pump();
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(
+            topLeft + const Offset(1, 1),
+            buttons: kSecondaryMouseButton,
+            kind: PointerDeviceKind.mouse,
+          );
+          await tester.pump();
+          final actual = wellColors(tester);
+          const expected = [Color(0xFF000000), Color(0xFFFF0000)];
+          expect(actual, equals(expected));
+        });
+      });
+      group('color picker switch back', () {
+        testWidgets('to eraser', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Eraser'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Color picker'));
+          await tester.pump();
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          final actual = selectedTools(tester);
+          const expected = [false, true, false];
+          expect(actual, equals(expected));
+        });
+      });
+      group('edit colors', () {
+        testWidgets('primary', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Edit colors'));
+          await tester.pumpAndSettle();
+          await tester.enterText(channelField('Red:'), '255');
+          await tester.pump();
+          await tester.tap(find.byTooltip('OK'));
+          await tester.pumpAndSettle();
+          final actual = wellColors(tester);
+          const expected = [Color(0xFFFF0000), Color(0xFFFFFFFF)];
+          expect(actual, equals(expected));
+        });
+        testWidgets('secondary', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Secondary color'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Edit colors'));
+          await tester.pumpAndSettle();
+          await tester.enterText(channelField('Red:'), '0');
+          await tester.pump();
+          await tester.tap(find.byTooltip('OK'));
+          await tester.pumpAndSettle();
+          final actual = wellColors(tester);
+          const expected = [Color(0xFF000000), Color(0xFF00FFFF)];
+          expect(actual, equals(expected));
+        });
+        testWidgets('cancel', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Edit colors'));
+          await tester.pumpAndSettle();
+          await tester.enterText(channelField('Red:'), '255');
+          await tester.pump();
+          await tester.tap(find.byTooltip('Cancel'));
+          await tester.pumpAndSettle();
+          final actual = wellColors(tester);
+          const expected = [Color(0xFF000000), Color(0xFFFFFFFF)];
           expect(actual, equals(expected));
         });
       });
