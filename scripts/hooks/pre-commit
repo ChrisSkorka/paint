@@ -1,0 +1,109 @@
+#!/bin/sh
+
+# Install:
+# ln -srf scripts/hooks/pre-commit .git/hooks/pre-commit
+
+unset GIT_CONFIG_PARAMETERS  # prevent VS Code's git config leaking into flutter/dart subprocesses
+
+# Stash unstaged/untracked changes so checks only apply to what's being committed
+DID_STASH=0
+if ! git diff --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+  printf "Stashing unstaged/untracked changes... "
+  if git stash push --keep-index --include-untracked --quiet; then
+    echo "DONE"
+    echo
+    DID_STASH=1
+  fi
+fi
+
+restore() {
+  [ "$DID_STASH" = 1 ] || return 0
+  # Reset to a clean worktree FIRST so the pop has nothing to merge against.
+  # Popping while the staged version still sits in the worktree makes pop a
+  # three-way merge that conflicts on partially-staged files, leaving the
+  # index unmerged -> the commit then fails with "error: building trees".
+  # After reset --hard, pop --index is a conflict-free fast-forward that
+  # restores the exact staged/unstaged split.
+  printf "Restoring stashed changes... "
+  git reset --hard --quiet
+  git clean -fdq                 # remove untracked files created during checks
+  git stash pop --index --quiet
+  echo "DONE"
+}
+trap restore EXIT
+
+PASS=true
+
+echo "--- Pre-commit checks ---"
+
+echo
+printf "Checking flutter analyze... "
+OUTPUT=$(flutter analyze 2>&1)
+STATUS=$?
+if [ $STATUS -eq 0 ]; then
+  echo "PASSED"
+else
+  PASS=false
+  echo "FAILED"
+  echo "$ flutter analyze"
+  echo "$OUTPUT"
+fi
+
+echo
+printf "Checking dart formatting... "
+OUTPUT=$(dart format --output=none --set-exit-if-changed . 2>&1)
+STATUS=$?
+if [ $STATUS -eq 0 ]; then
+  echo "PASSED"
+else
+  PASS=false
+  echo "FAILED"
+  echo "$ dart format --output=none --set-exit-if-changed ."
+  echo "$OUTPUT"
+  echo "To fix, run: dart format ."
+fi
+
+echo
+printf "Checking flutter tests... "
+OUTPUT=$(flutter test --coverage --branch-coverage 2>&1)
+STATUS=$?
+if [ $STATUS -eq 0 ]; then
+  echo "PASSED"
+else
+  PASS=false
+  echo "FAILED"
+  echo "$ flutter test --coverage --branch-coverage"
+  echo "$OUTPUT"
+fi
+
+echo
+printf "Checking test coverage... "
+if [ $STATUS -eq 0 ]; then
+  UNCOVERED=$(awk -F: '
+    /^SF:/ { file=$2 }
+    /^DA:/ { split($2,a,","); if (a[2]==0) print file":"a[1] }
+    /^BRDA:/ { split($2,a,","); if (a[4]+0==0) print file":"a[1]" (branch)" }
+  ' coverage/lcov.info)
+  if [ -z "$UNCOVERED" ]; then
+    echo "PASSED"
+  else
+    PASS=false
+    echo "FAILED"
+    echo "Uncovered lines:"
+    echo "$UNCOVERED"
+  fi
+else
+  echo "SKIPPED (tests failed)"
+fi
+
+echo
+if [ "$PASS" = false ]; then
+  echo "--- Pre-commit checks failed. Commit aborted. ---"
+  echo
+  echo "To skip checks, run: git commit --no-verify"
+  echo
+  exit 1
+fi
+
+echo "--- All checks passed. ---"
+echo
