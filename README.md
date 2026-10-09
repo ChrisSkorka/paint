@@ -139,12 +139,12 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 #### 1.2 canvas & drawing
 
-- [ ] canvas widget: renders layers over the transparency chess grid, pixelated, at zoom level
-- [ ] pointer mapping: screen position → pixel position, primary (left) & secondary (right) button
-- [ ] tool interface: start, stroke, end, draw pointer; draws on the document's active layer and reports the altered area (used by history in phase 2)
-- [ ] pen: square & circle tips, hard edge, configurable size, line interpolation between pointer events
-- [ ] eraser: hard edge, configurable size
-- [ ] bottom panel: cursor pixel position, canvas size, zoom control
+- [x] canvas widget: renders layers over the transparency chess grid, pixelated, at zoom level
+- [x] pointer mapping: screen position → pixel position, primary (left) & secondary (right) button
+- [x] tool interface: start, stroke, end, draw pointer; draws on the document's active layer and reports the altered area (used by history in phase 2)
+- [x] pen: square & circle tips, hard edge, configurable size, line interpolation between pointer events
+- [x] eraser: hard edge, configurable size
+- [x] bottom panel: cursor pixel position, canvas size, zoom control
 
 #### 1.3 colors
 

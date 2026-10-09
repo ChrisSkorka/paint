@@ -1,15 +1,24 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document.dart';
+import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/widgets/components/numeric_value_range.dart';
+import 'package:paint/widgets/components/pixel_canvas.dart';
 import 'package:paint/widgets/components/swatch_grid.dart';
 import 'package:paint/widgets/views/editor_view.dart';
 
 import '../../../support/desktop_view.dart';
 import '../../../support/editor_view_probes.dart';
+import '../../../support/hover.dart';
+import '../../../support/layer_probes.dart';
 import '../../../support/view_probes.dart';
 
 void main() {
+  const transparent = 0x00000000;
+  const black = 0xFF000000;
+  const white = 0xFFFFFFFF;
+
   group('class EditorView', () {
     group('render', () {
       group('defaults', () {
@@ -64,10 +73,193 @@ void main() {
           final actual = find.text('2 × 2');
           expect(actual, findsOneWidget);
         });
+        testWidgets('cursor', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          final actual = find.text('-');
+          expect(actual, findsOneWidget);
+        });
+        testWidgets('pen tip', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Pen options'));
+          await tester.pumpAndSettle();
+          final actual = selectedTips(tester);
+          const expected = [true, false];
+          expect(actual, equals(expected));
+        });
       });
     });
 
     group('interactions', () {
+      group('drawing', () {
+        testWidgets('primary click', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(5, 1));
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, black],
+            [transparent, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('secondary click', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(
+            topLeft + const Offset(1, 5),
+            buttons: kSecondaryMouseButton,
+            kind: PointerDeviceKind.mouse,
+          );
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, transparent],
+            [white, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('drag', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          final gesture = await tester.startGesture(
+            topLeft + const Offset(1, 1),
+          );
+          await gesture.moveTo(topLeft + const Offset(5, 5));
+          await gesture.up();
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [black, transparent],
+            [transparent, black],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('eraser', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(
+            width: 2,
+            height: 2,
+            background: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          await tester.tap(find.byTooltip('Eraser'));
+          await tester.pump();
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, black],
+            [black, black],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('cursor', () {
+        testWidgets('hover', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await hoverOver(tester, find.byType(PixelCanvas));
+          final actual = find.text('1, 1');
+          expect(actual, findsOneWidget);
+        });
+        testWidgets('exit', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          final gesture = await hoverOver(tester, find.byType(PixelCanvas));
+          await gesture.moveTo(Offset.zero);
+          await tester.pump();
+          final actual = find.text('-');
+          expect(actual, findsOneWidget);
+        });
+      });
+      group('pen tip', () {
+        testWidgets('circle', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Pen options'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Circle tip'));
+          await tester.pump();
+          final actual = selectedTips(tester);
+          const expected = [false, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('back to square', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Pen options'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Circle tip'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Square tip'));
+          await tester.pump();
+          final actual = selectedTips(tester);
+          const expected = [true, false];
+          expect(actual, equals(expected));
+        });
+      });
       group('tools', () {
         testWidgets('eraser', (tester) async {
           useDesktopView(tester);

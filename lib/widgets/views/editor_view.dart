@@ -5,8 +5,11 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../editor/canvas/document.dart';
 import '../../editor/canvas/pixel_color.dart';
+import '../../editor/editor_controller.dart';
+import '../../editor/tools/brush_tip.dart';
 import '../../editor/tools/color_palettes.dart';
-import '../components/chess_grid.dart';
+import '../../editor/tools/tool_kind.dart';
+import '../components/pixel_canvas.dart';
 import '../components/numeric_value_range.dart';
 import '../components/paint_bar.dart';
 import '../components/paint_icon_button.dart';
@@ -14,8 +17,6 @@ import '../components/paint_split_button.dart';
 import '../components/paint_style.dart';
 import '../components/ribbon_section.dart';
 import '../components/swatch_grid.dart';
-
-enum _Tool { pen, eraser, colorPicker }
 
 class EditorView extends StatefulWidget {
   const EditorView({super.key, required this.document});
@@ -27,24 +28,18 @@ class EditorView extends StatefulWidget {
 }
 
 class _EditorViewState extends State<EditorView> {
-  var tool = _Tool.pen;
-  var zoom = 4;
-  var penSize = 1;
-  var eraserSize = 1;
-  var primaryColor = PixelColor.black;
-  var secondaryColor = PixelColor.white;
-  var editingPrimary = true;
+  late final controller = EditorController.forDocument(
+    document: widget.document,
+  );
 
-  void _selectColor(Color color) {
-    final pixelColor = PixelColor(argb: color.toARGB32());
-    setState(() {
-      if (editingPrimary) {
-        primaryColor = pixelColor;
-      } else {
-        secondaryColor = pixelColor;
-      }
-    });
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
   }
+
+  void _selectColor(Color color) =>
+      controller.selectColor(PixelColor(argb: color.toARGB32()));
 
   List<List<Color>> _toColors(List<List<PixelColor>> palette) => [
     for (final row in palette) [for (final color in row) Color(color.argb)],
@@ -63,8 +58,53 @@ class _EditorViewState extends State<EditorView> {
     );
   }
 
+  Widget _penDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sizeDropdown(
+          value: controller.penSize,
+          onChanged: controller.setPenSize,
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
+            spacing: 4,
+            children: [
+              const Text('Tip:'),
+              PaintIconButton(
+                icon: FontAwesomeIcons.square,
+                tooltip: 'Square tip',
+                selected: controller.penTip == BrushTip.square,
+                onPressed: () => controller.setPenTip(BrushTip.square),
+              ),
+              PaintIconButton(
+                icon: FontAwesomeIcons.circle,
+                tooltip: 'Circle tip',
+                selected: controller.penTip == BrushTip.circle,
+                onPressed: () => controller.setPenTip(BrushTip.circle),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _cursorText() {
+    final cursor = controller.cursor;
+    return cursor == null ? '-' : '${cursor.x}, ${cursor.y}';
+  }
+
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) => _buildEditor(),
+    );
+  }
+
+  Widget _buildEditor() {
     return Column(
       children: [
         PaintBar(
@@ -93,26 +133,22 @@ class _EditorViewState extends State<EditorView> {
                                   icon: FontAwesomeIcons.pencil,
                                   tooltip: 'Pen',
                                   color: PaintStyle.penColor,
-                                  selected: tool == _Tool.pen,
+                                  selected: controller.toolKind == ToolKind.pen,
                                   onPressed: () =>
-                                      setState(() => tool = _Tool.pen),
-                                  dropdown: _sizeDropdown(
-                                    value: penSize,
-                                    onChanged: (size) =>
-                                        setState(() => penSize = size),
-                                  ),
+                                      controller.selectTool(ToolKind.pen),
+                                  dropdown: _penDropdown(),
                                 ),
                                 PaintSplitButton(
                                   icon: FontAwesomeIcons.eraser,
                                   tooltip: 'Eraser',
                                   color: PaintStyle.eraserColor,
-                                  selected: tool == _Tool.eraser,
+                                  selected:
+                                      controller.toolKind == ToolKind.eraser,
                                   onPressed: () =>
-                                      setState(() => tool = _Tool.eraser),
+                                      controller.selectTool(ToolKind.eraser),
                                   dropdown: _sizeDropdown(
-                                    value: eraserSize,
-                                    onChanged: (size) =>
-                                        setState(() => eraserSize = size),
+                                    value: controller.eraserSize,
+                                    onChanged: controller.setEraserSize,
                                   ),
                                 ),
                               ],
@@ -123,9 +159,12 @@ class _EditorViewState extends State<EditorView> {
                                   icon: FontAwesomeIcons.eyeDropper,
                                   tooltip: 'Color picker',
                                   color: PaintStyle.colorPickerColor,
-                                  selected: tool == _Tool.colorPicker,
-                                  onPressed: () =>
-                                      setState(() => tool = _Tool.colorPicker),
+                                  selected:
+                                      controller.toolKind ==
+                                      ToolKind.colorPicker,
+                                  onPressed: () => controller.selectTool(
+                                    ToolKind.colorPicker,
+                                  ),
                                 ),
                               ],
                             ),
@@ -137,18 +176,18 @@ class _EditorViewState extends State<EditorView> {
                             RibbonColumn(
                               children: [
                                 ColorWell(
-                                  color: Color(primaryColor.argb),
+                                  color: Color(controller.primaryColor.argb),
                                   tooltip: 'Primary color',
-                                  selected: editingPrimary,
+                                  selected: controller.editingPrimary,
                                   onPressed: () =>
-                                      setState(() => editingPrimary = true),
+                                      controller.editPrimary(primary: true),
                                 ),
                                 ColorWell(
-                                  color: Color(secondaryColor.argb),
+                                  color: Color(controller.secondaryColor.argb),
                                   tooltip: 'Secondary color',
-                                  selected: !editingPrimary,
+                                  selected: !controller.editingPrimary,
                                   onPressed: () =>
-                                      setState(() => editingPrimary = false),
+                                      controller.editPrimary(primary: false),
                                 ),
                               ],
                             ),
@@ -187,12 +226,15 @@ class _EditorViewState extends State<EditorView> {
                   decoration: const BoxDecoration(
                     boxShadow: PaintStyle.faintShadow,
                   ),
-                  child: CustomPaint(
-                    painter: const ChessGridPainter(),
-                    size: Size(
-                      widget.document.width * zoom.toDouble(),
-                      widget.document.height * zoom.toDouble(),
-                    ),
+                  child: PixelCanvas(
+                    width: widget.document.width,
+                    height: widget.document.height,
+                    zoom: controller.zoom,
+                    layers: controller.visibleLayers,
+                    onPointerDown: controller.pointerDown,
+                    onPointerMove: controller.pointerMove,
+                    onPointerUp: controller.pointerUp,
+                    onPointerExit: controller.pointerExit,
                   ),
                 ),
               ),
@@ -202,12 +244,12 @@ class _EditorViewState extends State<EditorView> {
         PaintBar(
           child: Row(
             children: [
-              const PaintBarSection(
+              PaintBarSection(
                 child: Row(
                   spacing: 6,
                   children: [
-                    FaIcon(FontAwesomeIcons.arrowPointer, size: 14),
-                    Text('-'),
+                    const FaIcon(FontAwesomeIcons.arrowPointer, size: 14),
+                    Text(_cursorText()),
                   ],
                 ),
               ),
@@ -230,7 +272,7 @@ class _EditorViewState extends State<EditorView> {
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: NumericValueRange(
                   label: 'Zoom:',
-                  value: zoom,
+                  value: controller.zoom,
                   minimum: 1,
                   maximum: 100,
                   rangeMinimum: 0,
@@ -239,7 +281,7 @@ class _EditorViewState extends State<EditorView> {
                   rangeToValue: (range) => pow(2, range).round(),
                   decrement: (value) => value ~/ 2,
                   increment: (value) => value * 2,
-                  onChanged: (value) => setState(() => zoom = value),
+                  onChanged: controller.setZoom,
                 ),
               ),
             ],

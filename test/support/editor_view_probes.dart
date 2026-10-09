@@ -41,3 +41,22 @@ Finder sizeRange() => find.ancestor(
   of: find.text('Size:'),
   matching: find.byType(NumericValueRange),
 );
+
+List<bool> selectedTips(WidgetTester tester) => [
+  tester
+      .widget<PaintIconButton>(
+        find.ancestor(
+          of: find.byTooltip('Square tip'),
+          matching: find.byType(PaintIconButton),
+        ),
+      )
+      .selected,
+  tester
+      .widget<PaintIconButton>(
+        find.ancestor(
+          of: find.byTooltip('Circle tip'),
+          matching: find.byType(PaintIconButton),
+        ),
+      )
+      .selected,
+];

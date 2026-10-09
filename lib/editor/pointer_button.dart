@@ -1,0 +1,1 @@
+enum PointerButton { primary, secondary }
