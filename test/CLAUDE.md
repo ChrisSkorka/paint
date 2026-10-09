@@ -19,16 +19,38 @@ Skip:
 - Private methods
 - Getters and setters (unless they have non-trivial logic)
 
-## Structure
+## Directory Structure
 
 - Categorize tests into `unit`, `integration`, and `end-to-end` tests
 - Mirror the source file path under `test/{category}` (e.g. `lib/foo/bar/baz.dart` → `test/unit/foo/bar/baz_test.dart`)
-- Use `group()` to organize tests by class/subsystem -> method -> scenario-group (if appropriate)
-- The class/subsystem and method levels may also feature integration groups
+- Mocks, fakes, stubs, dummies, helper methods live in `test/support`
+
+## Test Grouping Structure
+
+Test files must always have 3 levels of grouping before tests.
+The 3rd level is especially useful during planning to discover all the cases to be considered.
+
+For truly standalone test scenarios, you may have a 3rd level group with just the one test.
+
+For top level functions not in a class, the level 1 = 'standalone'.
+
+### Non-widget tests groups
+
+1. group level 1: top level symbols: class | 'standalone' for symbols not in a class
+2. group level 2: methods / callables on a class / functions
+3. group level 3: group of scenarios / theme of test collection (typically usage oriented)
+4. actual tests
+
+### Widget tests groups
+
+1. group level 1: top level symbols: class | 'standalone' for symbols not in a class
+2. group level 2: attribute of interest: render | interactions | lifecycle
+3. group level 3: group of scenarios / theme of test collection (typically usage oriented)
+4. actual tests
 
 ### Deriving groups
 
-Derive groups from the member's inputs — don't invent scenarios:
+Derive groups from the member's inputs:
 - collection/map argument → cardinalities: none / one / multiple
 - match or dispatch behaviour → match / no match
 - independent arguments → cross product, plus a `mixed` group covering orderings
@@ -41,10 +63,11 @@ When a member composes with others or itself, cover the full matrix (configs × 
 ## Naming
 
 - Group names:
-  - level 1: 'class ClassName' | 'functions' (top-level functions)
-  - level 2: 'method methodName' | 'function functionName' | 'getter getterName' | 'operator operator-symbol'
-  - level 3: 'scenario-description' | 'integrations'
-  - level 4 (within in)
+  - level 1: 'class ClassName' | 'standalone'
+  - level 2: 
+    - non widget tests: 'method methodName' | 'function functionName' | 'getter getterName' | 'operator operator-symbol' | etc
+    - widget tests: 'render' | 'interactions' | 'lifecycle'
+  - level 3: 'group description' (do not skip this group level even if it only includes 1 test)
 - Test names: very short plain english description of the scenario or purpose, never include the expectation
   - do:
     - `multiple newlines`

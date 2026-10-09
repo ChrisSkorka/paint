@@ -79,11 +79,11 @@ Simple Image & GIF Editor
     - components
     - views
 - test
-  - unit (no widgets)
+  - unit (purely stub/mock/fake dependencies/children)
     - <mirror lib sub structure>
   - integration
     - <mirror lib sub structure>
-  - end-to-end
+  - end-to-end (only test top level entry points)
     - <mirror lib sub structure>
   - support: reusable mocks and fakes
     - <mirror lib sub structure>
@@ -132,10 +132,10 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 #### 1.1 foundation
 
-- [ ] app shell: single page with `new document` and `editor` tabs
-- [ ] theme & shared components from the style section: ribbon section, icon button, split button, dropdown, swatch grid, numeric value range
-- [ ] editor model (`lib/editor`, pure Dart): document (width, height, list of layers, active layer index, created with one layer), layer (RGBA pixel buffer), color, point & rectangle
-- [ ] new document tab: create new with width & height in pixels
+- [x] app shell: single page with `new document` and `editor` tabs
+- [x] theme & shared components from the style section: ribbon section, icon button, split button, dropdown, swatch grid, numeric value range
+- [x] editor model (`lib/editor`, pure Dart): document (width, height, list of layers, active layer index, created with one layer), layer (RGBA pixel buffer), color, point & rectangle
+- [x] new document tab: create new with width & height in pixels
 
 #### 1.2 canvas & drawing
 
