@@ -13,6 +13,8 @@ import 'tools/brush_tip.dart';
 import 'tools/bucket_fill.dart';
 import 'tools/eraser.dart';
 import 'tools/pen.dart';
+import 'tools/shape.dart';
+import 'tools/shape_tool.dart';
 import 'tools/tool.dart';
 import 'tools/tool_kind.dart';
 
@@ -44,11 +46,13 @@ class EditorController extends ChangeNotifier {
   var _penSize = 1;
   var _penTip = BrushTip.square;
   var _eraserSize = 1;
+  var _shapeWidth = 1;
   var _zoom = 4;
   var _primaryColor = PixelColor.black;
   var _secondaryColor = PixelColor.white;
   var _editingPrimary = true;
   PixelPoint? _cursor;
+  PixelPoint? _strokeOrigin;
   PixelPoint? _strokePoint;
   var _strokeColor = PixelColor.black;
   var _strokeButton = PointerButton.primary;
@@ -64,6 +68,7 @@ class EditorController extends ChangeNotifier {
   int get penSize => _penSize;
   BrushTip get penTip => _penTip;
   int get eraserSize => _eraserSize;
+  int get shapeWidth => _shapeWidth;
   int get zoom => _zoom;
   PixelColor get primaryColor => _primaryColor;
   PixelColor get secondaryColor => _secondaryColor;
@@ -79,8 +84,15 @@ class EditorController extends ChangeNotifier {
     ToolKind.pen => Pen(size: _penSize, tip: _penTip),
     ToolKind.eraser => Eraser(size: _eraserSize),
     ToolKind.bucketFill => const BucketFill(),
+    ToolKind.line => _shapeTool(Shape.line),
+    ToolKind.rectangle => _shapeTool(Shape.rectangle),
+    ToolKind.circle => _shapeTool(Shape.ellipse),
+    ToolKind.arrow => _shapeTool(Shape.arrow),
     ToolKind.colorPicker => null,
   };
+
+  ShapeTool _shapeTool(Shape shape) =>
+      ShapeTool(shape: shape, width: _shapeWidth, origin: _strokeOrigin);
 
   void selectTool(ToolKind toolKind) {
     _toolKind = toolKind;
@@ -100,6 +112,11 @@ class EditorController extends ChangeNotifier {
 
   void setEraserSize(int size) {
     _eraserSize = size;
+    notifyListeners();
+  }
+
+  void setShapeWidth(int width) {
+    _shapeWidth = width;
     notifyListeners();
   }
 
@@ -138,7 +155,8 @@ class EditorController extends ChangeNotifier {
       PointerButton.secondary => _secondaryColor,
     };
     _strokeButton = button;
-    if (_toolKind case ToolKind.pen || ToolKind.bucketFill) {
+    _strokeOrigin = point;
+    if (_toolKind != ToolKind.eraser && _toolKind != ToolKind.colorPicker) {
       _rememberColor(_strokeColor);
     }
     _sampleColor(point: point);
@@ -181,7 +199,9 @@ class EditorController extends ChangeNotifier {
       color: _strokeColor,
     );
     if (altered != null) _strokeArea = _strokeArea.union(altered);
+    _strokeOrigin = null;
     _strokePoint = null;
+    _redrawPointer(point: point, color: _strokeColor);
     _recordStroke();
     if (_toolKind == ToolKind.colorPicker) _toolKind = _drawingToolKind;
     notifyListeners();
@@ -233,12 +253,16 @@ class EditorController extends ChangeNotifier {
   }
 
   void _movePointer({required PixelPoint point, required PixelColor color}) {
+    _redrawPointer(point: point, color: color);
+    notifyListeners();
+  }
+
+  void _redrawPointer({required PixelPoint point, required PixelColor color}) {
     _clearPointer();
     _pointerArea =
         _tool?.drawPointer(layer: pointerLayer, point: point, color: color) ??
         _noArea;
     _cursor = document.activeLayer.contains(point) ? point : null;
-    notifyListeners();
   }
 
   void _clearPointer() {

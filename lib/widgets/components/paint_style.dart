@@ -18,6 +18,7 @@ abstract final class PaintStyle {
   static const penColor = Color(0xFFFF8C00);
   static const eraserColor = Color(0xFFCD5C5C);
   static const fillColor = Color(0xFF8A2BE2);
+  static const shapeColor = Color(0xFF2E8B57);
   static const colorPickerColor = Color(0xFF1E90FF);
   static const saveColor = Color(0xFF00BFFF);
   static const changeOutlineColor = Color(0xFF1E90FF);

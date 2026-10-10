@@ -165,7 +165,7 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 #### 2.2 more tools
 
 - [x] bucket fill (4-connected, exact color match)
-- [ ] shapes: line, rectangle, circle, outline width from tool config, outline centered on selection edge, preview while dragging, outline color is primary color, fill is secondary color
+- [x] shapes: line, rectangle, circle, outline width from tool config, outline centered on selection edge, preview while dragging
 - [ ] select: rectangle selection, move contents, rotate 90°, mirror horizontally & vertically, delete key performs eraser on selection
 - [ ] colors: add no-color option, no-color button below dialog button
 
@@ -196,7 +196,9 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] gif import (frames → image-per-frame layer) & export
 - [ ] save animations to shared_preferences
 
-### phase 6: performance
+### phase 6: polish
+
+### phase 6.1: performance
 
 - [ ] check memory consumption & performance of history stack
   - a 4096*4096 canvas is unusable
@@ -205,15 +207,27 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - [ ] or progressive history item merging
   - [ ] image compression (package:archive, XOR against previous layer)
 
-### phase 7: polish
+### phase 6.2: editor
 
-- [ ] interchangeable panes: move panes between top & right panels
 - [ ] keyboard shortcuts for tools
-- [ ] performance pass on large canvases (dirty-rect rendering)
-- [ ] color picker: better UI
-- [ ] transparent colors: blend mode
 - [ ] scrollable views always show scroll bars (& scroll bars are thick)
 - [ ] scroll image to the right & bottom
+- [ ] interchangeable panes: move panes between top & right panels
+
+### phase 6.3: improve tools
+
+- [ ] pen ribbon: split size & tip into own ribbon, pen, eraser, and shapes use same settings
+- [ ] shape tool: constraint to square/level when ctrl is pressed
+- [ ] shape tool: fill with secondary color
+- [ ] color picker: better UI
+- [ ] transparent colors: blend mode
+
+### phase 6.4: history
+
 - [ ] history item preview enlarges on hover
-- [ ] allow zoom less than 1x
 - [ ] history slider
+- [ ] feature to convert history diff into layer
+
+### phase 6.5: misc
+
+- [ ] allow zoom less than 1x

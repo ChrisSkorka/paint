@@ -70,11 +70,12 @@ class _EditorViewState extends State<EditorView> {
   ];
 
   Widget _sizeDropdown({
+    String label = 'Size:',
     required int value,
     required ValueChanged<int> onChanged,
   }) {
     return NumericValueRange(
-      label: 'Size:',
+      label: label,
       value: value,
       minimum: 1,
       maximum: 64,
@@ -112,6 +113,21 @@ class _EditorViewState extends State<EditorView> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _shapeButton({required FaIconData icon, required ToolKind toolKind}) {
+    return PaintSplitButton(
+      icon: icon,
+      tooltip: toolKind.label,
+      color: PaintStyle.shapeColor,
+      selected: controller.toolKind == toolKind,
+      onPressed: () => controller.selectTool(toolKind),
+      dropdown: _sizeDropdown(
+        label: 'Width:',
+        value: controller.shapeWidth,
+        onChanged: controller.setShapeWidth,
+      ),
     );
   }
 
@@ -285,6 +301,35 @@ class _EditorViewState extends State<EditorView> {
                                   controller.toolKind == ToolKind.colorPicker,
                               onPressed: () =>
                                   controller.selectTool(ToolKind.colorPicker),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    RibbonSection(
+                      title: 'Shapes',
+                      columns: [
+                        RibbonColumn(
+                          children: [
+                            _shapeButton(
+                              icon: FontAwesomeIcons.slash,
+                              toolKind: ToolKind.line,
+                            ),
+                            _shapeButton(
+                              icon: FontAwesomeIcons.square,
+                              toolKind: ToolKind.rectangle,
+                            ),
+                          ],
+                        ),
+                        RibbonColumn(
+                          children: [
+                            _shapeButton(
+                              icon: FontAwesomeIcons.circle,
+                              toolKind: ToolKind.circle,
+                            ),
+                            _shapeButton(
+                              icon: FontAwesomeIcons.arrowRight,
+                              toolKind: ToolKind.arrow,
                             ),
                           ],
                         ),

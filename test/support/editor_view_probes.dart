@@ -98,3 +98,20 @@ List<bool> undoRedoEnabled(WidgetTester tester) => [
             .onPressed !=
         null,
 ];
+
+List<bool> selectedShapes(WidgetTester tester) => [
+  for (final tooltip in ['Line', 'Rectangle', 'Circle', 'Arrow'])
+    tester
+        .widget<PaintSplitButton>(
+          find.ancestor(
+            of: find.byTooltip(tooltip),
+            matching: find.byType(PaintSplitButton),
+          ),
+        )
+        .selected,
+];
+
+Finder widthRange() => find.ancestor(
+  of: find.text('Width:'),
+  matching: find.byType(NumericValueRange),
+);

@@ -334,6 +334,31 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
+        testWidgets('rectangle drag', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 3, height: 3);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rectangle'));
+          await tester.pump();
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          final gesture = await tester.startGesture(
+            topLeft + const Offset(1, 1),
+          );
+          await gesture.moveTo(topLeft + const Offset(9, 9));
+          await gesture.up();
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [black, black, black],
+            [black, transparent, black],
+            [black, black, black],
+          ];
+          expect(actual, equals(expected));
+        });
       });
       group('cursor', () {
         testWidgets('hover', (tester) async {
@@ -449,6 +474,78 @@ void main() {
           const expected = [false, false, false, true];
           expect(actual, equals(expected));
         });
+        testWidgets('line', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Line'));
+          await tester.pump();
+          final actual = [selectedTools(tester), selectedShapes(tester)];
+          const expected = [
+            [false, false, false, false],
+            [true, false, false, false],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('rectangle', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rectangle'));
+          await tester.pump();
+          final actual = [selectedTools(tester), selectedShapes(tester)];
+          const expected = [
+            [false, false, false, false],
+            [false, true, false, false],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('circle', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Circle'));
+          await tester.pump();
+          final actual = [selectedTools(tester), selectedShapes(tester)];
+          const expected = [
+            [false, false, false, false],
+            [false, false, true, false],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('arrow', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Arrow'));
+          await tester.pump();
+          final actual = [selectedTools(tester), selectedShapes(tester)];
+          const expected = [
+            [false, false, false, false],
+            [false, false, false, true],
+          ];
+          expect(actual, equals(expected));
+        });
         testWidgets('back to pen', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
@@ -509,6 +606,28 @@ void main() {
           );
           await tester.pump();
           final actual = tester.widget<NumericValueRange>(sizeRange()).value;
+          const expected = 2;
+          expect(actual, equals(expected));
+        });
+        testWidgets('shape width', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rectangle options'));
+          await tester.pumpAndSettle();
+          await tester.tap(
+            find.descendant(
+              of: widthRange(),
+              matching: find.byTooltip('Increase'),
+            ),
+          );
+          await tester.pump();
+          final actual = tester.widget<NumericValueRange>(widthRange()).value;
           const expected = 2;
           expect(actual, equals(expected));
         });

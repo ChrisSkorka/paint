@@ -139,6 +139,22 @@ void main() {
       });
     });
 
+    group('method setShapeWidth', () {
+      group('widths', () {
+        test('larger', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setShapeWidth(3);
+          final actual = [editorController.shapeWidth, notifications];
+          const expected = [3, 1];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method setZoom', () {
       group('levels', () {
         test('larger', () {
@@ -657,6 +673,30 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
+        test('shape', () {
+          final document = Document.blank(width: 3, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.line);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = [
+            pixelRows(document.activeLayer),
+            pixelRows(editorController.pointerLayer),
+          ];
+          const expected = [
+            [
+              [transparent, transparent, transparent],
+            ],
+            [
+              [transparent, black, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
         test('color picker', () {
           final document = Document.blank(width: 3, height: 1);
           final editorController = EditorController.forDocument(
@@ -877,6 +917,19 @@ void main() {
             document: Document.blank(width: 2, height: 1),
           );
           editorController.selectTool(ToolKind.bucketFill);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = editorController.recentColors;
+          const expected = [PixelColor.black];
+          expect(actual, equals(expected));
+        });
+        test('shape', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.selectTool(ToolKind.rectangle);
           editorController.pointerDown(
             point: const PixelPoint(x: 0, y: 0),
             button: PointerButton.primary,
@@ -1118,6 +1171,54 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
+        test('shape preview', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.rectangle);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 2));
+          final actual = [
+            pixelRows(document.activeLayer),
+            pixelRows(editorController.pointerLayer),
+          ];
+          const expected = [
+            [
+              [transparent, transparent, transparent],
+              [transparent, transparent, transparent],
+              [transparent, transparent, transparent],
+            ],
+            [
+              [black, black, black],
+              [black, transparent, black],
+              [black, black, black],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('shape preview shrinks', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          editorController.selectTool(ToolKind.rectangle);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 2));
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 0));
+          final actual = pixelRows(editorController.pointerLayer);
+          const expected = [
+            [black, black, transparent],
+            [transparent, transparent, transparent],
+            [transparent, transparent, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
         test('color picker', () {
           final document = Document.blank(width: 4, height: 1);
           final editorController = EditorController.forDocument(
@@ -1190,6 +1291,104 @@ void main() {
               [black, transparent, transparent],
             ],
             2,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('line', () {
+          final document = Document.blank(width: 3, height: 2);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.line);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 1));
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 1));
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [black, transparent, transparent],
+            [transparent, black, black],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('rectangle', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.rectangle);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 2));
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 2));
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [black, black, black],
+            [black, transparent, black],
+            [black, black, black],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('circle', () {
+          final document = Document.blank(width: 5, height: 5);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.circle);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 4, y: 4));
+          editorController.pointerUp(point: const PixelPoint(x: 4, y: 4));
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, black, black, black, transparent],
+            [black, transparent, transparent, transparent, black],
+            [black, transparent, transparent, transparent, black],
+            [black, transparent, transparent, transparent, black],
+            [transparent, black, black, black, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('arrow', () {
+          final document = Document.blank(width: 5, height: 3);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.arrow);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 1),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 4, y: 1));
+          editorController.pointerUp(point: const PixelPoint(x: 4, y: 1));
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, transparent, transparent, black, transparent],
+            [black, black, black, black, black],
+            [transparent, transparent, transparent, black, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('shape pointer', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 1),
+          );
+          editorController.selectTool(ToolKind.line);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 0));
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 0));
+          final actual = pixelRows(editorController.pointerLayer);
+          const expected = [
+            [transparent, transparent, black],
           ];
           expect(actual, equals(expected));
         });
@@ -1509,6 +1708,49 @@ void main() {
                   255,
                   255,
                 ]),
+              ),
+            ),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('rectangle', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.selectTool(ToolKind.rectangle);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 0));
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 0));
+          final actual = editorController.history.entries;
+          final expected = [
+            HistoryEntry(
+              name: 'Rectangle',
+              layerIndex: 0,
+              before: LayerSnapshot(
+                area: const PixelRectangle(
+                  left: 0,
+                  top: 0,
+                  width: 2,
+                  height: 1,
+                ),
+                rgba: Uint8List.fromList([0, 0, 0, 0, 0, 0, 0, 0]),
+              ),
+              after: LayerSnapshot(
+                area: const PixelRectangle(
+                  left: 0,
+                  top: 0,
+                  width: 2,
+                  height: 1,
+                ),
+                rgba: Uint8List.fromList([0, 0, 0, 255, 0, 0, 0, 255]),
+              ),
+              thumbnail: Layer(
+                width: 2,
+                height: 1,
+                rgba: Uint8List.fromList([0, 0, 0, 255, 0, 0, 0, 255]),
               ),
             ),
           ];
