@@ -23,6 +23,7 @@ void main() {
                 height: 2,
                 zoom: 4,
                 layers: const [],
+                frame: 0,
                 onPointerDown: ({required point, required button}) {},
                 onPointerMove: ({required point}) {},
                 onPointerUp: ({required point}) {},
@@ -46,7 +47,10 @@ void main() {
                 width: 3,
                 height: 2,
                 zoom: 4,
-                layers: [DocumentLayer(name: 'Background', pixels: layer)],
+                layers: [
+                  DocumentLayer(name: 'Background', images: [layer]),
+                ],
+                frame: 0,
                 onPointerDown: ({required point, required button}) {},
                 onPointerMove: ({required point}) {},
                 onPointerUp: ({required point}) {},
@@ -66,7 +70,9 @@ void main() {
               .single;
           final actual = [pixelLayersPainter.layers, pixelLayersPainter.zoom];
           final expected = [
-            [DocumentLayer(name: 'Background', pixels: layer)],
+            [
+              DocumentLayer(name: 'Background', images: [layer]),
+            ],
             4,
           ];
           expect(actual, equals(expected));
@@ -85,6 +91,7 @@ void main() {
                 height: 2,
                 zoom: 4,
                 layers: const [],
+                frame: 0,
                 onPointerDown: ({required point, required button}) =>
                     events.add(['down', point, button]),
                 onPointerMove: ({required point}) =>
@@ -112,6 +119,7 @@ void main() {
                 height: 2,
                 zoom: 4,
                 layers: const [],
+                frame: 0,
                 onPointerDown: ({required point, required button}) =>
                     events.add(['down', point, button]),
                 onPointerMove: ({required point}) =>
@@ -146,6 +154,7 @@ void main() {
                 height: 2,
                 zoom: 4,
                 layers: const [],
+                frame: 0,
                 onPointerDown: ({required point, required button}) =>
                     events.add(['down', point, button]),
                 onPointerMove: ({required point}) =>
@@ -178,6 +187,7 @@ void main() {
                 height: 2,
                 zoom: 4,
                 layers: const [],
+                frame: 0,
                 onPointerDown: ({required point, required button}) =>
                     events.add(['down', point, button]),
                 onPointerMove: ({required point}) =>
@@ -206,6 +216,7 @@ void main() {
                 height: 2,
                 zoom: 4,
                 layers: const [],
+                frame: 0,
                 onPointerDown: ({required point, required button}) =>
                     events.add(['down', point, button]),
                 onPointerMove: ({required point}) =>
@@ -239,6 +250,7 @@ void main() {
                 height: 2,
                 zoom: 4,
                 layers: const [],
+                frame: 0,
                 onPointerDown: ({required point, required button}) =>
                     events.add(['down', point, button]),
                 onPointerMove: ({required point}) =>

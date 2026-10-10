@@ -8,23 +8,26 @@ abstract final class ImageCodec {
   static const jpgQuality = 95;
 
   static Uint8List encodePng({required Layer layer}) {
-    return image.encodePng(_toImage(layer: layer));
+    return image.encodePng(toImage(layer: layer));
   }
 
   static Uint8List encodeJpg({required Layer layer}) {
-    return image.encodeJpg(_toImage(layer: layer), quality: jpgQuality);
+    return image.encodeJpg(toImage(layer: layer), quality: jpgQuality);
   }
 
   static Layer? decode({required Uint8List bytes}) {
     final decoded = _tryDecode(bytes: bytes);
-    if (decoded == null) return null;
+    return decoded == null ? null : toLayer(decoded: decoded);
+  }
+
+  static Layer toLayer({required image.Image decoded}) {
     final rgba = decoded
         .convert(format: image.Format.uint8, numChannels: 4)
         .getBytes(order: image.ChannelOrder.rgba);
     return Layer(width: decoded.width, height: decoded.height, rgba: rgba);
   }
 
-  static image.Image _toImage({required Layer layer}) {
+  static image.Image toImage({required Layer layer}) {
     return image.Image.fromBytes(
       width: layer.width,
       height: layer.height,

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document_layer.dart';
 import 'package:paint/editor/canvas/layer.dart';
+import 'package:paint/editor/canvas/layer_timeframe.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
@@ -15,7 +16,11 @@ void main() {
     group('method paint', () {
       group('layers', () {
         test('none', () {
-          const pixelLayersPainter = PixelLayersPainter(layers: [], zoom: 1);
+          const pixelLayersPainter = PixelLayersPainter(
+            layers: [],
+            frame: 0,
+            zoom: 1,
+          );
           final stubCanvas = StubCanvas();
           pixelLayersPainter.paint(stubCanvas, const Size(2, 2));
           final actual = stubCanvas.drawnRectangles;
@@ -27,13 +32,16 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer.filled(
-                  width: 2,
-                  height: 2,
-                  color: PixelColor.transparent,
-                ),
+                images: [
+                  Layer.filled(
+                    width: 2,
+                    height: 2,
+                    color: PixelColor.transparent,
+                  ),
+                ],
               ),
             ],
+            frame: 0,
             zoom: 1,
           );
           final stubCanvas = StubCanvas();
@@ -59,9 +67,10 @@ void main() {
           );
           final pixelLayersPainter = PixelLayersPainter(
             layers: [
-              DocumentLayer(name: 'Background', pixels: bottom),
-              DocumentLayer(name: 'Background', pixels: top),
+              DocumentLayer(name: 'Background', images: [bottom]),
+              DocumentLayer(name: 'Background', images: [top]),
             ],
+            frame: 0,
             zoom: 1,
           );
           final stubCanvas = StubCanvas();
@@ -75,19 +84,63 @@ void main() {
         });
       });
 
+      group('frames', () {
+        test('first', () {
+          final pixelLayersPainter = PixelLayersPainter(
+            layers: [
+              DocumentLayer(
+                name: 'Background',
+                images: [
+                  Layer.filled(width: 1, height: 1, color: PixelColor.white),
+                  Layer.filled(width: 1, height: 1, color: PixelColor.black),
+                ],
+                timeframe: LayerTimeframe.perFrame,
+              ),
+            ],
+            frame: 0,
+            zoom: 1,
+          );
+          final stubCanvas = StubCanvas();
+          pixelLayersPainter.paint(stubCanvas, const Size(1, 1));
+          final actual = stubCanvas.drawnRectangles;
+          const expected = [(Rect.fromLTRB(0, 0, 1, 1), 0xFFFFFFFF)];
+          expect(actual, equals(expected));
+        });
+        test('second', () {
+          final pixelLayersPainter = PixelLayersPainter(
+            layers: [
+              DocumentLayer(
+                name: 'Background',
+                images: [
+                  Layer.filled(width: 1, height: 1, color: PixelColor.white),
+                  Layer.filled(width: 1, height: 1, color: PixelColor.black),
+                ],
+                timeframe: LayerTimeframe.perFrame,
+              ),
+            ],
+            frame: 1,
+            zoom: 1,
+          );
+          final stubCanvas = StubCanvas();
+          pixelLayersPainter.paint(stubCanvas, const Size(1, 1));
+          final actual = stubCanvas.drawnRectangles;
+          const expected = [(Rect.fromLTRB(0, 0, 1, 1), 0xFF000000)];
+          expect(actual, equals(expected));
+        });
+      });
+
       group('runs', () {
         test('single pixel', () {
           final pixelLayersPainter = PixelLayersPainter(
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer.filled(
-                  width: 1,
-                  height: 1,
-                  color: PixelColor.black,
-                ),
+                images: [
+                  Layer.filled(width: 1, height: 1, color: PixelColor.black),
+                ],
               ),
             ],
+            frame: 0,
             zoom: 1,
           );
           final stubCanvas = StubCanvas();
@@ -107,7 +160,10 @@ void main() {
             color: const PixelColor(argb: 0x80112233),
           );
           final pixelLayersPainter = PixelLayersPainter(
-            layers: [DocumentLayer(name: 'Background', pixels: layer)],
+            layers: [
+              DocumentLayer(name: 'Background', images: [layer]),
+            ],
+            frame: 0,
             zoom: 1,
           );
           final stubCanvas = StubCanvas();
@@ -130,7 +186,10 @@ void main() {
             color: PixelColor.transparent,
           );
           final pixelLayersPainter = PixelLayersPainter(
-            layers: [DocumentLayer(name: 'Background', pixels: layer)],
+            layers: [
+              DocumentLayer(name: 'Background', images: [layer]),
+            ],
+            frame: 0,
             zoom: 1,
           );
           final stubCanvas = StubCanvas();
@@ -147,13 +206,12 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer.filled(
-                  width: 2,
-                  height: 2,
-                  color: PixelColor.black,
-                ),
+                images: [
+                  Layer.filled(width: 2, height: 2, color: PixelColor.black),
+                ],
               ),
             ],
+            frame: 0,
             zoom: 1,
           );
           final stubCanvas = StubCanvas();
@@ -179,8 +237,11 @@ void main() {
             color: PixelColor.black,
           );
           final pixelLayersPainter = PixelLayersPainter(
-            layers: [DocumentLayer(name: 'Background', pixels: layer)],
+            layers: [
+              DocumentLayer(name: 'Background', images: [layer]),
+            ],
             zoom: 3,
+            frame: 0,
           );
           final stubCanvas = StubCanvas();
           pixelLayersPainter.paint(stubCanvas, const Size(6, 6));
@@ -195,13 +256,12 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer.filled(
-                  width: 1,
-                  height: 1,
-                  color: PixelColor.black,
-                ),
+                images: [
+                  Layer.filled(width: 1, height: 1, color: PixelColor.black),
+                ],
               ),
             ],
+            frame: 0,
             zoom: 1,
           );
           final stubCanvas = StubCanvas();
@@ -223,14 +283,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer.filled(
-                  width: 1,
-                  height: 1,
-                  color: PixelColor.black,
-                ),
+                images: [
+                  Layer.filled(width: 1, height: 1, color: PixelColor.black),
+                ],
                 opacity: 50,
               ),
             ],
+            frame: 0,
             zoom: 1,
           );
           final stubCanvas = StubCanvas();
@@ -252,14 +311,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer.filled(
-                  width: 1,
-                  height: 1,
-                  color: PixelColor.black,
-                ),
+                images: [
+                  Layer.filled(width: 1, height: 1, color: PixelColor.black),
+                ],
                 opacity: 0,
               ),
             ],
+            frame: 0,
             zoom: 1,
           );
           final stubCanvas = StubCanvas();
@@ -322,9 +380,13 @@ void main() {
     group('method shouldRepaint', () {
       group('old delegate', () {
         test('same painter', () {
-          const pixelLayersPainter = PixelLayersPainter(layers: [], zoom: 1);
+          const pixelLayersPainter = PixelLayersPainter(
+            layers: [],
+            frame: 0,
+            zoom: 1,
+          );
           final actual = pixelLayersPainter.shouldRepaint(
-            const PixelLayersPainter(layers: [], zoom: 1),
+            const PixelLayersPainter(layers: [], zoom: 1, frame: 0),
           );
           const expected = true;
           expect(actual, equals(expected));

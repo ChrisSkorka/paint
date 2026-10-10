@@ -4,11 +4,46 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document.dart';
 import 'package:paint/editor/canvas/document_layer.dart';
 import 'package:paint/editor/canvas/layer.dart';
+import 'package:paint/editor/canvas/layer_timeframe.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 
 import '../../../support/layer_probes.dart';
 
 void main() {
+  const red = 0xFFFF0000;
+  const blue = 0xFF0000FF;
+  const transparent = 0x00000000;
+
+  Document animatedDocument({required int activeFrameIndex}) => Document(
+    width: 1,
+    height: 1,
+    layers: [
+      DocumentLayer(
+        name: 'Background',
+        images: [
+          layerFromRows([
+            [red],
+          ]),
+        ],
+      ),
+      DocumentLayer(
+        name: 'Sprite',
+        images: [
+          layerFromRows([
+            [blue],
+          ]),
+          layerFromRows([
+            [transparent],
+          ]),
+        ],
+        timeframe: LayerTimeframe.perFrame,
+      ),
+    ],
+    activeLayerIndex: 1,
+    frameDurations: [100, 200],
+    activeFrameIndex: activeFrameIndex,
+  );
+
   group('class Document', () {
     group('factory blank', () {
       group('background', () {
@@ -20,11 +55,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([0, 0, 0, 0, 0, 0, 0, 0]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([0, 0, 0, 0, 0, 0, 0, 0]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -43,20 +80,22 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([
-                    0xff,
-                    0xff,
-                    0xff,
-                    0xff,
-                    0xff,
-                    0xff,
-                    0xff,
-                    0xff,
-                  ]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([
+                      0xff,
+                      0xff,
+                      0xff,
+                      0xff,
+                      0xff,
+                      0xff,
+                      0xff,
+                      0xff,
+                    ]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -74,6 +113,17 @@ void main() {
         test('given', () {
           final actual = Document.blank(name: 'Cat', width: 1, height: 1).name;
           const expected = 'Cat';
+          expect(actual, equals(expected));
+        });
+      });
+      group('frames', () {
+        test('single frame', () {
+          final document = Document.blank(width: 1, height: 1);
+          final actual = [document.frameDurations, document.activeFrameIndex];
+          final expected = [
+            [100],
+            0,
+          ];
           expect(actual, equals(expected));
         });
       });
@@ -114,7 +164,9 @@ void main() {
           final expected = Document(
             width: 3,
             height: 2,
-            layers: [DocumentLayer(name: 'Background', pixels: image)],
+            layers: [
+              DocumentLayer(name: 'Background', images: [image]),
+            ],
             activeLayerIndex: 0,
           );
           expect(actual, equals(expected));
@@ -131,11 +183,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 1,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 2, 3, 4]),
-                ),
+                images: [
+                  Layer(
+                    width: 1,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 2, 3, 4]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -157,19 +211,23 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 1,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 2, 3, 4]),
-                ),
+                images: [
+                  Layer(
+                    width: 1,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 2, 3, 4]),
+                  ),
+                ],
               ),
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 1,
-                  height: 1,
-                  rgba: Uint8List.fromList([5, 6, 7, 8]),
-                ),
+                images: [
+                  Layer(
+                    width: 1,
+                    height: 1,
+                    rgba: Uint8List.fromList([5, 6, 7, 8]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -189,19 +247,23 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 1,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 2, 3, 4]),
-                ),
+                images: [
+                  Layer(
+                    width: 1,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 2, 3, 4]),
+                  ),
+                ],
               ),
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 1,
-                  height: 1,
-                  rgba: Uint8List.fromList([5, 6, 7, 8]),
-                ),
+                images: [
+                  Layer(
+                    width: 1,
+                    height: 1,
+                    rgba: Uint8List.fromList([5, 6, 7, 8]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 1,
@@ -215,6 +277,33 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('frames', () {
+        test('per frame first', () {
+          final document = animatedDocument(activeFrameIndex: 0);
+          final actual = pixelRows(document.activeLayer);
+          final expected = [
+            [blue],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('per frame second', () {
+          final document = animatedDocument(activeFrameIndex: 1);
+          final actual = pixelRows(document.activeLayer);
+          final expected = [
+            [transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('constant second', () {
+          final document = animatedDocument(activeFrameIndex: 1)
+            ..activeLayerIndex = 0;
+          final actual = pixelRows(document.activeLayer);
+          final expected = [
+            [red],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
     });
 
     group('method flatten', () {
@@ -222,7 +311,7 @@ void main() {
         test('transparent', () {
           final document = Document.blank(width: 1, height: 1);
           final actual = pixelRows(
-            document.flatten(background: PixelColor.transparent),
+            document.flatten(background: PixelColor.transparent, frame: 0),
           );
           final expected = [
             [0x00000000],
@@ -232,7 +321,7 @@ void main() {
         test('white', () {
           final document = Document.blank(width: 1, height: 1);
           final actual = pixelRows(
-            document.flatten(background: PixelColor.white),
+            document.flatten(background: PixelColor.white, frame: 0),
           );
           final expected = [
             [0xFFFFFFFF],
@@ -249,21 +338,25 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: layerFromRows([
-                  [0xFFFF0000, 0xFFFF0000],
-                ]),
+                images: [
+                  layerFromRows([
+                    [0xFFFF0000, 0xFFFF0000],
+                  ]),
+                ],
               ),
               DocumentLayer(
                 name: 'Top',
-                pixels: layerFromRows([
-                  [0xFF0000FF, 0x00000000],
-                ]),
+                images: [
+                  layerFromRows([
+                    [0xFF0000FF, 0x00000000],
+                  ]),
+                ],
               ),
             ],
             activeLayerIndex: 0,
           );
           final actual = pixelRows(
-            document.flatten(background: PixelColor.transparent),
+            document.flatten(background: PixelColor.transparent, frame: 0),
           );
           final expected = [
             [0xFF0000FF, 0xFFFF0000],
@@ -277,15 +370,17 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Top',
-                pixels: layerFromRows([
-                  [0x800000FF],
-                ]),
+                images: [
+                  layerFromRows([
+                    [0x800000FF],
+                  ]),
+                ],
               ),
             ],
             activeLayerIndex: 0,
           );
           final actual = pixelRows(
-            document.flatten(background: PixelColor.white),
+            document.flatten(background: PixelColor.white, frame: 0),
           );
           final expected = [
             [0xFF7F7FFF],
@@ -299,15 +394,17 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Top',
-                pixels: layerFromRows([
-                  [0x800000FF],
-                ]),
+                images: [
+                  layerFromRows([
+                    [0x800000FF],
+                  ]),
+                ],
               ),
             ],
             activeLayerIndex: 0,
           );
           final actual = pixelRows(
-            document.flatten(background: PixelColor.transparent),
+            document.flatten(background: PixelColor.transparent, frame: 0),
           );
           final expected = [
             [0x800000FF],
@@ -321,16 +418,18 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Top',
-                pixels: layerFromRows([
-                  [0xFF0000FF],
-                ]),
+                images: [
+                  layerFromRows([
+                    [0xFF0000FF],
+                  ]),
+                ],
                 visible: false,
               ),
             ],
             activeLayerIndex: 0,
           );
           final actual = pixelRows(
-            document.flatten(background: PixelColor.white),
+            document.flatten(background: PixelColor.white, frame: 0),
           );
           final expected = [
             [0xFFFFFFFF],
@@ -344,19 +443,43 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Top',
-                pixels: layerFromRows([
-                  [0xFF000000],
-                ]),
+                images: [
+                  layerFromRows([
+                    [0xFF000000],
+                  ]),
+                ],
                 opacity: 50,
               ),
             ],
             activeLayerIndex: 0,
           );
           final actual = pixelRows(
-            document.flatten(background: PixelColor.white),
+            document.flatten(background: PixelColor.white, frame: 0),
           );
           final expected = [
             [0xFF808080],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('frames', () {
+        test('first', () {
+          final document = animatedDocument(activeFrameIndex: 1);
+          final actual = pixelRows(
+            document.flatten(background: PixelColor.transparent, frame: 0),
+          );
+          final expected = [
+            [blue],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('second', () {
+          final document = animatedDocument(activeFrameIndex: 0);
+          final actual = pixelRows(
+            document.flatten(background: PixelColor.transparent, frame: 1),
+          );
+          final expected = [
+            [red],
           ];
           expect(actual, equals(expected));
         });
@@ -384,6 +507,21 @@ void main() {
         test('different store id', () {
           final document = Document.blank(width: 2, height: 1);
           final other = Document.blank(width: 2, height: 1)..storeId = '1';
+          final actual = document == other;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('different frame durations', () {
+          final document = animatedDocument(activeFrameIndex: 0);
+          final other = animatedDocument(activeFrameIndex: 0)
+            ..frameDurations = [100, 300];
+          final actual = document == other;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('different active frame', () {
+          final document = animatedDocument(activeFrameIndex: 0);
+          final other = animatedDocument(activeFrameIndex: 1);
           final actual = document == other;
           const expected = false;
           expect(actual, equals(expected));
@@ -501,6 +639,21 @@ void main() {
           const expected = false;
           expect(actual, equals(expected));
         });
+        test('different frame durations', () {
+          final document = animatedDocument(activeFrameIndex: 0);
+          final other = animatedDocument(activeFrameIndex: 0)
+            ..frameDurations = [100, 300];
+          final actual = document.hashCode == other.hashCode;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('different active frame', () {
+          final document = animatedDocument(activeFrameIndex: 0);
+          final other = animatedDocument(activeFrameIndex: 1);
+          final actual = document.hashCode == other.hashCode;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
         test('different layer pixels', () {
           final document = Document.blank(width: 2, height: 1);
           final other = Document.blank(
@@ -520,7 +673,8 @@ void main() {
         test('single', () {
           final document = Document.blank(width: 2, height: 1);
           final actual = document.toString();
-          const expected = 'Document(Untitled, 2, 1, layers: 1, active: 0)';
+          const expected =
+              'Document(Untitled, 2, 1, layers: 1, active: 0, frames: 1, frame: 0)';
           expect(actual, equals(expected));
         });
         test('multiple', () {
@@ -530,25 +684,39 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer.filled(
-                  width: 2,
-                  height: 1,
-                  color: PixelColor.transparent,
-                ),
+                images: [
+                  Layer.filled(
+                    width: 2,
+                    height: 1,
+                    color: PixelColor.transparent,
+                  ),
+                ],
               ),
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer.filled(
-                  width: 2,
-                  height: 1,
-                  color: PixelColor.transparent,
-                ),
+                images: [
+                  Layer.filled(
+                    width: 2,
+                    height: 1,
+                    color: PixelColor.transparent,
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 1,
           );
           final actual = document.toString();
-          const expected = 'Document(Untitled, 2, 1, layers: 2, active: 1)';
+          const expected =
+              'Document(Untitled, 2, 1, layers: 2, active: 1, frames: 1, frame: 0)';
+          expect(actual, equals(expected));
+        });
+      });
+      group('frames', () {
+        test('multiple', () {
+          final document = animatedDocument(activeFrameIndex: 1);
+          final actual = document.toString();
+          const expected =
+              'Document(Untitled, 1, 1, layers: 2, active: 1, frames: 2, frame: 1)';
           expect(actual, equals(expected));
         });
       });

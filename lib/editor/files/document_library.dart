@@ -36,7 +36,7 @@ class DocumentLibrary extends ChangeNotifier {
       name: document.name,
       modified: modified,
       thumbnail: Layer.thumbnail(
-        layer: document.flatten(background: PixelColor.transparent),
+        layer: document.flatten(background: PixelColor.transparent, frame: 0),
         maximumSize: thumbnailSize,
       ),
     );

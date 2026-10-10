@@ -63,11 +63,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -92,11 +94,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -124,11 +128,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -158,11 +164,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -171,7 +179,10 @@ void main() {
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history.undo();
-          final actual = [history.position, document.layers.first.pixels.rgba];
+          final actual = [
+            history.position,
+            document.layers.first.images.first.rgba,
+          ];
           final expected = [
             1,
             Uint8List.fromList([1, 1, 1, 1, 0, 0, 0, 0]),
@@ -185,11 +196,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -200,7 +213,10 @@ void main() {
           history
             ..undo()
             ..undo();
-          final actual = [history.position, document.layers.first.pixels.rgba];
+          final actual = [
+            history.position,
+            document.layers.first.images.first.rgba,
+          ];
           final expected = [
             0,
             Uint8List.fromList([0, 0, 0, 0, 0, 0, 0, 0]),
@@ -214,11 +230,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -229,7 +247,10 @@ void main() {
           history
             ..jumpTo(0)
             ..undo();
-          final actual = [history.position, document.layers.first.pixels.rgba];
+          final actual = [
+            history.position,
+            document.layers.first.images.first.rgba,
+          ];
           final expected = [
             0,
             Uint8List.fromList([0, 0, 0, 0, 0, 0, 0, 0]),
@@ -248,11 +269,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -261,7 +284,10 @@ void main() {
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history.redo();
-          final actual = [history.position, document.layers.first.pixels.rgba];
+          final actual = [
+            history.position,
+            document.layers.first.images.first.rgba,
+          ];
           final expected = [
             2,
             Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
@@ -275,11 +301,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -290,7 +318,10 @@ void main() {
           history
             ..undo()
             ..redo();
-          final actual = [history.position, document.layers.first.pixels.rgba];
+          final actual = [
+            history.position,
+            document.layers.first.images.first.rgba,
+          ];
           final expected = [
             2,
             Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
@@ -304,11 +335,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -319,7 +352,10 @@ void main() {
           history
             ..jumpTo(0)
             ..redo();
-          final actual = [history.position, document.layers.first.pixels.rgba];
+          final actual = [
+            history.position,
+            document.layers.first.images.first.rgba,
+          ];
           final expected = [
             1,
             Uint8List.fromList([1, 1, 1, 1, 0, 0, 0, 0]),
@@ -338,11 +374,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -351,7 +389,10 @@ void main() {
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history.jumpTo(0);
-          final actual = [history.position, document.layers.first.pixels.rgba];
+          final actual = [
+            history.position,
+            document.layers.first.images.first.rgba,
+          ];
           final expected = [
             0,
             Uint8List.fromList([0, 0, 0, 0, 0, 0, 0, 0]),
@@ -365,11 +406,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -378,7 +421,10 @@ void main() {
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history.jumpTo(2);
-          final actual = [history.position, document.layers.first.pixels.rgba];
+          final actual = [
+            history.position,
+            document.layers.first.images.first.rgba,
+          ];
           final expected = [
             2,
             Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
@@ -392,11 +438,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -407,7 +455,10 @@ void main() {
           history
             ..jumpTo(0)
             ..jumpTo(2);
-          final actual = [history.position, document.layers.first.pixels.rgba];
+          final actual = [
+            history.position,
+            document.layers.first.images.first.rgba,
+          ];
           final expected = [
             2,
             Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
@@ -421,11 +472,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -434,7 +487,10 @@ void main() {
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history.jumpTo(-1);
-          final actual = [history.position, document.layers.first.pixels.rgba];
+          final actual = [
+            history.position,
+            document.layers.first.images.first.rgba,
+          ];
           final expected = [
             0,
             Uint8List.fromList([0, 0, 0, 0, 0, 0, 0, 0]),
@@ -448,11 +504,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -463,7 +521,10 @@ void main() {
           history
             ..jumpTo(0)
             ..jumpTo(5);
-          final actual = [history.position, document.layers.first.pixels.rgba];
+          final actual = [
+            history.position,
+            document.layers.first.images.first.rgba,
+          ];
           final expected = [
             2,
             Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
@@ -490,11 +551,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -513,11 +576,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -550,11 +615,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -573,11 +640,13 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer(
-                  width: 2,
-                  height: 1,
-                  rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
-                ),
+                images: [
+                  Layer(
+                    width: 2,
+                    height: 1,
+                    rgba: Uint8List.fromList([1, 1, 1, 1, 2, 2, 2, 2]),
+                  ),
+                ],
               ),
             ],
             activeLayerIndex: 0,

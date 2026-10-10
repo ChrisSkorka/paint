@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:collection/collection.dart';
@@ -7,6 +8,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../editor/canvas/document.dart';
 import '../../editor/canvas/pixel_color.dart';
+import '../../editor/canvas/pixel_point.dart';
 import '../../editor/editor_controller.dart';
 import '../../editor/files/document_library.dart';
 import '../../editor/files/export_format.dart';
@@ -16,6 +18,7 @@ import '../../editor/canvas/layer.dart';
 import '../../editor/history/history.dart';
 import '../../editor/history/history_entry.dart';
 import '../../editor/history/pixel_history_entry.dart';
+import '../../editor/pointer_button.dart';
 import '../../editor/tools/brush_tip.dart';
 import '../../editor/tools/color_palettes.dart';
 import '../../editor/tools/tool_kind.dart';
@@ -32,6 +35,7 @@ import '../components/paint_style.dart';
 import '../components/ribbon_section.dart';
 import '../components/side_panel.dart';
 import '../components/swatch_grid.dart';
+import '../components/timeline.dart';
 
 class EditorView extends StatefulWidget {
   const EditorView({
@@ -56,11 +60,51 @@ class _EditorViewState extends State<EditorView> {
     document: widget.document,
   );
   var exportFormat = ExportFormat.png;
+  Timer? playback;
 
   @override
   void dispose() {
+    playback?.cancel();
     controller.dispose();
     super.dispose();
+  }
+
+  void _togglePlayback() {
+    if (playback != null) {
+      _stopPlayback();
+      return;
+    }
+    setState(_scheduleNextFrame);
+  }
+
+  void _scheduleNextFrame() {
+    final document = widget.document;
+    playback = Timer(
+      Duration(
+        milliseconds: document.frameDurations[document.activeFrameIndex],
+      ),
+      () {
+        controller.selectFrame(
+          (document.activeFrameIndex + 1) % document.frameCount,
+        );
+        _scheduleNextFrame();
+      },
+    );
+  }
+
+  void _stopPlayback() {
+    setState(() {
+      playback?.cancel();
+      playback = null;
+    });
+  }
+
+  void _pointerDown({
+    required PixelPoint point,
+    required PointerButton button,
+  }) {
+    if (playback != null) _stopPlayback();
+    controller.pointerDown(point: point, button: button);
   }
 
   void _selectColor(Color color) =>
@@ -177,11 +221,12 @@ class _EditorViewState extends State<EditorView> {
       LayerListItem(
         name: layer.name,
         thumbnail: Layer.thumbnail(
-          layer: layer.pixels,
+          layer: layer.imageAt(widget.document.activeFrameIndex),
           maximumSize: History.thumbnailSize,
         ),
         visible: layer.visible,
         opacity: layer.opacity,
+        timeframe: layer.timeframe,
       ),
   ];
 
@@ -334,7 +379,8 @@ class _EditorViewState extends State<EditorView> {
                 height: widget.document.height,
                 zoom: controller.zoom,
                 layers: controller.visibleLayers,
-                onPointerDown: controller.pointerDown,
+                frame: widget.document.activeFrameIndex,
+                onPointerDown: _pointerDown,
                 onPointerMove: controller.pointerMove,
                 onPointerUp: controller.pointerUp,
                 onPointerExit: controller.pointerExit,
@@ -361,6 +407,7 @@ class _EditorViewState extends State<EditorView> {
             onVisibilityChanged: controller.setLayerVisibility,
             onOpacityChanged: controller.previewLayerOpacity,
             onOpacityChangeEnd: controller.setLayerOpacity,
+            onTimeframeChanged: controller.setLayerTimeframe,
           ),
         ),
         Row(
@@ -784,7 +831,26 @@ class _EditorViewState extends State<EditorView> {
                   ],
                 ),
               ),
-              const Spacer(),
+              Expanded(
+                child: PaintBarSection(
+                  child: Timeline(
+                    frame: widget.document.activeFrameIndex,
+                    frameCount: widget.document.frameCount,
+                    frameDuration: widget
+                        .document
+                        .frameDurations[widget.document.activeFrameIndex],
+                    playing: playback != null,
+                    onPlayPause: _togglePlayback,
+                    onSelectFrame: controller.selectFrame,
+                    onAddFrame: controller.addFrame,
+                    onRemoveFrame: controller.canRemoveFrame
+                        ? controller.removeFrame
+                        : null,
+                    onDurationChanged: controller.previewFrameDuration,
+                    onDurationChangeEnd: controller.setFrameDuration,
+                  ),
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: NumericValueRange(

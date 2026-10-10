@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../editor/canvas/document_layer.dart';
 import '../../editor/canvas/layer.dart';
+import '../../editor/canvas/layer_timeframe.dart';
 import 'history_list.dart';
 import 'numeric_value_range.dart';
 import 'paint_icon_button.dart';
@@ -14,12 +15,14 @@ class LayerListItem {
     required this.thumbnail,
     required this.visible,
     required this.opacity,
+    required this.timeframe,
   });
 
   final String name;
   final Layer thumbnail;
   final bool visible;
   final int opacity;
+  final LayerTimeframe timeframe;
 }
 
 class LayerList extends StatelessWidget {
@@ -31,6 +34,7 @@ class LayerList extends StatelessWidget {
     required this.onVisibilityChanged,
     required this.onOpacityChanged,
     required this.onOpacityChangeEnd,
+    required this.onTimeframeChanged,
   });
 
   final List<LayerListItem> items;
@@ -42,6 +46,8 @@ class LayerList extends StatelessWidget {
   onOpacityChanged;
   final void Function({required int index, required int opacity})
   onOpacityChangeEnd;
+  final void Function({required int index, required LayerTimeframe timeframe})
+  onTimeframeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +89,23 @@ class LayerList extends StatelessWidget {
                 onOpacityChangeEnd(index: index, opacity: opacity),
           ),
         ),
-        const SizedBox(width: 4),
+        PaintIconButton(
+          icon: switch (item.timeframe) {
+            LayerTimeframe.constant => FontAwesomeIcons.image,
+            LayerTimeframe.perFrame => FontAwesomeIcons.film,
+          },
+          tooltip: switch (item.timeframe) {
+            LayerTimeframe.constant => 'Use image per frame',
+            LayerTimeframe.perFrame => 'Use constant image',
+          },
+          onPressed: () => onTimeframeChanged(
+            index: index,
+            timeframe: switch (item.timeframe) {
+              LayerTimeframe.constant => LayerTimeframe.perFrame,
+              LayerTimeframe.perFrame => LayerTimeframe.constant,
+            },
+          ),
+        ),
         Expanded(child: Text(item.name, overflow: TextOverflow.ellipsis)),
         Opacity(
           opacity: item.visible ? 1 : 0.4,

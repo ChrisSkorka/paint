@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document.dart';
 import 'package:paint/editor/canvas/document_layer.dart';
 import 'package:paint/editor/canvas/layer.dart';
+import 'package:paint/editor/canvas/layer_timeframe.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/files/document_format_exception.dart';
 import 'package:paint/editor/files/image_codec.dart';
@@ -23,20 +24,55 @@ void main() {
     layers: [
       DocumentLayer(
         name: 'Background',
-        pixels: layerFromRows([
-          [red, red],
-        ]),
+        images: [
+          layerFromRows([
+            [red, red],
+          ]),
+        ],
       ),
       DocumentLayer(
         name: 'Top',
-        pixels: layerFromRows([
-          [blue, transparent],
-        ]),
+        images: [
+          layerFromRows([
+            [blue, transparent],
+          ]),
+        ],
         visible: false,
         opacity: 50,
       ),
     ],
     activeLayerIndex: 0,
+  );
+
+  Document animatedDocument() => Document(
+    name: 'Cat',
+    width: 2,
+    height: 1,
+    layers: [
+      DocumentLayer(
+        name: 'Background',
+        images: [
+          layerFromRows([
+            [red, red],
+          ]),
+        ],
+      ),
+      DocumentLayer(
+        name: 'Sprite',
+        images: [
+          layerFromRows([
+            [blue, transparent],
+          ]),
+          layerFromRows([
+            [transparent, blue],
+          ]),
+        ],
+        timeframe: LayerTimeframe.perFrame,
+        opacity: 50,
+      ),
+    ],
+    activeLayerIndex: 1,
+    frameDurations: [100, 250],
   );
 
   List<int> png(List<List<int>> rows) =>
@@ -76,7 +112,8 @@ void main() {
           );
           const expected =
               '<?xml version="1.0" encoding="UTF-8"?>\n'
-              '<image version="0.0.5" w="2" h="1">\n'
+              '<image xmlns:paint="urn:info.skorka.chris.paint" version="0.0.5" '
+              'w="2" h="1" paint:frame-durations="100">\n'
               '  <stack>\n'
               '    <layer name="Top" src="data/layer1.png" x="0" y="0" '
               'visibility="hidden" opacity="0.50"/>\n'
@@ -154,6 +191,61 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+
+      group('frames', () {
+        test('file names', () {
+          final actual = archiveFileNames(
+            OraCodec.encode(document: animatedDocument()),
+          );
+          const expected = [
+            'mimetype',
+            'stack.xml',
+            'mergedimage.png',
+            'Thumbnails/thumbnail.png',
+            'data/layer0.png',
+            'data/layer1-frame0.png',
+            'data/layer1-frame1.png',
+          ];
+          expect(actual, equals(expected));
+        });
+        test('stack', () {
+          final actual = archiveText(
+            OraCodec.encode(document: animatedDocument()),
+            name: 'stack.xml',
+          );
+          const expected =
+              '<?xml version="1.0" encoding="UTF-8"?>\n'
+              '<image xmlns:paint="urn:info.skorka.chris.paint" version="0.0.5" '
+              'w="2" h="1" paint:frame-durations="100,250">\n'
+              '  <stack>\n'
+              '    <stack name="Sprite" visibility="visible" opacity="0.50" '
+              'selected="true" paint:timeframe="per-frame">\n'
+              '      <layer name="Sprite 1" src="data/layer1-frame0.png" x="0" '
+              'y="0" visibility="visible" opacity="1.00"/>\n'
+              '      <layer name="Sprite 2" src="data/layer1-frame1.png" x="0" '
+              'y="0" visibility="hidden" opacity="1.00"/>\n'
+              '    </stack>\n'
+              '    <layer name="Background" src="data/layer0.png" x="0" y="0" '
+              'visibility="visible" opacity="1.00"/>\n'
+              '  </stack>\n'
+              '</image>';
+          expect(actual, equals(expected));
+        });
+        test('merged image', () {
+          final bytes = OraCodec.encode(
+            document: animatedDocument()..activeFrameIndex = 1,
+          );
+          final actual = pixelRows(
+            ImageCodec.decode(
+              bytes: archiveFile(bytes, name: 'mergedimage.png'),
+            )!,
+          );
+          final expected = [
+            [0xFF800080, red],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
     });
 
     group('method decode', () {
@@ -219,15 +311,19 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Layer 1',
-                pixels: layerFromRows([
-                  [red, red],
-                ]),
+                images: [
+                  layerFromRows([
+                    [red, red],
+                  ]),
+                ],
               ),
               DocumentLayer(
                 name: 'Layer 2',
-                pixels: layerFromRows([
-                  [blue, blue],
-                ]),
+                images: [
+                  layerFromRows([
+                    [blue, blue],
+                  ]),
+                ],
               ),
             ],
             activeLayerIndex: 1,
@@ -247,7 +343,10 @@ void main() {
             },
           );
           final actual = pixelRows(
-            OraCodec.decode(name: 'Cat', bytes: bytes).layers.single.pixels,
+            OraCodec.decode(
+              name: 'Cat',
+              bytes: bytes,
+            ).layers.single.images.first,
           );
           final expected = [
             [transparent, blue, blue],
@@ -301,6 +400,214 @@ void main() {
               layer.opacity,
           ];
           const expected = [0, 100];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('frames', () {
+        test('round trip', () {
+          final actual = OraCodec.decode(
+            name: 'Cat',
+            bytes: OraCodec.encode(document: animatedDocument()),
+          );
+          final expected = animatedDocument();
+          expect(actual, equals(expected));
+        });
+        test('missing durations', () {
+          final bytes = oraArchive(
+            stack:
+                '<image w="1" h="1"><stack>'
+                '<layer src="a.png"/>'
+                '</stack></image>',
+            files: {
+              'a.png': png([
+                [blue],
+              ]),
+            },
+          );
+          final actual = OraCodec.decode(
+            name: 'Cat',
+            bytes: bytes,
+          ).frameDurations;
+          final expected = [100];
+          expect(actual, equals(expected));
+        });
+        test('invalid durations', () {
+          final bytes = oraArchive(
+            stack:
+                '<image xmlns:paint="urn:info.skorka.chris.paint" w="1" h="1" paint:frame-durations="abc, 50">'
+                '<stack><layer src="a.png"/></stack></image>',
+            files: {
+              'a.png': png([
+                [blue],
+              ]),
+            },
+          );
+          final actual = OraCodec.decode(
+            name: 'Cat',
+            bytes: bytes,
+          ).frameDurations;
+          final expected = [100, 50];
+          expect(actual, equals(expected));
+        });
+        test('out of range durations', () {
+          final bytes = oraArchive(
+            stack:
+                '<image xmlns:paint="urn:info.skorka.chris.paint" w="1" h="1" paint:frame-durations="1,20000">'
+                '<stack><layer src="a.png"/></stack></image>',
+            files: {
+              'a.png': png([
+                [blue],
+              ]),
+            },
+          );
+          final actual = OraCodec.decode(
+            name: 'Cat',
+            bytes: bytes,
+          ).frameDurations;
+          final expected = [10, 10000];
+          expect(actual, equals(expected));
+        });
+        test('missing frame images', () {
+          final bytes = oraArchive(
+            stack:
+                '<image xmlns:paint="urn:info.skorka.chris.paint" w="1" h="1" paint:frame-durations="100,100">'
+                '<stack><stack name="A" paint:timeframe="per-frame">'
+                '<layer src="a.png"/>'
+                '</stack></stack></image>',
+            files: {
+              'a.png': png([
+                [blue],
+              ]),
+            },
+          );
+          final actual = [
+            for (final image in OraCodec.decode(
+              name: 'Cat',
+              bytes: bytes,
+            ).layers.single.images)
+              pixelRows(image),
+          ];
+          final expected = [
+            [
+              [blue],
+            ],
+            [
+              [transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('extra frame images', () {
+          final bytes = oraArchive(
+            stack:
+                '<image xmlns:paint="urn:info.skorka.chris.paint" w="1" h="1">'
+                '<stack><stack name="A" paint:timeframe="per-frame">'
+                '<layer src="a.png"/><layer src="b.png"/>'
+                '</stack></stack></image>',
+            files: {
+              'a.png': png([
+                [blue],
+              ]),
+              'b.png': png([
+                [red],
+              ]),
+            },
+          );
+          final actual = OraCodec.decode(name: 'Cat', bytes: bytes);
+          final expected = Document(
+            name: 'Cat',
+            width: 1,
+            height: 1,
+            layers: [
+              DocumentLayer(
+                name: 'A',
+                images: [
+                  layerFromRows([
+                    [blue],
+                  ]),
+                ],
+                timeframe: LayerTimeframe.perFrame,
+              ),
+            ],
+            activeLayerIndex: 0,
+          );
+          expect(actual, equals(expected));
+        });
+        test('frame stack in nested stack', () {
+          final bytes = oraArchive(
+            stack:
+                '<image xmlns:paint="urn:info.skorka.chris.paint" w="1" h="1">'
+                '<stack><stack>'
+                '<stack name="A" paint:timeframe="per-frame">'
+                '<layer src="a.png"/></stack>'
+                '</stack><layer name="B" src="b.png"/></stack></image>',
+            files: {
+              'a.png': png([
+                [blue],
+              ]),
+              'b.png': png([
+                [red],
+              ]),
+            },
+          );
+          final actual = [
+            for (final layer in OraCodec.decode(
+              name: 'Cat',
+              bytes: bytes,
+            ).layers)
+              [layer.name, layer.timeframe],
+          ];
+          final expected = [
+            ['B', LayerTimeframe.constant],
+            ['A', LayerTimeframe.perFrame],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('other stack attribute', () {
+          final bytes = oraArchive(
+            stack:
+                '<image xmlns:paint="urn:info.skorka.chris.paint" w="1" h="1">'
+                '<stack><stack name="A" paint:timeframe="other">'
+                '<layer name="B" src="a.png"/>'
+                '</stack></stack></image>',
+            files: {
+              'a.png': png([
+                [blue],
+              ]),
+            },
+          );
+          final actual = [
+            for (final layer in OraCodec.decode(
+              name: 'Cat',
+              bytes: bytes,
+            ).layers)
+              [layer.name, layer.timeframe],
+          ];
+          final expected = [
+            ['B', LayerTimeframe.constant],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('ignored elements', () {
+          final bytes = oraArchive(
+            stack:
+                '<image w="1" h="1">'
+                '<stack><text/><layer name="B" src="a.png"/></stack></image>',
+            files: {
+              'a.png': png([
+                [blue],
+              ]),
+            },
+          );
+          final actual = [
+            for (final layer in OraCodec.decode(
+              name: 'Cat',
+              bytes: bytes,
+            ).layers)
+              layer.name,
+          ];
+          final expected = ['B'];
           expect(actual, equals(expected));
         });
       });
@@ -363,6 +670,20 @@ void main() {
           void event() => OraCodec.decode(
             name: 'Cat',
             bytes: oraArchive(stack: '<image w="1" h="1"><stack/></image>'),
+          );
+          expect(event, throwsA(equals(DocumentFormatException.unsupported())));
+        });
+        test('missing root stack', () {
+          void event() => OraCodec.decode(
+            name: 'Cat',
+            bytes: oraArchive(
+              stack: '<image w="1" h="1"><layer src="a.png"/></image>',
+              files: {
+                'a.png': png([
+                  [blue],
+                ]),
+              },
+            ),
           );
           expect(event, throwsA(equals(DocumentFormatException.unsupported())));
         });

@@ -18,6 +18,7 @@ class PixelCanvas extends StatelessWidget {
     required this.height,
     required this.zoom,
     required this.layers,
+    required this.frame,
     required this.onPointerDown,
     required this.onPointerMove,
     required this.onPointerUp,
@@ -30,6 +31,7 @@ class PixelCanvas extends StatelessWidget {
   final int height;
   final int zoom;
   final List<DocumentLayer> layers;
+  final int frame;
   final void Function({
     required PixelPoint point,
     required PointerButton button,
@@ -76,7 +78,11 @@ class PixelCanvas extends StatelessWidget {
             ),
             child: CustomPaint(
               painter: const ChessGridPainter(),
-              foregroundPainter: PixelLayersPainter(layers: layers, zoom: zoom),
+              foregroundPainter: PixelLayersPainter(
+                layers: layers,
+                frame: frame,
+                zoom: zoom,
+              ),
               size: Size(width * zoom.toDouble(), height * zoom.toDouble()),
             ),
           ),
@@ -87,9 +93,14 @@ class PixelCanvas extends StatelessWidget {
 }
 
 class PixelLayersPainter extends CustomPainter {
-  const PixelLayersPainter({required this.layers, required this.zoom});
+  const PixelLayersPainter({
+    required this.layers,
+    required this.frame,
+    required this.zoom,
+  });
 
   final List<DocumentLayer> layers;
+  final int frame;
   final int zoom;
 
   static void paintPixels({
@@ -148,7 +159,7 @@ class PixelLayersPainter extends CustomPainter {
             ),
         );
       }
-      paintPixels(canvas: canvas, pixels: layer.pixels, zoom: zoom);
+      paintPixels(canvas: canvas, pixels: layer.imageAt(frame), zoom: zoom);
       if (translucent) canvas.restore();
     }
   }

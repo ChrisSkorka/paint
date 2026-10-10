@@ -6,6 +6,7 @@ import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/files/document_codec.dart';
 import 'package:paint/editor/files/document_format_exception.dart';
+import 'package:paint/editor/files/gif_codec.dart';
 import 'package:paint/editor/files/image_codec.dart';
 import 'package:paint/editor/files/ora_codec.dart';
 
@@ -53,6 +54,21 @@ void main() {
             height: 1,
             background: PixelColor.white,
           );
+          expect(actual, equals(expected));
+        });
+        test('gif', () {
+          final bytes = GifCodec.encode(
+            document: Document.fromImage(
+              image: layerFromRows([
+                [red],
+              ]),
+            ),
+          );
+          final actual = DocumentCodec.decode(
+            fileName: 'cat.gif',
+            bytes: bytes,
+          );
+          final expected = GifCodec.decode(name: 'cat', bytes: bytes);
           expect(actual, equals(expected));
         });
         test('ora with png extension', () {

@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document.dart';
 import 'package:paint/editor/canvas/document_layer.dart';
+import 'package:paint/editor/canvas/layer_timeframe.dart';
 import 'package:paint/editor/files/export_format.dart';
+import 'package:paint/editor/files/gif_codec.dart';
 import 'package:paint/editor/files/image_codec.dart';
 import 'package:paint/editor/files/ora_codec.dart';
 
@@ -18,19 +20,46 @@ void main() {
     layers: [
       DocumentLayer(
         name: 'Background',
-        pixels: layerFromRows([
-          [grey, transparent],
-        ]),
+        images: [
+          layerFromRows([
+            [grey, transparent],
+          ]),
+        ],
       ),
       DocumentLayer(
         name: 'Hidden',
-        pixels: layerFromRows([
-          [transparent, grey],
-        ]),
+        images: [
+          layerFromRows([
+            [transparent, grey],
+          ]),
+        ],
         visible: false,
       ),
     ],
     activeLayerIndex: 0,
+  );
+
+  Document animatedDocument() => Document(
+    name: 'Cat',
+    width: 1,
+    height: 1,
+    layers: [
+      DocumentLayer(
+        name: 'Background',
+        images: [
+          layerFromRows([
+            [grey],
+          ]),
+          layerFromRows([
+            [transparent],
+          ]),
+        ],
+        timeframe: LayerTimeframe.perFrame,
+      ),
+    ],
+    activeLayerIndex: 0,
+    frameDurations: [100, 200],
+    activeFrameIndex: 1,
   );
 
   group('enum ExportFormat', () {
@@ -44,6 +73,11 @@ void main() {
         test('jpg', () {
           final actual = ExportFormat.jpg.fileName(document: greyDocument());
           const expected = 'Cat.jpg';
+          expect(actual, equals(expected));
+        });
+        test('gif', () {
+          final actual = ExportFormat.gif.fileName(document: greyDocument());
+          const expected = 'Cat.gif';
           expect(actual, equals(expected));
         });
         test('ora', () {
@@ -78,12 +112,44 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
+        test('gif', () {
+          final actual = GifCodec.decode(
+            name: 'Cat',
+            bytes: ExportFormat.gif.encode(document: animatedDocument()),
+          );
+          final expected = animatedDocument()..activeFrameIndex = 0;
+          expect(actual, equals(expected));
+        });
         test('ora', () {
           final actual = OraCodec.decode(
             name: 'Cat',
             bytes: ExportFormat.ora.encode(document: greyDocument()),
           );
           final expected = greyDocument();
+          expect(actual, equals(expected));
+        });
+      });
+      group('frames', () {
+        test('png active frame', () {
+          final actual = pixelRows(
+            ImageCodec.decode(
+              bytes: ExportFormat.png.encode(document: animatedDocument()),
+            )!,
+          );
+          final expected = [
+            [transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('jpg active frame', () {
+          final actual = pixelRows(
+            ImageCodec.decode(
+              bytes: ExportFormat.jpg.encode(document: animatedDocument()),
+            )!,
+          );
+          final expected = [
+            [0xFFFFFFFF],
+          ];
           expect(actual, equals(expected));
         });
       });

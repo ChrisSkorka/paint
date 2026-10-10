@@ -208,11 +208,39 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 5: animations
 
-- [ ] document frames & frame duration in model
-- [ ] layer timeframe mode: constant (shown in every frame) or image per frame (set per layer)
-- [ ] timeline in bottom panel: play / pause button, frame slider, add / remove frame
-- [ ] gif import (frames → image-per-frame layer) & export
-- [ ] save animations in ora (namespaced extensions: per-frame layers as stacks, frame durations)
+### phase 5.1: frames & timeline
+
+- [x] document frames & frame duration in model
+- [x] layer timeframe mode: constant (shown in every frame) or image per frame (set per layer)
+- [x] timeline in bottom panel: play / pause button, frame slider, add / remove frame
+- [x] gif import (frames → image-per-frame layer) & export
+- [x] save animations in ora (namespaced extensions: per-frame layers as stacks, frame durations)
+
+### phase 5.2: rich controls
+
+- [ ] ribbon (top)
+  - row 1: prev frame, play/pause, next frame, FPS, onion skinning input
+  - row 2: slider, #/# indicator
+- [ ] frames pane (right side)
+  - list item: number, holds input, frame preview
+  - controls: plus (create blank), copy (clone selected), delete, move up, move down
+  - item is selected when it's frame is shows (follows during playback)
+- [ ] onion skinning: 
+  - onion skinning input: toggle button with dialog
+  - dialog: toggle prev frames, toggle next frames, frame counter
+  - renders visible per-frame layers from adjacent frame
+  - renders {frame counter} of each prev & next frames
+  - adjacent frames render with opacity starting at 50% halving for each consecutive frame 
+  - previous frames are red tinted
+  - next frames are green tinted
+  - off during playback
+- [ ] frame holds
+  - replace per-frame durations with global FPS
+  - GIFs frame durations are rounded (held frame durations are rounded before multiplying by holds)
+  - holds input: + & - button with number between
+  - allow 0 to disable/hide frame
+  - zero-hold frames are excluded from playback, GIF export, onion skinning, and #/# counter (but rendered when exporting images on that frame)
+  - when 
 
 ### phase 6: polish
 
@@ -227,12 +255,13 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 6.2: editor
 
-- [ ] keyboard shortcuts for tools
 - [ ] scrollable views always show scroll bars (& scroll bars are thick)
 - [ ] scroll image to the right & bottom
 - [ ] interchangeable panes: move panes between top & right panels
 - [ ] tabs: multiple documents
 - [ ] wide double buttons for pairs: undo/redo, rotate, mirror
+- [ ] right panels are resizable & collapsible
+- [ ] bottom items have constant width
 
 ### phase 6.3: improve tools
 
@@ -255,6 +284,13 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] allow change image size
 - [ ] allow renaming documents stored in-app
 
+### phase 6.6: shortcuts & favorites
+
+- [ ] favorite tool configs
+- [ ] keyboard shortcuts for pinned tool configs
+- [ ] keyboard shortcuts for tools
+- [ ] keyboard shortcuts for animations
+
 ### phase 6.6: misc
 
 - [ ] allow zoom less than 1x
@@ -263,3 +299,4 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] text inputs have unit text on right side
 - [ ] right click on web triggers system context menu
 - [ ] save real file when opening real files on native system
+- [ ] animation loop toggle

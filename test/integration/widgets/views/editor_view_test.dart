@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document.dart';
 import 'package:paint/editor/canvas/layer.dart';
+import 'package:paint/editor/canvas/layer_timeframe.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
@@ -19,6 +20,7 @@ import 'package:paint/widgets/views/editor_view.dart';
 
 import '../../../support/color_dialog_probes.dart';
 import '../../../support/desktop_view.dart';
+import '../../../support/document_probes.dart';
 import '../../../support/editor_view_probes.dart';
 import '../../../support/hover.dart';
 import '../../../support/keyboard.dart';
@@ -264,6 +266,57 @@ void main() {
           );
           final actual = find.text('Saved').evaluate().length;
           const expected = 1;
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('timeline', () {
+        testWidgets('single frame', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final actual = [
+            timelineState(tester),
+            find.text('1 / 1').evaluate().length,
+          ];
+          const expected = [
+            [0, 1, 100, false, 0],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('animation', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          final actual = [timelineState(tester), layerTimeframes(tester)];
+          const expected = [
+            [0, 2, 100, false, 0],
+            [LayerTimeframe.constant, LayerTimeframe.perFrame],
+          ];
           expect(actual, equals(expected));
         });
       });
@@ -1938,6 +1991,33 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
+        testWidgets('gif', (tester) async {
+          final stubFiles = StubFileAccess();
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: stubFiles,
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(name: 'Cat', width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Export formats'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('Export as GIF'));
+          await tester.pumpAndSettle();
+          final actual = [
+            for (final file in stubFiles.saved) [file.fileName, file.format],
+          ];
+          const expected = [
+            ['Cat.gif', ExportFormat.gif],
+          ];
+          expect(actual, equals(expected));
+        });
         testWidgets('failure', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
@@ -1956,6 +2036,273 @@ void main() {
           await tester.pump();
           final actual = find.text('Could not export').evaluate().length;
           const expected = 1;
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('timeline', () {
+        testWidgets('add frame', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Add frame'));
+          await tester.pump();
+          final actual = [timelineState(tester), historyState(tester)];
+          const expected = [
+            [1, 2, 100, false, 1],
+            [
+              ['Start', 'Add frame'],
+              1,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('remove frame', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Remove frame'));
+          await tester.pump();
+          final actual = [timelineState(tester), historyState(tester)];
+          const expected = [
+            [0, 1, 200, false, 0],
+            [
+              ['Start', 'Remove frame'],
+              1,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('select frame', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.drag(find.byType(Slider).first, const Offset(2000, 0));
+          await tester.pump();
+          final actual = timelineState(tester);
+          const expected = [1, 2, 200, false, 1];
+          expect(actual, equals(expected));
+        });
+        testWidgets('frame duration', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Frame duration'));
+          await tester.pumpAndSettle();
+          await tester.tap(
+            find.descendant(
+              of: find.ancestor(
+                of: find.text('Duration (ms):'),
+                matching: find.byType(NumericValueRange),
+              ),
+              matching: find.byTooltip('Increase'),
+            ),
+          );
+          await tester.pump();
+          final actual = [timelineState(tester), historyState(tester)];
+          const expected = [
+            [0, 2, 110, false, 0],
+            [
+              ['Start', 'Frame duration'],
+              1,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('layer timeframe', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Use image per frame'));
+          await tester.pump();
+          final actual = [layerTimeframes(tester), historyState(tester)];
+          const expected = [
+            [LayerTimeframe.perFrame, LayerTimeframe.perFrame],
+            [
+              ['Start', 'Image per frame'],
+              1,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('playback', () {
+        testWidgets('play', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Play'));
+          await tester.pump();
+          final started = timelineState(tester);
+          await tester.pump(const Duration(milliseconds: 100));
+          final advanced = timelineState(tester);
+          await tester.pump(const Duration(milliseconds: 200));
+          final wrapped = timelineState(tester);
+          await tester.tap(find.byTooltip('Pause'));
+          await tester.pump();
+          final actual = [started, advanced, wrapped];
+          const expected = [
+            [0, 2, 100, true, 0],
+            [1, 2, 200, true, 1],
+            [0, 2, 100, true, 0],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('pause', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Play'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Pause'));
+          await tester.pump(const Duration(milliseconds: 500));
+          final actual = [timelineState(tester), historyState(tester)];
+          const expected = [
+            [0, 2, 100, false, 0],
+            [
+              ['Start'],
+              0,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('drawing', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Play'));
+          await tester.pump();
+          await tester.tap(find.byType(PixelCanvas));
+          await tester.pump(const Duration(milliseconds: 500));
+          final actual = timelineState(tester);
+          const expected = [0, 2, 100, false, 0];
+          expect(actual, equals(expected));
+        });
+        testWidgets('dispose while playing', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Play'));
+          await tester.pump();
+          await tester.pumpWidget(const SizedBox());
+          await tester.pump(const Duration(milliseconds: 500));
+          final actual = find.byType(EditorView).evaluate().length;
+          const expected = 0;
           expect(actual, equals(expected));
         });
       });
@@ -3109,7 +3456,7 @@ void main() {
           await tester.tapAt(topLeft + const Offset(5, 1));
           await tester.pump();
           final actual = [
-            for (final layer in document.layers) pixelRows(layer.pixels),
+            for (final layer in document.layers) pixelRows(layer.images.first),
           ];
           const expected = [
             [

@@ -35,7 +35,7 @@ void main() {
             'cat.png',
             [1, 2],
             [
-              ['ora', 'png', 'jpg', 'jpeg'],
+              ['ora', 'png', 'jpg', 'jpeg', 'gif'],
             ],
           ];
           expect(actual, equals(expected));

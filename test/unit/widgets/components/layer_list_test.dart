@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:paint/editor/canvas/layer.dart';
+import 'package:paint/editor/canvas/layer_timeframe.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/widgets/components/history_list.dart';
 import 'package:paint/widgets/components/layer_list.dart';
@@ -19,6 +20,10 @@ void main() {
   void ignoreSelect(int index) {}
   void ignoreVisibility({required int index, required bool visible}) {}
   void ignoreOpacity({required int index, required int opacity}) {}
+  void ignoreTimeframe({
+    required int index,
+    required LayerTimeframe timeframe,
+  }) {}
 
   group('class LayerList', () {
     group('render', () {
@@ -34,6 +39,7 @@ void main() {
                   onVisibilityChanged: ignoreVisibility,
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -56,6 +62,7 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -63,6 +70,7 @@ void main() {
                   onVisibilityChanged: ignoreVisibility,
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -85,12 +93,14 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                     LayerListItem(
                       name: 'Sketch',
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 60,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -98,6 +108,7 @@ void main() {
                   onVisibilityChanged: ignoreVisibility,
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -122,6 +133,7 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -129,6 +141,7 @@ void main() {
                   onVisibilityChanged: ignoreVisibility,
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -158,6 +171,7 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -165,6 +179,7 @@ void main() {
                   onVisibilityChanged: ignoreVisibility,
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -191,6 +206,7 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: false,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -198,6 +214,7 @@ void main() {
                   onVisibilityChanged: ignoreVisibility,
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -226,6 +243,7 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -233,6 +251,7 @@ void main() {
                   onVisibilityChanged: ignoreVisibility,
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -263,6 +282,7 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 40,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -270,6 +290,7 @@ void main() {
                   onVisibilityChanged: ignoreVisibility,
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -290,6 +311,71 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('timeframe', () {
+        testWidgets('constant', (tester) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: LayerList(
+                  items: [
+                    LayerListItem(
+                      name: 'Background',
+                      thumbnail: stubThumbnail,
+                      visible: true,
+                      opacity: 100,
+                      timeframe: LayerTimeframe.constant,
+                    ),
+                  ],
+                  activeIndex: 0,
+                  onSelect: ignoreSelect,
+                  onVisibilityChanged: ignoreVisibility,
+                  onOpacityChanged: ignoreOpacity,
+                  onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
+                ),
+              ),
+            ),
+          );
+          final timeframeButton = tester.widget<PaintIconButton>(
+            find.byType(PaintIconButton),
+          );
+          final actual = [timeframeButton.icon, timeframeButton.tooltip];
+          final expected = [FontAwesomeIcons.image, 'Use image per frame'];
+          expect(actual, equals(expected));
+        });
+        testWidgets('per frame', (tester) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: LayerList(
+                  items: [
+                    LayerListItem(
+                      name: 'Background',
+                      thumbnail: stubThumbnail,
+                      visible: true,
+                      opacity: 100,
+                      timeframe: LayerTimeframe.perFrame,
+                    ),
+                  ],
+                  activeIndex: 0,
+                  onSelect: ignoreSelect,
+                  onVisibilityChanged: ignoreVisibility,
+                  onOpacityChanged: ignoreOpacity,
+                  onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
+                ),
+              ),
+            ),
+          );
+          final timeframeButton = tester.widget<PaintIconButton>(
+            find.byType(PaintIconButton),
+          );
+          final actual = [timeframeButton.icon, timeframeButton.tooltip];
+          final expected = [FontAwesomeIcons.film, 'Use constant image'];
+          expect(actual, equals(expected));
+        });
+      });
+
       group('active', () {
         testWidgets('bottom', (tester) async {
           await tester.pumpWidget(
@@ -302,12 +388,14 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                     LayerListItem(
                       name: 'Sketch',
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -315,6 +403,7 @@ void main() {
                   onVisibilityChanged: ignoreVisibility,
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -346,12 +435,14 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                     LayerListItem(
                       name: 'Sketch',
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 1,
@@ -359,6 +450,7 @@ void main() {
                   onVisibilityChanged: ignoreVisibility,
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -396,12 +488,14 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                     LayerListItem(
                       name: 'Sketch',
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -409,6 +503,7 @@ void main() {
                   onVisibilityChanged: ignoreVisibility,
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -430,12 +525,14 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                     LayerListItem(
                       name: 'Sketch',
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 1,
@@ -443,6 +540,7 @@ void main() {
                   onVisibilityChanged: ignoreVisibility,
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -464,12 +562,14 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                     LayerListItem(
                       name: 'Sketch',
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -477,6 +577,7 @@ void main() {
                   onVisibilityChanged: ignoreVisibility,
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -498,12 +599,14 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                     LayerListItem(
                       name: 'Sketch',
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -511,6 +614,7 @@ void main() {
                   onVisibilityChanged: ignoreVisibility,
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -531,12 +635,14 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                     LayerListItem(
                       name: 'Sketch',
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -544,6 +650,7 @@ void main() {
                   onVisibilityChanged: ignoreVisibility,
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -575,6 +682,7 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -583,6 +691,7 @@ void main() {
                       changes.add((index, visible)),
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -604,6 +713,7 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: false,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -612,6 +722,7 @@ void main() {
                       changes.add((index, visible)),
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -633,12 +744,14 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                     LayerListItem(
                       name: 'Sketch',
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -647,6 +760,7 @@ void main() {
                       changes.add((index, visible)),
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -657,6 +771,71 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('timeframe', () {
+        testWidgets('to per frame', (tester) async {
+          final changes = <(int, LayerTimeframe)>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: LayerList(
+                  items: [
+                    LayerListItem(
+                      name: 'Background',
+                      thumbnail: stubThumbnail,
+                      visible: true,
+                      opacity: 100,
+                      timeframe: LayerTimeframe.constant,
+                    ),
+                  ],
+                  activeIndex: 0,
+                  onSelect: ignoreSelect,
+                  onVisibilityChanged: ignoreVisibility,
+                  onOpacityChanged: ignoreOpacity,
+                  onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ({required index, required timeframe}) =>
+                      changes.add((index, timeframe)),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Use image per frame'));
+          final actual = changes;
+          const expected = [(0, LayerTimeframe.perFrame)];
+          expect(actual, equals(expected));
+        });
+        testWidgets('to constant', (tester) async {
+          final changes = <(int, LayerTimeframe)>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: LayerList(
+                  items: [
+                    LayerListItem(
+                      name: 'Background',
+                      thumbnail: stubThumbnail,
+                      visible: true,
+                      opacity: 100,
+                      timeframe: LayerTimeframe.perFrame,
+                    ),
+                  ],
+                  activeIndex: 0,
+                  onSelect: ignoreSelect,
+                  onVisibilityChanged: ignoreVisibility,
+                  onOpacityChanged: ignoreOpacity,
+                  onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ({required index, required timeframe}) =>
+                      changes.add((index, timeframe)),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Use constant image'));
+          final actual = changes;
+          const expected = [(0, LayerTimeframe.constant)];
+          expect(actual, equals(expected));
+        });
+      });
+
       group('opacity', () {
         testWidgets('open dropdown', (tester) async {
           await tester.pumpWidget(
@@ -669,6 +848,7 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -676,6 +856,7 @@ void main() {
                   onVisibilityChanged: ignoreVisibility,
                   onOpacityChanged: ignoreOpacity,
                   onOpacityChangeEnd: ignoreOpacity,
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -702,6 +883,7 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -711,6 +893,7 @@ void main() {
                       changes.add((index, opacity)),
                   onOpacityChangeEnd: ({required index, required opacity}) =>
                       ends.add((index, opacity)),
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -739,6 +922,7 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -748,6 +932,7 @@ void main() {
                       changes.add((index, opacity)),
                   onOpacityChangeEnd: ({required index, required opacity}) =>
                       ends.add((index, opacity)),
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -776,6 +961,7 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -785,6 +971,7 @@ void main() {
                       changes.add((index, opacity)),
                   onOpacityChangeEnd: ({required index, required opacity}) =>
                       ends.add((index, opacity)),
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),
@@ -813,12 +1000,14 @@ void main() {
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                     LayerListItem(
                       name: 'Sketch',
                       thumbnail: stubThumbnail,
                       visible: true,
                       opacity: 100,
+                      timeframe: LayerTimeframe.constant,
                     ),
                   ],
                   activeIndex: 0,
@@ -828,6 +1017,7 @@ void main() {
                       changes.add((index, opacity)),
                   onOpacityChangeEnd: ({required index, required opacity}) =>
                       ends.add((index, opacity)),
+                  onTimeframeChanged: ignoreTimeframe,
                 ),
               ),
             ),

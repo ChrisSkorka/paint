@@ -121,5 +121,49 @@ void main() {
         });
       });
     });
+
+    group('method toLayer', () {
+      group('formats', () {
+        test('rgb image', () {
+          final source = image.Image(width: 2, height: 1)
+            ..setPixelRgb(0, 0, 255, 0, 0)
+            ..setPixelRgb(1, 0, 255, 255, 255);
+          final actual = pixelRows(ImageCodec.toLayer(decoded: source));
+          final expected = [
+            [red, white],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('rgba image', () {
+          final source = image.Image(width: 1, height: 1, numChannels: 4)
+            ..setPixelRgba(0, 0, 255, 0, 0, 0x80);
+          final actual = pixelRows(ImageCodec.toLayer(decoded: source));
+          final expected = [
+            [0x80FF0000],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method toImage', () {
+      group('pixels', () {
+        test('rgba', () {
+          final converted = ImageCodec.toImage(
+            layer: layerFromRows([
+              [0x80FF0000, white],
+            ]),
+          );
+          final actual = [
+            for (final pixel in converted) [pixel.r, pixel.g, pixel.b, pixel.a],
+          ];
+          final expected = [
+            [255, 0, 0, 0x80],
+            [255, 255, 255, 255],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
   });
 }

@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/layer.dart';
+import 'package:paint/editor/canvas/layer_timeframe.dart';
 import 'package:paint/widgets/components/history_list.dart';
 import 'package:paint/widgets/components/layer_list.dart';
 import 'package:paint/widgets/components/numeric_value_range.dart';
 import 'package:paint/widgets/components/paint_icon_button.dart';
 import 'package:paint/widgets/components/paint_split_button.dart';
+import 'package:paint/widgets/components/pixel_canvas.dart';
 import 'package:paint/widgets/components/swatch_grid.dart';
+import 'package:paint/widgets/components/timeline.dart';
 
 List<bool> selectedTools(WidgetTester tester) => [
   tester
@@ -187,4 +190,20 @@ List<bool> clipboardActionsEnabled(WidgetTester tester) => [
             )
             .onPressed !=
         null,
+];
+
+List<Object> timelineState(WidgetTester tester) {
+  final timeline = tester.widget<Timeline>(find.byType(Timeline));
+  return [
+    timeline.frame,
+    timeline.frameCount,
+    timeline.frameDuration,
+    timeline.playing,
+    tester.widget<PixelCanvas>(find.byType(PixelCanvas)).frame,
+  ];
+}
+
+List<LayerTimeframe> layerTimeframes(WidgetTester tester) => [
+  for (final item in tester.widget<LayerList>(find.byType(LayerList)).items)
+    item.timeframe,
 ];

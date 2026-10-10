@@ -3,12 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
+import 'package:paint/editor/files/gif_codec.dart';
 import 'package:paint/widgets/components/pixel_canvas.dart';
 import 'package:paint/widgets/components/stored_document_list.dart';
 import 'package:paint/widgets/views/paint_app.dart';
 
 import '../../../support/color_dialog_probes.dart';
 import '../../../support/desktop_view.dart';
+import '../../../support/document_probes.dart';
+import '../../../support/editor_view_probes.dart';
 import '../../../support/keyboard.dart';
 import '../../../support/view_probes.dart';
 import '../../../support/stub_document_store.dart';
@@ -82,7 +85,7 @@ void main() {
           await gesture.moveTo(topLeft + const Offset(9, 1));
           await gesture.up();
           await tester.pump();
-          final documentLayer = canvasLayers(tester).first.pixels;
+          final documentLayer = canvasLayers(tester).first.images.first;
           final actual = [
             for (var x = 0; x < 4; x++)
               documentLayer.getPixel(PixelPoint(x: x, y: 0)),
@@ -164,9 +167,56 @@ void main() {
             find.text('Saved').evaluate().length,
             canvasLayers(
               tester,
-            ).first.pixels.getPixel(const PixelPoint(x: 0, y: 0)),
+            ).first.images.first.getPixel(const PixelPoint(x: 0, y: 0)),
           ];
           const expected = [1, 1, 1, PixelColor.black];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('animation', () {
+        testWidgets('open gif, add frame, save and reopen', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            PaintApp(
+              key: UniqueKey(),
+              files: StubFileAccess(
+                file: (
+                  name: 'walk.gif',
+                  bytes: GifCodec.encode(
+                    document: animatedDocument(
+                      spriteColors: [0xFF000000, 0xFFFF0000],
+                      activeFrameIndex: 0,
+                    ),
+                  ),
+                ),
+              ),
+              library: stubDocumentLibrary(),
+              clipboard: StubImageClipboard(),
+            ),
+          );
+          await tester.tap(find.text('From file'));
+          await tester.pumpAndSettle();
+          final opened = timelineState(tester);
+          await tester.tap(find.byTooltip('Add frame'));
+          await tester.pump();
+          await pressControlShortcut(tester, key: LogicalKeyboardKey.keyS);
+          await tester.pump();
+          await tester.tap(find.text('New document'));
+          await tester.pumpAndSettle();
+          await tester.tap(
+            find.descendant(
+              of: find.byType(StoredDocumentList),
+              matching: find.text('walk'),
+            ),
+          );
+          await tester.pumpAndSettle();
+          final reopened = timelineState(tester);
+          final actual = [opened, reopened];
+          const expected = [
+            [0, 2, 100, false, 0],
+            [0, 3, 100, false, 0],
+          ];
           expect(actual, equals(expected));
         });
       });
@@ -189,7 +239,7 @@ void main() {
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           await tester.tapAt(topLeft + const Offset(1, 1));
           await tester.pump();
-          final documentLayer = canvasLayers(tester).first.pixels;
+          final documentLayer = canvasLayers(tester).first.images.first;
           final drawn = documentLayer.getPixel(const PixelPoint(x: 0, y: 0));
           await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
           await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
@@ -234,7 +284,7 @@ void main() {
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           await tester.tapAt(topLeft + const Offset(1, 1));
           await tester.pump();
-          final documentLayer = canvasLayers(tester).first.pixels;
+          final documentLayer = canvasLayers(tester).first.images.first;
           final actual = documentLayer.getPixel(const PixelPoint(x: 0, y: 0));
           const expected = PixelColor(argb: 0x80FF0000);
           expect(actual, equals(expected));

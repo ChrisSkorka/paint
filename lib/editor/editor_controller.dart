@@ -5,14 +5,16 @@ import 'package:flutter/foundation.dart';
 import 'canvas/document.dart';
 import 'canvas/document_layer.dart';
 import 'canvas/layer.dart';
+import 'canvas/layer_timeframe.dart';
 import 'canvas/pixel_color.dart';
 import 'canvas/pixel_point.dart';
 import 'canvas/pixel_rectangle.dart';
 import 'files/save_status.dart';
+import 'history/document_structure.dart';
 import 'history/history.dart';
 import 'history/layer_snapshot.dart';
-import 'history/layers_history_entry.dart';
 import 'history/pixel_history_entry.dart';
+import 'history/structure_history_entry.dart';
 import 'pointer_button.dart';
 import 'selection/selection.dart';
 import 'tools/brush_tip.dart';
@@ -71,7 +73,7 @@ class EditorController extends ChangeNotifier {
   var _strokeArea = _noArea;
   var _recentColors = const <PixelColor>[];
   late var _layerCount = document.layers.length;
-  List<DocumentLayer>? _layersBeforeOpacityPreview;
+  DocumentStructure? _structureBeforePreview;
 
   static const _noArea = PixelRectangle(left: 0, top: 0, width: 0, height: 0);
   static const recentColorLimit = 5;
@@ -102,6 +104,7 @@ class EditorController extends ChangeNotifier {
   bool get canMoveLayerUp =>
       document.activeLayerIndex < document.layers.length - 1;
   bool get canMoveLayerDown => document.activeLayerIndex > 0;
+  bool get canRemoveFrame => document.frameCount > 1;
 
   SaveStatus get saveStatus => switch (document.storeId) {
     null => SaveStatus.notSaved,
@@ -119,7 +122,7 @@ class EditorController extends ChangeNotifier {
 
   List<DocumentLayer> get visibleLayers => [
     ...document.layers.where((layer) => layer.visible),
-    DocumentLayer(name: 'Pointer', pixels: pointerLayer),
+    DocumentLayer(name: 'Pointer', images: [pointerLayer]),
   ];
 
   Tool? get _tool => switch (_toolKind) {
@@ -164,7 +167,7 @@ class EditorController extends ChangeNotifier {
   }
 
   void setLayerVisibility({required int index, required bool visible}) {
-    _changeLayers(
+    _changeStructure(
       name: visible ? 'Show layer' : 'Hide layer',
       changedLayerIndex: index,
       change: () => document.layers[index] = document.layers[index].copyWith(
@@ -174,30 +177,134 @@ class EditorController extends ChangeNotifier {
   }
 
   void previewLayerOpacity({required int index, required int opacity}) {
-    _layersBeforeOpacityPreview ??= List.of(document.layers);
+    _structureBeforePreview ??= DocumentStructure.capture(document: document);
     document.layers[index] = document.layers[index].copyWith(opacity: opacity);
     notifyListeners();
   }
 
   void setLayerOpacity({required int index, required int opacity}) {
-    final layersBefore =
-        _layersBeforeOpacityPreview ?? List.of(document.layers);
-    _layersBeforeOpacityPreview = null;
-    if (layersBefore[index].opacity == opacity) {
-      document.layers
-        ..clear()
-        ..addAll(layersBefore);
+    final before = _endPreview();
+    if (before.layers[index].opacity == opacity) {
+      before.restore(document);
       notifyListeners();
       return;
     }
-    _changeLayers(
+    _changeStructure(
       name: 'Layer opacity',
-      layersBefore: layersBefore,
+      before: before,
       changedLayerIndex: index,
       change: () => document.layers[index] = document.layers[index].copyWith(
         opacity: opacity,
       ),
     );
+  }
+
+  void setLayerTimeframe({
+    required int index,
+    required LayerTimeframe timeframe,
+  }) {
+    final layer = document.layers[index];
+    if (layer.timeframe == timeframe) return;
+    _changeStructure(
+      name: timeframe.label,
+      changedLayerIndex: index,
+      change: () {
+        _selection = null;
+        document.layers[index] = layer.copyWith(
+          timeframe: timeframe,
+          images: switch (timeframe) {
+            LayerTimeframe.constant => [
+              layer.imageAt(document.activeFrameIndex),
+            ],
+            LayerTimeframe.perFrame => [
+              for (var frame = 0; frame < document.frameCount; frame++)
+                Layer.copyOf(layer.images.first),
+            ],
+          },
+        );
+      },
+    );
+  }
+
+  void selectFrame(int index) {
+    if (_strokePoint != null) return;
+    _selection = null;
+    document.activeFrameIndex = index;
+    notifyListeners();
+  }
+
+  void addFrame() {
+    _changeStructure(
+      name: 'Add frame',
+      change: () {
+        _selection = null;
+        final source = document.activeFrameIndex;
+        final index = source + 1;
+        _changePerFrameImages(
+          (images) => images.insert(index, Layer.copyOf(images[source])),
+        );
+        document.frameDurations = List.of(document.frameDurations)
+          ..insert(index, document.frameDurations[source]);
+        document.activeFrameIndex = index;
+      },
+    );
+  }
+
+  void removeFrame() {
+    if (!canRemoveFrame) return;
+    _changeStructure(
+      name: 'Remove frame',
+      change: () {
+        _selection = null;
+        final index = document.activeFrameIndex;
+        _changePerFrameImages((images) => images.removeAt(index));
+        document.frameDurations = List.of(document.frameDurations)
+          ..removeAt(index);
+        document.activeFrameIndex = max(0, index - 1);
+      },
+    );
+  }
+
+  void _changePerFrameImages(void Function(List<Layer> images) change) {
+    for (var index = 0; index < document.layers.length; index++) {
+      final layer = document.layers[index];
+      if (layer.timeframe == LayerTimeframe.constant) continue;
+      final images = List.of(layer.images);
+      change(images);
+      document.layers[index] = layer.copyWith(images: images);
+    }
+  }
+
+  void previewFrameDuration(int duration) {
+    _structureBeforePreview ??= DocumentStructure.capture(document: document);
+    document.frameDurations = _withActiveFrameDuration(duration);
+    notifyListeners();
+  }
+
+  void setFrameDuration(int duration) {
+    final before = _endPreview();
+    if (before.frameDurations[document.activeFrameIndex] == duration) {
+      before.restore(document);
+      notifyListeners();
+      return;
+    }
+    _changeStructure(
+      name: 'Frame duration',
+      before: before,
+      change: () =>
+          document.frameDurations = _withActiveFrameDuration(duration),
+    );
+  }
+
+  List<int> _withActiveFrameDuration(int duration) =>
+      List.of(document.frameDurations)..[document.activeFrameIndex] = duration;
+
+  DocumentStructure _endPreview() {
+    final before =
+        _structureBeforePreview ??
+        DocumentStructure.capture(document: document);
+    _structureBeforePreview = null;
+    return before;
   }
 
   void selectLayer(int index) {
@@ -208,7 +315,7 @@ class EditorController extends ChangeNotifier {
   }
 
   void addLayer() {
-    _changeLayers(
+    _changeStructure(
       name: 'Add layer',
       change: () {
         _selection = null;
@@ -227,7 +334,7 @@ class EditorController extends ChangeNotifier {
     final index = document.activeLayerIndex + 1;
     document.layers.insert(
       index,
-      DocumentLayer(name: 'Layer $_layerCount', pixels: pixels),
+      DocumentLayer(name: 'Layer $_layerCount', images: [pixels]),
     );
     document.activeLayerIndex = index;
     return pixels;
@@ -235,7 +342,7 @@ class EditorController extends ChangeNotifier {
 
   void removeLayer() {
     if (!canRemoveLayer) return;
-    _changeLayers(
+    _changeStructure(
       name: 'Remove layer',
       change: () {
         _selection = null;
@@ -247,7 +354,7 @@ class EditorController extends ChangeNotifier {
 
   void moveLayer({required bool up}) {
     if (!(up ? canMoveLayerUp : canMoveLayerDown)) return;
-    _changeLayers(
+    _changeStructure(
       name: up ? 'Move layer up' : 'Move layer down',
       change: () {
         _selection = null;
@@ -259,27 +366,23 @@ class EditorController extends ChangeNotifier {
     );
   }
 
-  void _changeLayers({
+  void _changeStructure({
     required String name,
     required VoidCallback change,
-    List<DocumentLayer>? layersBefore,
+    DocumentStructure? before,
     int? changedLayerIndex,
   }) {
     if (_strokePoint != null) return;
-    layersBefore ??= List.of(document.layers);
-    final activeIndexBefore = document.activeLayerIndex;
+    before ??= DocumentStructure.capture(document: document);
     change();
     history.record(
-      LayersHistoryEntry(
+      StructureHistoryEntry(
         name: name,
-        layersBefore: layersBefore,
-        activeIndexBefore: activeIndexBefore,
-        layersAfter: List.of(document.layers),
-        activeIndexAfter: document.activeLayerIndex,
+        before: before,
+        after: DocumentStructure.capture(document: document),
         thumbnail: Layer.thumbnail(
-          layer: document
-              .layers[changedLayerIndex ?? document.activeLayerIndex]
-              .pixels,
+          layer: document.layers[changedLayerIndex ?? document.activeLayerIndex]
+              .imageAt(document.activeFrameIndex),
           maximumSize: History.thumbnailSize,
         ),
       ),
@@ -313,7 +416,7 @@ class EditorController extends ChangeNotifier {
   void jumpToHistory(int position) {
     if (_strokePoint != null) return;
     _selection = null;
-    _layersBeforeOpacityPreview = null;
+    _structureBeforePreview = null;
     history.jumpTo(position);
     notifyListeners();
   }
@@ -421,7 +524,7 @@ class EditorController extends ChangeNotifier {
     final area = _selection?.area;
     if (area != null &&
         (image.width > area.width || image.height > area.height)) {
-      _changeLayers(
+      _changeStructure(
         name: 'Paste as layer',
         change: () => _selection = Selection.pasted(
           layer: _insertLayer(),
@@ -535,6 +638,7 @@ class EditorController extends ChangeNotifier {
     final entry = PixelHistoryEntry(
       name: name,
       layerIndex: document.activeLayerIndex,
+      frameIndex: document.activeFrameIndex,
       before: LayerSnapshot.capture(layer: before, area: area),
       after: LayerSnapshot.capture(layer: document.activeLayer, area: area),
       thumbnail: Layer.thumbnail(

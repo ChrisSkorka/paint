@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document.dart';
 import 'package:paint/editor/canvas/document_layer.dart';
 import 'package:paint/editor/canvas/layer.dart';
+import 'package:paint/editor/canvas/layer_timeframe.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
@@ -24,6 +25,8 @@ void main() {
   const white = 0xFFFFFFFF;
   const red = 0xFFFF0000;
   const grey = 0x88888888;
+  const green = 0xFF00FF00;
+  const blue = 0xFF0000FF;
 
   group('class EditorController', () {
     group('factory forDocument', () {
@@ -70,10 +73,10 @@ void main() {
           );
           final actual = editorController.visibleLayers;
           final expected = [
-            DocumentLayer(name: 'Background', pixels: document.activeLayer),
+            DocumentLayer(name: 'Background', images: [document.activeLayer]),
             DocumentLayer(
               name: 'Pointer',
-              pixels: editorController.pointerLayer,
+              images: [editorController.pointerLayer],
             ),
           ];
           expect(actual, equals(expected));
@@ -87,20 +90,16 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer.filled(
-                  width: 1,
-                  height: 1,
-                  color: PixelColor.white,
-                ),
+                images: [
+                  Layer.filled(width: 1, height: 1, color: PixelColor.white),
+                ],
                 visible: false,
               ),
               DocumentLayer(
                 name: 'Sketch',
-                pixels: Layer.filled(
-                  width: 1,
-                  height: 1,
-                  color: PixelColor.black,
-                ),
+                images: [
+                  Layer.filled(width: 1, height: 1, color: PixelColor.black),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -121,11 +120,9 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer.filled(
-                  width: 1,
-                  height: 1,
-                  color: PixelColor.white,
-                ),
+                images: [
+                  Layer.filled(width: 1, height: 1, color: PixelColor.white),
+                ],
                 opacity: 0,
               ),
             ],
@@ -257,19 +254,15 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer.filled(
-                  width: 1,
-                  height: 1,
-                  color: PixelColor.white,
-                ),
+                images: [
+                  Layer.filled(width: 1, height: 1, color: PixelColor.white),
+                ],
               ),
               DocumentLayer(
                 name: 'Sketch',
-                pixels: Layer.filled(
-                  width: 1,
-                  height: 1,
-                  color: PixelColor.black,
-                ),
+                images: [
+                  Layer.filled(width: 1, height: 1, color: PixelColor.black),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -329,19 +322,15 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer.filled(
-                  width: 1,
-                  height: 1,
-                  color: PixelColor.white,
-                ),
+                images: [
+                  Layer.filled(width: 1, height: 1, color: PixelColor.white),
+                ],
               ),
               DocumentLayer(
                 name: 'Sketch',
-                pixels: Layer.filled(
-                  width: 1,
-                  height: 1,
-                  color: PixelColor.black,
-                ),
+                images: [
+                  Layer.filled(width: 1, height: 1, color: PixelColor.black),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -594,19 +583,15 @@ void main() {
             layers: [
               DocumentLayer(
                 name: 'Background',
-                pixels: Layer.filled(
-                  width: 1,
-                  height: 1,
-                  color: PixelColor.white,
-                ),
+                images: [
+                  Layer.filled(width: 1, height: 1, color: PixelColor.white),
+                ],
               ),
               DocumentLayer(
                 name: 'Sketch',
-                pixels: Layer.filled(
-                  width: 1,
-                  height: 1,
-                  color: PixelColor.black,
-                ),
+                images: [
+                  Layer.filled(width: 1, height: 1, color: PixelColor.black),
+                ],
               ),
             ],
             activeLayerIndex: 0,
@@ -637,7 +622,9 @@ void main() {
           );
           editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
           final actual = [
-            document.layers.first.pixels.getPixel(const PixelPoint(x: 0, y: 0)),
+            document.layers.first.images.first.getPixel(
+              const PixelPoint(x: 0, y: 0),
+            ),
             editorController.history.entries.map((entry) => entry.name),
           ];
           const expected = [
@@ -797,7 +784,7 @@ void main() {
           );
           editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
           final actual = [
-            for (final layer in document.layers) pixelRows(layer.pixels),
+            for (final layer in document.layers) pixelRows(layer.images.first),
           ];
           const expected = [
             [
@@ -1276,7 +1263,7 @@ void main() {
           editorController.jumpToHistory(0);
           final actual = [
             layerStructure(document),
-            for (final layer in document.layers) pixelRows(layer.pixels),
+            for (final layer in document.layers) pixelRows(layer.images.first),
           ];
           const expected = [
             [
@@ -1290,6 +1277,816 @@ void main() {
               [transparent, transparent],
             ],
           ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter canRemoveFrame', () {
+      group('frame count', () {
+        test('one', () {
+          final editorController = EditorController.forDocument(
+            document: animatedDocument(
+              spriteColors: [red],
+              activeFrameIndex: 0,
+            ),
+          );
+          final actual = editorController.canRemoveFrame;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('multiple', () {
+          final editorController = EditorController.forDocument(
+            document: animatedDocument(
+              spriteColors: [red, green],
+              activeFrameIndex: 0,
+            ),
+          );
+          final actual = editorController.canRemoveFrame;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method selectFrame', () {
+      group('index', () {
+        test('other frame', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.selectFrame(1);
+          final actual = [
+            document.activeFrameIndex,
+            editorController.history.entries.length,
+            notifications,
+          ];
+          const expected = [1, 0, 1];
+          expect(actual, equals(expected));
+        });
+      });
+      group('drawing', () {
+        test('selected frame', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectFrame(1);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          final actual = frameStructure(document);
+          const expected = [
+            [100, 200],
+            1,
+            [
+              [white],
+              [red, black],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('undo on other frame', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          editorController.selectFrame(0);
+          editorController.undo();
+          final actual = frameStructure(document);
+          const expected = [
+            [100, 200],
+            0,
+            [
+              [white],
+              [red, green],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('selection', () {
+        test('cleared', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectAll();
+          editorController.selectFrame(1);
+          final actual = editorController.selectionArea;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+      group('stroke', () {
+        test('during stroke', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.selectFrame(1);
+          final actual = document.activeFrameIndex;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method addFrame', () {
+      group('position', () {
+        test('after only frame', () {
+          final document = animatedDocument(
+            spriteColors: [red],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.addFrame();
+          final actual = [frameStructure(document), notifications];
+          const expected = [
+            [
+              [100, 100],
+              1,
+              [
+                [white],
+                [red, red],
+              ],
+            ],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('after middle frame', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.addFrame();
+          final actual = frameStructure(document);
+          const expected = [
+            [100, 200, 200, 300],
+            2,
+            [
+              [white],
+              [red, green, green, blue],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('images', () {
+        test('copied', () {
+          final document = animatedDocument(
+            spriteColors: [red],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.addFrame();
+          final images = document.layers[1].images;
+          final actual = identical(images[0], images[1]);
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('recorded', () {
+          final document = animatedDocument(
+            spriteColors: [red],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.addFrame();
+          final actual = editorController.history.entries.map(
+            (entry) => entry.name,
+          );
+          const expected = ['Add frame'];
+          expect(actual, equals(expected));
+        });
+        test('undo', () {
+          final document = animatedDocument(
+            spriteColors: [red],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.addFrame();
+          editorController.undo();
+          final actual = frameStructure(document);
+          const expected = [
+            [100],
+            0,
+            [
+              [white],
+              [red],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('redo', () {
+          final document = animatedDocument(
+            spriteColors: [red],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.addFrame();
+          editorController.undo();
+          editorController.redo();
+          final actual = frameStructure(document);
+          const expected = [
+            [100, 100],
+            1,
+            [
+              [white],
+              [red, red],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('selection', () {
+        test('cleared', () {
+          final document = animatedDocument(
+            spriteColors: [red],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectAll();
+          editorController.addFrame();
+          final actual = editorController.selectionArea;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+      group('stroke', () {
+        test('during stroke', () {
+          final document = animatedDocument(
+            spriteColors: [red],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.addFrame();
+          final actual = [
+            document.frameCount,
+            editorController.history.entries.length,
+          ];
+          const expected = [1, 0];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method removeFrame', () {
+      group('position', () {
+        test('last frame', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 2,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.removeFrame();
+          final actual = [frameStructure(document), notifications];
+          const expected = [
+            [
+              [100, 200],
+              1,
+              [
+                [white],
+                [red, green],
+              ],
+            ],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('first frame', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.removeFrame();
+          final actual = frameStructure(document);
+          const expected = [
+            [200, 300],
+            0,
+            [
+              [white],
+              [green, blue],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('frame count', () {
+        test('only frame', () {
+          final document = animatedDocument(
+            spriteColors: [red],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.removeFrame();
+          final actual = [
+            frameStructure(document),
+            editorController.history.entries.length,
+          ];
+          const expected = [
+            [
+              [100],
+              0,
+              [
+                [white],
+                [red],
+              ],
+            ],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('recorded', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.removeFrame();
+          final actual = editorController.history.entries.map(
+            (entry) => entry.name,
+          );
+          const expected = ['Remove frame'];
+          expect(actual, equals(expected));
+        });
+        test('undo', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.removeFrame();
+          editorController.undo();
+          final actual = frameStructure(document);
+          const expected = [
+            [100, 200],
+            1,
+            [
+              [white],
+              [red, green],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('selection', () {
+        test('cleared', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectAll();
+          editorController.removeFrame();
+          final actual = editorController.selectionArea;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method setLayerTimeframe', () {
+      group('timeframe', () {
+        test('to per frame', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setLayerTimeframe(
+            index: 0,
+            timeframe: LayerTimeframe.perFrame,
+          );
+          final actual = [
+            frameStructure(document),
+            document.layers.first.timeframe,
+            notifications,
+          ];
+          const expected = [
+            [
+              [100, 200],
+              1,
+              [
+                [white, white],
+                [red, green],
+              ],
+            ],
+            LayerTimeframe.perFrame,
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('to constant', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setLayerTimeframe(
+            index: 1,
+            timeframe: LayerTimeframe.constant,
+          );
+          final actual = [
+            frameStructure(document),
+            document.layers[1].timeframe,
+          ];
+          const expected = [
+            [
+              [100, 200],
+              1,
+              [
+                [white],
+                [green],
+              ],
+            ],
+            LayerTimeframe.constant,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('unchanged', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setLayerTimeframe(
+            index: 1,
+            timeframe: LayerTimeframe.perFrame,
+          );
+          final actual = [
+            editorController.history.entries.length,
+            notifications,
+          ];
+          const expected = [0, 0];
+          expect(actual, equals(expected));
+        });
+      });
+      group('images', () {
+        test('copied per frame', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setLayerTimeframe(
+            index: 0,
+            timeframe: LayerTimeframe.perFrame,
+          );
+          final images = document.layers.first.images;
+          final actual = identical(images[0], images[1]);
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('recorded', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setLayerTimeframe(
+            index: 0,
+            timeframe: LayerTimeframe.perFrame,
+          );
+          editorController.setLayerTimeframe(
+            index: 1,
+            timeframe: LayerTimeframe.constant,
+          );
+          final actual = editorController.history.entries.map(
+            (entry) => entry.name,
+          );
+          const expected = ['Image per frame', 'Constant image'];
+          expect(actual, equals(expected));
+        });
+        test('undo', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setLayerTimeframe(
+            index: 1,
+            timeframe: LayerTimeframe.constant,
+          );
+          editorController.undo();
+          final actual = [
+            frameStructure(document),
+            document.layers[1].timeframe,
+          ];
+          const expected = [
+            [
+              [100, 200],
+              0,
+              [
+                [white],
+                [red, green],
+              ],
+            ],
+            LayerTimeframe.perFrame,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('thumbnail', () {
+        test('active frame of changed layer', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectLayer(0);
+          editorController.setLayerTimeframe(
+            index: 1,
+            timeframe: LayerTimeframe.constant,
+          );
+          final actual = pixelRows(
+            editorController.history.entries.single.thumbnail,
+          );
+          const expected = [
+            [green],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('selection', () {
+        test('cleared', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectAll();
+          editorController.setLayerTimeframe(
+            index: 1,
+            timeframe: LayerTimeframe.constant,
+          );
+          final actual = editorController.selectionArea;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method previewFrameDuration', () {
+      group('duration', () {
+        test('active frame', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.previewFrameDuration(50);
+          final actual = [
+            document.frameDurations,
+            editorController.history.entries.length,
+            notifications,
+          ];
+          const expected = [
+            [100, 50],
+            0,
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('repeated', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.previewFrameDuration(50);
+          editorController.previewFrameDuration(70);
+          final actual = [
+            document.frameDurations,
+            editorController.history.entries.length,
+          ];
+          const expected = [
+            [70, 200],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method setFrameDuration', () {
+      group('duration', () {
+        test('without preview', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setFrameDuration(50);
+          final actual = [
+            document.frameDurations,
+            editorController.history.entries.map((entry) => entry.name),
+            notifications,
+          ];
+          const expected = [
+            [100, 50],
+            ['Frame duration'],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('after preview', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.previewFrameDuration(60);
+          editorController.previewFrameDuration(40);
+          editorController.setFrameDuration(40);
+          final actual = [
+            document.frameDurations,
+            editorController.history.entries.map((entry) => entry.name),
+          ];
+          const expected = [
+            [40, 200],
+            ['Frame duration'],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('unchanged', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setFrameDuration(100);
+          final actual = [
+            document.frameDurations,
+            editorController.history.entries.length,
+            notifications,
+          ];
+          const expected = [
+            [100, 200],
+            0,
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('preview back to start', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.previewFrameDuration(60);
+          editorController.setFrameDuration(100);
+          final actual = [
+            document.frameDurations,
+            editorController.history.entries.length,
+          ];
+          const expected = [
+            [100, 200],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('undo after preview', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.previewFrameDuration(60);
+          editorController.setFrameDuration(30);
+          editorController.undo();
+          final actual = document.frameDurations;
+          const expected = [100, 200];
+          expect(actual, equals(expected));
+        });
+        test('redo', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setFrameDuration(30);
+          editorController.undo();
+          editorController.redo();
+          final actual = document.frameDurations;
+          const expected = [30, 200];
           expect(actual, equals(expected));
         });
       });
@@ -2403,7 +3200,9 @@ void main() {
             document: Document(
               width: 2,
               height: 1,
-              layers: [DocumentLayer(name: 'Background', pixels: layer)],
+              layers: [
+                DocumentLayer(name: 'Background', images: [layer]),
+              ],
               activeLayerIndex: 0,
             ),
           );
@@ -2646,6 +3445,7 @@ void main() {
             PixelHistoryEntry(
               name: 'Pen',
               layerIndex: 0,
+              frameIndex: 0,
               before: LayerSnapshot(
                 area: const PixelRectangle(
                   left: 1,
@@ -2701,6 +3501,7 @@ void main() {
             PixelHistoryEntry(
               name: 'Pen',
               layerIndex: 0,
+              frameIndex: 0,
               before: LayerSnapshot(
                 area: const PixelRectangle(
                   left: 0,
@@ -2766,6 +3567,7 @@ void main() {
             PixelHistoryEntry(
               name: 'Eraser',
               layerIndex: 0,
+              frameIndex: 0,
               before: LayerSnapshot(
                 area: const PixelRectangle(
                   left: 2,
@@ -2821,6 +3623,7 @@ void main() {
             PixelHistoryEntry(
               name: 'Fill',
               layerIndex: 0,
+              frameIndex: 0,
               before: LayerSnapshot(
                 area: const PixelRectangle(
                   left: 0,
@@ -2882,6 +3685,7 @@ void main() {
             PixelHistoryEntry(
               name: 'Rectangle',
               layerIndex: 0,
+              frameIndex: 0,
               before: LayerSnapshot(
                 area: const PixelRectangle(
                   left: 0,

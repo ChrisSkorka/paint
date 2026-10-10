@@ -13,6 +13,8 @@ class Document {
     required this.height,
     required this.layers,
     required this.activeLayerIndex,
+    this.frameDurations = const [defaultFrameDuration],
+    this.activeFrameIndex = 0,
     this.storeId,
   });
 
@@ -29,7 +31,9 @@ class Document {
       layers: [
         DocumentLayer(
           name: 'Background',
-          pixels: Layer.filled(width: width, height: height, color: background),
+          images: [
+            Layer.filled(width: width, height: height, color: background),
+          ],
         ),
       ],
       activeLayerIndex: 0,
@@ -44,7 +48,9 @@ class Document {
       name: name,
       width: image.width,
       height: image.height,
-      layers: [DocumentLayer(name: 'Background', pixels: image)],
+      layers: [
+        DocumentLayer(name: 'Background', images: [image]),
+      ],
       activeLayerIndex: 0,
     );
   }
@@ -52,17 +58,24 @@ class Document {
   static const untitledName = 'Untitled';
   static const minimumSize = 1;
   static const maximumSize = 4096;
+  static const defaultFrameDuration = 100;
+  static const minimumFrameDuration = 10;
+  static const maximumFrameDuration = 10000;
 
   final String name;
   final int width;
   final int height;
   final List<DocumentLayer> layers;
   int activeLayerIndex;
+  List<int> frameDurations;
+  int activeFrameIndex;
   String? storeId;
 
-  Layer get activeLayer => layers[activeLayerIndex].pixels;
+  int get frameCount => frameDurations.length;
 
-  Layer flatten({required PixelColor background}) {
+  Layer get activeLayer => layers[activeLayerIndex].imageAt(activeFrameIndex);
+
+  Layer flatten({required PixelColor background, required int frame}) {
     final flattened = Layer.filled(
       width: width,
       height: height,
@@ -71,7 +84,7 @@ class Document {
     for (final layer in layers.where((layer) => layer.visible)) {
       _blend(
         target: flattened.rgba,
-        source: layer.pixels.rgba,
+        source: layer.imageAt(frame).rgba,
         opacity: layer.opacity / DocumentLayer.maximumOpacity,
       );
     }
@@ -107,6 +120,8 @@ class Document {
       other.width == width &&
       other.height == height &&
       other.activeLayerIndex == activeLayerIndex &&
+      const ListEquality<int>().equals(other.frameDurations, frameDurations) &&
+      other.activeFrameIndex == activeFrameIndex &&
       other.storeId == storeId &&
       const ListEquality<DocumentLayer>().equals(other.layers, layers);
 
@@ -116,11 +131,13 @@ class Document {
     width,
     height,
     activeLayerIndex,
+    const ListEquality<int>().hash(frameDurations),
+    activeFrameIndex,
     storeId,
     const ListEquality<DocumentLayer>().hash(layers),
   );
 
   @override
   String toString() =>
-      'Document($name, $width, $height, layers: ${layers.length}, active: $activeLayerIndex)';
+      'Document($name, $width, $height, layers: ${layers.length}, active: $activeLayerIndex, frames: $frameCount, frame: $activeFrameIndex)';
 }
