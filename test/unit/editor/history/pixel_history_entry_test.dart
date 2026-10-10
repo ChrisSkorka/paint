@@ -2,24 +2,30 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document.dart';
+import 'package:paint/editor/canvas/document_layer.dart';
 import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
-import 'package:paint/editor/history/history_entry.dart';
 import 'package:paint/editor/history/layer_snapshot.dart';
+import 'package:paint/editor/history/pixel_history_entry.dart';
 
 void main() {
-  group('class HistoryEntry', () {
+  group('class PixelHistoryEntry', () {
     group('method undo', () {
       group('layers', () {
         test('first layer', () {
           final document = Document(
             width: 2,
             height: 1,
-            layers: [Layer(width: 2, height: 1, rgba: Uint8List(8))],
+            layers: [
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer(width: 2, height: 1, rgba: Uint8List(8)),
+              ),
+            ],
             activeLayerIndex: 0,
           );
-          final historyEntry = HistoryEntry(
+          final historyEntry = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 0,
             before: LayerSnapshot(
@@ -37,7 +43,7 @@ void main() {
             ),
           );
           historyEntry.undo(document);
-          final actual = document.layers.first.rgba;
+          final actual = document.layers.first.pixels.rgba;
           final expected = Uint8List.fromList([0, 0, 0, 0, 1, 2, 3, 4]);
           expect(actual, equals(expected));
         });
@@ -46,12 +52,18 @@ void main() {
             width: 1,
             height: 1,
             layers: [
-              Layer(width: 1, height: 1, rgba: Uint8List(4)),
-              Layer(width: 1, height: 1, rgba: Uint8List(4)),
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer(width: 1, height: 1, rgba: Uint8List(4)),
+              ),
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer(width: 1, height: 1, rgba: Uint8List(4)),
+              ),
             ],
             activeLayerIndex: 0,
           );
-          final historyEntry = HistoryEntry(
+          final historyEntry = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 1,
             before: LayerSnapshot(
@@ -69,7 +81,9 @@ void main() {
             ),
           );
           historyEntry.undo(document);
-          final actual = [for (final layer in document.layers) layer.rgba];
+          final actual = [
+            for (final layer in document.layers) layer.pixels.rgba,
+          ];
           final expected = [
             Uint8List(4),
             Uint8List.fromList([1, 2, 3, 4]),
@@ -85,10 +99,15 @@ void main() {
           final document = Document(
             width: 2,
             height: 1,
-            layers: [Layer(width: 2, height: 1, rgba: Uint8List(8))],
+            layers: [
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer(width: 2, height: 1, rgba: Uint8List(8)),
+              ),
+            ],
             activeLayerIndex: 0,
           );
-          final historyEntry = HistoryEntry(
+          final historyEntry = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 0,
             before: LayerSnapshot(
@@ -106,7 +125,7 @@ void main() {
             ),
           );
           historyEntry.redo(document);
-          final actual = document.layers.first.rgba;
+          final actual = document.layers.first.pixels.rgba;
           final expected = Uint8List.fromList([5, 6, 7, 8, 0, 0, 0, 0]);
           expect(actual, equals(expected));
         });
@@ -115,12 +134,18 @@ void main() {
             width: 1,
             height: 1,
             layers: [
-              Layer(width: 1, height: 1, rgba: Uint8List(4)),
-              Layer(width: 1, height: 1, rgba: Uint8List(4)),
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer(width: 1, height: 1, rgba: Uint8List(4)),
+              ),
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer(width: 1, height: 1, rgba: Uint8List(4)),
+              ),
             ],
             activeLayerIndex: 0,
           );
-          final historyEntry = HistoryEntry(
+          final historyEntry = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 1,
             before: LayerSnapshot(
@@ -138,7 +163,9 @@ void main() {
             ),
           );
           historyEntry.redo(document);
-          final actual = [for (final layer in document.layers) layer.rgba];
+          final actual = [
+            for (final layer in document.layers) layer.pixels.rgba,
+          ];
           final expected = [
             Uint8List(4),
             Uint8List.fromList([5, 6, 7, 8]),
@@ -151,7 +178,7 @@ void main() {
     group('operator ==', () {
       group('equals', () {
         test('same fields', () {
-          final historyEntry = HistoryEntry(
+          final historyEntry = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 0,
             before: LayerSnapshot(
@@ -168,7 +195,7 @@ void main() {
               color: PixelColor.transparent,
             ),
           );
-          final other = HistoryEntry(
+          final other = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 0,
             before: LayerSnapshot(
@@ -192,7 +219,7 @@ void main() {
       });
       group('not equals', () {
         test('different name', () {
-          final historyEntry = HistoryEntry(
+          final historyEntry = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 0,
             before: LayerSnapshot(
@@ -209,7 +236,7 @@ void main() {
               color: PixelColor.transparent,
             ),
           );
-          final other = HistoryEntry(
+          final other = PixelHistoryEntry(
             name: 'Eraser',
             layerIndex: 0,
             before: LayerSnapshot(
@@ -231,7 +258,7 @@ void main() {
           expect(actual, equals(expected));
         });
         test('different layer', () {
-          final historyEntry = HistoryEntry(
+          final historyEntry = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 0,
             before: LayerSnapshot(
@@ -248,7 +275,7 @@ void main() {
               color: PixelColor.transparent,
             ),
           );
-          final other = HistoryEntry(
+          final other = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 1,
             before: LayerSnapshot(
@@ -270,7 +297,7 @@ void main() {
           expect(actual, equals(expected));
         });
         test('different before', () {
-          final historyEntry = HistoryEntry(
+          final historyEntry = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 0,
             before: LayerSnapshot(
@@ -287,7 +314,7 @@ void main() {
               color: PixelColor.transparent,
             ),
           );
-          final other = HistoryEntry(
+          final other = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 0,
             before: LayerSnapshot(
@@ -309,7 +336,7 @@ void main() {
           expect(actual, equals(expected));
         });
         test('different thumbnail', () {
-          final historyEntry = HistoryEntry(
+          final historyEntry = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 0,
             before: LayerSnapshot(
@@ -326,7 +353,7 @@ void main() {
               color: PixelColor.transparent,
             ),
           );
-          final other = HistoryEntry(
+          final other = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 0,
             before: LayerSnapshot(
@@ -348,7 +375,7 @@ void main() {
           expect(actual, equals(expected));
         });
         test('different after', () {
-          final historyEntry = HistoryEntry(
+          final historyEntry = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 0,
             before: LayerSnapshot(
@@ -365,7 +392,7 @@ void main() {
               color: PixelColor.transparent,
             ),
           );
-          final other = HistoryEntry(
+          final other = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 0,
             before: LayerSnapshot(
@@ -392,7 +419,7 @@ void main() {
     group('getter hashCode', () {
       group('equals', () {
         test('same fields', () {
-          final historyEntry = HistoryEntry(
+          final historyEntry = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 0,
             before: LayerSnapshot(
@@ -409,7 +436,7 @@ void main() {
               color: PixelColor.transparent,
             ),
           );
-          final other = HistoryEntry(
+          final other = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 0,
             before: LayerSnapshot(
@@ -433,7 +460,7 @@ void main() {
       });
       group('not equals', () {
         test('different name', () {
-          final historyEntry = HistoryEntry(
+          final historyEntry = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 0,
             before: LayerSnapshot(
@@ -450,7 +477,7 @@ void main() {
               color: PixelColor.transparent,
             ),
           );
-          final other = HistoryEntry(
+          final other = PixelHistoryEntry(
             name: 'Eraser',
             layerIndex: 0,
             before: LayerSnapshot(
@@ -477,7 +504,7 @@ void main() {
     group('method toString', () {
       group('format', () {
         test('name and layer', () {
-          final historyEntry = HistoryEntry(
+          final historyEntry = PixelHistoryEntry(
             name: 'Pen',
             layerIndex: 2,
             before: LayerSnapshot(
@@ -495,7 +522,7 @@ void main() {
             ),
           );
           final actual = historyEntry.toString();
-          const expected = 'HistoryEntry(Pen, layer: 2)';
+          const expected = 'PixelHistoryEntry(Pen, layer: 2)';
           expect(actual, equals(expected));
         });
       });

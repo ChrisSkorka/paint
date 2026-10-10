@@ -184,15 +184,16 @@ void main() {
               ),
             ),
           );
-          final sidePanel = tester.getRect(find.byType(SidePanel));
+          final layersPanel = tester.getRect(find.byType(SidePanel).first);
+          final historyPanel = tester.getRect(find.byType(SidePanel).last);
           final topBar = tester.getRect(find.byType(PaintBar).first);
           final bottomBar = tester.getRect(find.byType(PaintBar).last);
           final actual = [
-            sidePanel.top,
-            sidePanel.right,
-            sidePanel.bottom == bottomBar.top,
+            layersPanel.top,
+            layersPanel.right,
+            historyPanel.bottom == bottomBar.top,
             topBar.top,
-            topBar.right == sidePanel.left,
+            topBar.right == layersPanel.left,
             bottomBar.width,
           ];
           const expected = [0.0, 1280.0, true, 0.0, true, 1280.0];
@@ -232,7 +233,7 @@ void main() {
             ),
           );
           final topBar = tester.getRect(find.byType(PaintBar).first);
-          final sidePanel = tester.getRect(find.byType(SidePanel));
+          final sidePanel = tester.getRect(find.byType(SidePanel).first);
           final bottomBar = tester.getRect(find.byType(PaintBar).last);
           final actual = [
             edgeShadow.left,
@@ -247,6 +248,100 @@ void main() {
     });
 
     group('interactions', () {
+      group('layers pane', () {
+        testWidgets('panel titles', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          final actual = [
+            for (final sidePanel in tester.widgetList<SidePanel>(
+              find.byType(SidePanel),
+            ))
+              sidePanel.title,
+          ];
+          const expected = ['Layers', 'History'];
+          expect(actual, equals(expected));
+        });
+        testWidgets('panel divider', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          final actual = [
+            for (final sidePanel in tester.widgetList<SidePanel>(
+              find.byType(SidePanel),
+            ))
+              sidePanel.border,
+          ];
+          const expected = [
+            Border(bottom: BorderSide(color: PaintStyle.separatorColor)),
+            null,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('blank document', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          final actual = layerState(tester);
+          const expected = [
+            ['Background'],
+            [true],
+            [100],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('layer actions', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          final actual = layerActionsEnabled(tester);
+          const expected = [true, false, false, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('thumbnail', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  document: Document.blank(
+                    width: 2,
+                    height: 1,
+                    background: PixelColor.white,
+                  ),
+                ),
+              ),
+            ),
+          );
+          final actual = pixelRows(layerThumbnail(tester));
+          const expected = [
+            [white, white],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
       group('drawing', () {
         testWidgets('primary click', (tester) async {
           useDesktopView(tester);
@@ -1561,6 +1656,486 @@ void main() {
         });
       });
 
+      group('layers pane', () {
+        testWidgets('add layer', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Add layer'));
+          await tester.pump();
+          final actual = [
+            layerState(tester),
+            layerActionsEnabled(tester),
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              ['Background', 'Layer 2'],
+              [true, true],
+              [100, 100],
+              1,
+            ],
+            [true, true, false, true],
+            [
+              ['Start', 'Add layer'],
+              1,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('remove layer', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Add layer'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Remove layer'));
+          await tester.pump();
+          final actual = [
+            layerState(tester),
+            layerActionsEnabled(tester),
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              ['Background'],
+              [true],
+              [100],
+              0,
+            ],
+            [true, false, false, false],
+            [
+              ['Start', 'Add layer', 'Remove layer'],
+              2,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('move layer down', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Add layer'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Move layer down'));
+          await tester.pump();
+          final actual = [
+            layerState(tester),
+            layerActionsEnabled(tester),
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              ['Layer 2', 'Background'],
+              [true, true],
+              [100, 100],
+              0,
+            ],
+            [true, true, true, false],
+            [
+              ['Start', 'Add layer', 'Move layer down'],
+              2,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('move layer up', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Add layer'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Move layer down'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Move layer up'));
+          await tester.pump();
+          final actual = [
+            layerState(tester),
+            layerActionsEnabled(tester),
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              ['Background', 'Layer 2'],
+              [true, true],
+              [100, 100],
+              1,
+            ],
+            [true, true, false, true],
+            [
+              ['Start', 'Add layer', 'Move layer down', 'Move layer up'],
+              3,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('select layer', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Add layer'));
+          await tester.pump();
+          await tester.tap(find.text('Background'));
+          await tester.pump();
+          final actual = [
+            layerState(tester),
+            layerActionsEnabled(tester),
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              ['Background', 'Layer 2'],
+              [true, true],
+              [100, 100],
+              0,
+            ],
+            [true, true, true, false],
+            [
+              ['Start', 'Add layer'],
+              1,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('undo add layer', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Add layer'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Undo'));
+          await tester.pump();
+          final actual = [
+            layerState(tester),
+            layerActionsEnabled(tester),
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              ['Background'],
+              [true],
+              [100],
+              0,
+            ],
+            [true, false, false, false],
+            [
+              ['Start', 'Add layer'],
+              0,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('layer history thumbnail', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 1)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Add layer'));
+          await tester.pump();
+          final actual = historyThumbnails(tester).last;
+          final expected = [
+            Layer.filled(width: 2, height: 1, color: PixelColor.transparent),
+            null,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('draw on selected layer', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 1);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          await tester.tap(find.byTooltip('Add layer'));
+          await tester.pump();
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(5, 1));
+          await tester.pump();
+          final actual = [
+            for (final layer in document.layers) pixelRows(layer.pixels),
+          ];
+          const expected = [
+            [
+              [transparent, transparent],
+            ],
+            [
+              [transparent, black],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('hide layer', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Hide layer'));
+          await tester.pump();
+          final actual = [
+            layerState(tester),
+            [for (final layer in canvasLayers(tester)) layer.name],
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              ['Background'],
+              [false],
+              [100],
+              0,
+            ],
+            ['Pointer'],
+            [
+              ['Start', 'Hide layer'],
+              1,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('show layer', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Hide layer'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Show layer'));
+          await tester.pump();
+          final actual = [
+            layerState(tester),
+            [for (final layer in canvasLayers(tester)) layer.name],
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              ['Background'],
+              [true],
+              [100],
+              0,
+            ],
+            ['Background', 'Pointer'],
+            [
+              ['Start', 'Hide layer', 'Show layer'],
+              2,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('opacity slider', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Layer opacity'));
+          await tester.pumpAndSettle();
+          tester
+              .widget<Slider>(
+                find.descendant(
+                  of: find.ancestor(
+                    of: find.text('Opacity:'),
+                    matching: find.byType(NumericValueRange),
+                  ),
+                  matching: find.byType(Slider),
+                ),
+              )
+              .onChanged!(30);
+          await tester.pump();
+          final actual = [
+            layerState(tester),
+            canvasLayers(tester).first.opacity,
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              ['Background'],
+              [true],
+              [30],
+              0,
+            ],
+            30,
+            [
+              ['Start'],
+              0,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('opacity drag', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Layer opacity'));
+          await tester.pumpAndSettle();
+          await tester.drag(
+            find.descendant(
+              of: find.ancestor(
+                of: find.text('Opacity:'),
+                matching: find.byType(NumericValueRange),
+              ),
+              matching: find.byType(Slider),
+            ),
+            const Offset(-40, 0),
+          );
+          await tester.pump();
+          final actual = [
+            canvasLayers(tester).first.opacity < 100,
+            historyState(tester),
+          ];
+          const expected = [
+            true,
+            [
+              ['Start', 'Layer opacity'],
+              1,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('opacity decrease', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Layer opacity'));
+          await tester.pumpAndSettle();
+          await tester.tap(
+            find.descendant(
+              of: find.ancestor(
+                of: find.text('Opacity:'),
+                matching: find.byType(NumericValueRange),
+              ),
+              matching: find.byTooltip('Decrease'),
+            ),
+          );
+          await tester.pump();
+          final actual = [layerState(tester), historyState(tester)];
+          const expected = [
+            [
+              ['Background'],
+              [true],
+              [99],
+              0,
+            ],
+            [
+              ['Start', 'Layer opacity'],
+              1,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('undo opacity drag', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Layer opacity'));
+          await tester.pumpAndSettle();
+          await tester.drag(
+            find.descendant(
+              of: find.ancestor(
+                of: find.text('Opacity:'),
+                matching: find.byType(NumericValueRange),
+              ),
+              matching: find.byType(Slider),
+            ),
+            const Offset(-40, 0),
+          );
+          await tester.pump();
+          await tester.tap(find.byTooltip('Undo'));
+          await tester.pump();
+          final actual = [layerState(tester), historyState(tester)];
+          const expected = [
+            [
+              ['Background'],
+              [true],
+              [100],
+              0,
+            ],
+            [
+              ['Start', 'Layer opacity'],
+              0,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('thumbnail after stroke', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 1)),
+              ),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(5, 1));
+          await tester.pump();
+          final actual = pixelRows(layerThumbnail(tester));
+          const expected = [
+            [transparent, black],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
       group('zoom', () {
         testWidgets('increase', (tester) async {
           useDesktopView(tester);
@@ -1601,7 +2176,17 @@ void main() {
               ),
             ),
           );
-          tester.widget<Slider>(find.byType(Slider)).onChanged!(3);
+          tester
+              .widget<Slider>(
+                find.descendant(
+                  of: find.ancestor(
+                    of: find.text('Zoom:'),
+                    matching: find.byType(NumericValueRange),
+                  ),
+                  matching: find.byType(Slider),
+                ),
+              )
+              .onChanged!(3);
           await tester.pump();
           final actual = canvasSize(tester);
           const expected = Size(16, 16);

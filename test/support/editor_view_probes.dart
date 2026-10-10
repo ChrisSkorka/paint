@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/widgets/components/history_list.dart';
+import 'package:paint/widgets/components/layer_list.dart';
 import 'package:paint/widgets/components/numeric_value_range.dart';
 import 'package:paint/widgets/components/paint_icon_button.dart';
 import 'package:paint/widgets/components/paint_split_button.dart';
@@ -131,6 +133,37 @@ List<bool> selectionActionsEnabled(WidgetTester tester) => [
     'Rotate right',
     'Mirror horizontally',
     'Mirror vertically',
+  ])
+    tester
+            .widget<PaintIconButton>(
+              find.ancestor(
+                of: find.byTooltip(tooltip),
+                matching: find.byType(PaintIconButton),
+              ),
+            )
+            .onPressed !=
+        null,
+];
+
+List<Object> layerState(WidgetTester tester) {
+  final layerList = tester.widget<LayerList>(find.byType(LayerList));
+  return [
+    [for (final item in layerList.items) item.name],
+    [for (final item in layerList.items) item.visible],
+    [for (final item in layerList.items) item.opacity],
+    layerList.activeIndex,
+  ];
+}
+
+Layer layerThumbnail(WidgetTester tester) =>
+    tester.widget<LayerList>(find.byType(LayerList)).items.last.thumbnail;
+
+List<bool> layerActionsEnabled(WidgetTester tester) => [
+  for (final tooltip in [
+    'Add layer',
+    'Remove layer',
+    'Move layer up',
+    'Move layer down',
   ])
     tester
             .widget<PaintIconButton>(

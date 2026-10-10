@@ -1,10 +1,11 @@
 import 'package:collection/collection.dart';
 
+import 'document_layer.dart';
 import 'layer.dart';
 import 'pixel_color.dart';
 
 class Document {
-  const Document({
+  Document({
     required this.width,
     required this.height,
     required this.layers,
@@ -19,7 +20,12 @@ class Document {
     return Document(
       width: width,
       height: height,
-      layers: [Layer.filled(width: width, height: height, color: background)],
+      layers: [
+        DocumentLayer(
+          name: 'Background',
+          pixels: Layer.filled(width: width, height: height, color: background),
+        ),
+      ],
       activeLayerIndex: 0,
     );
   }
@@ -29,10 +35,10 @@ class Document {
 
   final int width;
   final int height;
-  final List<Layer> layers;
-  final int activeLayerIndex;
+  final List<DocumentLayer> layers;
+  int activeLayerIndex;
 
-  Layer get activeLayer => layers[activeLayerIndex];
+  Layer get activeLayer => layers[activeLayerIndex].pixels;
 
   @override
   bool operator ==(Object other) =>
@@ -40,14 +46,14 @@ class Document {
       other.width == width &&
       other.height == height &&
       other.activeLayerIndex == activeLayerIndex &&
-      const ListEquality<Layer>().equals(other.layers, layers);
+      const ListEquality<DocumentLayer>().equals(other.layers, layers);
 
   @override
   int get hashCode => Object.hash(
     width,
     height,
     activeLayerIndex,
-    const ListEquality<Layer>().hash(layers),
+    const ListEquality<DocumentLayer>().hash(layers),
   );
 
   @override

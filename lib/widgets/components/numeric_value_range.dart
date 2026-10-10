@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'paint_icon_button.dart';
+import 'paint_style.dart';
 
 class NumericValueRange extends StatefulWidget {
   const NumericValueRange({
@@ -12,6 +13,7 @@ class NumericValueRange extends StatefulWidget {
     required this.minimum,
     required this.maximum,
     required this.onChanged,
+    this.onChangeEnd,
     this.rangeMinimum,
     this.rangeMaximum,
     this.valueToRange = _toDouble,
@@ -25,6 +27,7 @@ class NumericValueRange extends StatefulWidget {
   final int minimum;
   final int maximum;
   final ValueChanged<int> onChanged;
+  final ValueChanged<int>? onChangeEnd;
   final double? rangeMinimum;
   final double? rangeMaximum;
   final double Function(int value) valueToRange;
@@ -63,13 +66,21 @@ class _NumericValueRangeState extends State<NumericValueRange> {
     if (clamped != widget.value) widget.onChanged(clamped);
   }
 
+  void _end(int value) =>
+      widget.onChangeEnd?.call(value.clamp(widget.minimum, widget.maximum));
+
+  void _commit(int value) {
+    _change(value);
+    _end(value);
+  }
+
   void _submit(String text) {
     final clamped = (int.tryParse(text) ?? widget.value).clamp(
       widget.minimum,
       widget.maximum,
     );
     textController.text = '$clamped';
-    _change(clamped);
+    _commit(clamped);
   }
 
   @override
@@ -104,17 +115,13 @@ class _NumericValueRangeState extends State<NumericValueRange> {
           icon: FontAwesomeIcons.minus,
           tooltip: 'Decrease',
           onPressed: widget.value > widget.minimum
-              ? () => _change(widget.decrement(widget.value))
+              ? () => _commit(widget.decrement(widget.value))
               : null,
         ),
         SizedBox(
           width: 120,
           child: SliderTheme(
-            data: const SliderThemeData(
-              trackHeight: 2,
-              thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6),
-              overlayShape: RoundSliderOverlayShape(overlayRadius: 12),
-            ),
+            data: PaintStyle.sliderTheme,
             child: Slider(
               value: widget
                   .valueToRange(widget.value)
@@ -122,6 +129,7 @@ class _NumericValueRangeState extends State<NumericValueRange> {
               min: rangeMinimum,
               max: rangeMaximum,
               onChanged: (range) => _change(widget.rangeToValue(range)),
+              onChangeEnd: (range) => _end(widget.rangeToValue(range)),
             ),
           ),
         ),
@@ -129,7 +137,7 @@ class _NumericValueRangeState extends State<NumericValueRange> {
           icon: FontAwesomeIcons.plus,
           tooltip: 'Increase',
           onPressed: widget.value < widget.maximum
-              ? () => _change(widget.increment(widget.value))
+              ? () => _commit(widget.increment(widget.value))
               : null,
         ),
       ],

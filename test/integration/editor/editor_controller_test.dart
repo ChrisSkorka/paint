@@ -2,17 +2,19 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document.dart';
+import 'package:paint/editor/canvas/document_layer.dart';
 import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
 import 'package:paint/editor/editor_controller.dart';
-import 'package:paint/editor/history/history_entry.dart';
 import 'package:paint/editor/history/layer_snapshot.dart';
+import 'package:paint/editor/history/pixel_history_entry.dart';
 import 'package:paint/editor/pointer_button.dart';
 import 'package:paint/editor/tools/brush_tip.dart';
 import 'package:paint/editor/tools/tool_kind.dart';
 
+import '../../support/document_probes.dart';
 import '../../support/layer_probes.dart';
 
 void main() {
@@ -67,9 +69,74 @@ void main() {
           );
           final actual = editorController.visibleLayers;
           final expected = [
-            document.activeLayer,
-            editorController.pointerLayer,
+            DocumentLayer(name: 'Background', pixels: document.activeLayer),
+            DocumentLayer(
+              name: 'Pointer',
+              pixels: editorController.pointerLayer,
+            ),
           ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('visibility', () {
+        test('hidden layer', () {
+          final document = Document(
+            width: 1,
+            height: 1,
+            layers: [
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer.filled(
+                  width: 1,
+                  height: 1,
+                  color: PixelColor.white,
+                ),
+                visible: false,
+              ),
+              DocumentLayer(
+                name: 'Sketch',
+                pixels: Layer.filled(
+                  width: 1,
+                  height: 1,
+                  color: PixelColor.black,
+                ),
+              ),
+            ],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          final actual = [
+            for (final layer in editorController.visibleLayers) layer.name,
+          ];
+          const expected = ['Sketch', 'Pointer'];
+          expect(actual, equals(expected));
+        });
+        test('translucent layer', () {
+          final document = Document(
+            width: 1,
+            height: 1,
+            layers: [
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer.filled(
+                  width: 1,
+                  height: 1,
+                  color: PixelColor.white,
+                ),
+                opacity: 0,
+              ),
+            ],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          final actual = [
+            for (final layer in editorController.visibleLayers) layer.name,
+          ];
+          const expected = ['Background', 'Pointer'];
           expect(actual, equals(expected));
         });
       });
@@ -150,6 +217,1078 @@ void main() {
           editorController.setShapeWidth(3);
           final actual = [editorController.shapeWidth, notifications];
           const expected = [3, 1];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method setLayerVisibility', () {
+      group('visibility', () {
+        test('hide', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setLayerVisibility(index: 0, visible: false);
+          final actual = [document.layers.first.visible, notifications];
+          const expected = [false, 1];
+          expect(actual, equals(expected));
+        });
+        test('show', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setLayerVisibility(index: 0, visible: false);
+          editorController.setLayerVisibility(index: 0, visible: true);
+          final actual = document.layers.first.visible;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+      });
+      group('index', () {
+        test('second layer', () {
+          final document = Document(
+            width: 1,
+            height: 1,
+            layers: [
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer.filled(
+                  width: 1,
+                  height: 1,
+                  color: PixelColor.white,
+                ),
+              ),
+              DocumentLayer(
+                name: 'Sketch',
+                pixels: Layer.filled(
+                  width: 1,
+                  height: 1,
+                  color: PixelColor.black,
+                ),
+              ),
+            ],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setLayerVisibility(index: 1, visible: false);
+          final actual = [for (final layer in document.layers) layer.visible];
+          const expected = [true, false];
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('recorded', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setLayerVisibility(index: 0, visible: false);
+          editorController.setLayerVisibility(index: 0, visible: true);
+          final actual = editorController.history.entries.map(
+            (entry) => entry.name,
+          );
+          const expected = ['Hide layer', 'Show layer'];
+          expect(actual, equals(expected));
+        });
+        test('undo', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setLayerVisibility(index: 0, visible: false);
+          editorController.undo();
+          final actual = document.layers.first.visible;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        test('redo', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setLayerVisibility(index: 0, visible: false);
+          editorController.undo();
+          editorController.redo();
+          final actual = document.layers.first.visible;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+      });
+      group('thumbnail', () {
+        test('changed layer not active', () {
+          final document = Document(
+            width: 1,
+            height: 1,
+            layers: [
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer.filled(
+                  width: 1,
+                  height: 1,
+                  color: PixelColor.white,
+                ),
+              ),
+              DocumentLayer(
+                name: 'Sketch',
+                pixels: Layer.filled(
+                  width: 1,
+                  height: 1,
+                  color: PixelColor.black,
+                ),
+              ),
+            ],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setLayerVisibility(index: 1, visible: false);
+          final actual = editorController.history.entries.single.thumbnail;
+          final expected = Layer.filled(
+            width: 1,
+            height: 1,
+            color: PixelColor.black,
+          );
+          expect(actual, equals(expected));
+        });
+      });
+      group('selection', () {
+        test('kept', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectAll();
+          editorController.setLayerVisibility(index: 0, visible: false);
+          final actual = editorController.selectionArea;
+          const expected = PixelRectangle(left: 0, top: 0, width: 2, height: 1);
+          expect(actual, equals(expected));
+        });
+      });
+      group('stroke', () {
+        test('during stroke', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.setLayerVisibility(index: 0, visible: false);
+          final actual = [
+            document.layers.first.visible,
+            editorController.history.entries.length,
+          ];
+          const expected = [true, 0];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method previewLayerOpacity', () {
+      group('opacity', () {
+        test('partial', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.previewLayerOpacity(index: 0, opacity: 40);
+          final actual = [
+            document.layers.first.opacity,
+            editorController.history.entries.length,
+            notifications,
+          ];
+          const expected = [40, 0, 1];
+          expect(actual, equals(expected));
+        });
+        test('repeated', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.previewLayerOpacity(index: 0, opacity: 40);
+          editorController.previewLayerOpacity(index: 0, opacity: 20);
+          final actual = [
+            document.layers.first.opacity,
+            editorController.history.entries.length,
+          ];
+          const expected = [20, 0];
+          expect(actual, equals(expected));
+        });
+      });
+      group('index', () {
+        test('second layer', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.previewLayerOpacity(index: 1, opacity: 25);
+          final actual = [for (final layer in document.layers) layer.opacity];
+          const expected = [100, 25];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method setLayerOpacity', () {
+      group('opacity', () {
+        test('without preview', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setLayerOpacity(index: 0, opacity: 40);
+          final actual = [
+            document.layers.first.opacity,
+            editorController.history.entries.map((entry) => entry.name),
+            notifications,
+          ];
+          const expected = [
+            40,
+            ['Layer opacity'],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('after preview', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.previewLayerOpacity(index: 0, opacity: 60);
+          editorController.previewLayerOpacity(index: 0, opacity: 40);
+          editorController.setLayerOpacity(index: 0, opacity: 40);
+          final actual = [
+            document.layers.first.opacity,
+            editorController.history.entries.map((entry) => entry.name),
+          ];
+          const expected = [
+            40,
+            ['Layer opacity'],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('unchanged', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setLayerOpacity(index: 0, opacity: 100);
+          final actual = [
+            document.layers.first.opacity,
+            editorController.history.entries.length,
+            notifications,
+          ];
+          const expected = [100, 0, 1];
+          expect(actual, equals(expected));
+        });
+        test('preview back to start', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.previewLayerOpacity(index: 0, opacity: 60);
+          editorController.setLayerOpacity(index: 0, opacity: 100);
+          final actual = [
+            document.layers.first.opacity,
+            editorController.history.entries.length,
+          ];
+          const expected = [100, 0];
+          expect(actual, equals(expected));
+        });
+      });
+      group('index', () {
+        test('second layer', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setLayerOpacity(index: 1, opacity: 25);
+          final actual = [for (final layer in document.layers) layer.opacity];
+          const expected = [100, 25];
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('undo after preview', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.previewLayerOpacity(index: 0, opacity: 60);
+          editorController.setLayerOpacity(index: 0, opacity: 30);
+          editorController.undo();
+          final actual = document.layers.first.opacity;
+          const expected = 100;
+          expect(actual, equals(expected));
+        });
+        test('redo', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setLayerOpacity(index: 0, opacity: 30);
+          editorController.undo();
+          editorController.redo();
+          final actual = document.layers.first.opacity;
+          const expected = 30;
+          expect(actual, equals(expected));
+        });
+        test('separate drags', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.previewLayerOpacity(index: 0, opacity: 60);
+          editorController.setLayerOpacity(index: 0, opacity: 60);
+          editorController.previewLayerOpacity(index: 0, opacity: 20);
+          editorController.setLayerOpacity(index: 0, opacity: 20);
+          editorController.undo();
+          final actual = [
+            document.layers.first.opacity,
+            editorController.history.entries.length,
+          ];
+          const expected = [60, 2];
+          expect(actual, equals(expected));
+        });
+        test('preview discarded by undo', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setLayerOpacity(index: 0, opacity: 60);
+          editorController.previewLayerOpacity(index: 0, opacity: 20);
+          editorController.undo();
+          editorController.setLayerOpacity(index: 0, opacity: 50);
+          editorController.undo();
+          final actual = document.layers.first.opacity;
+          const expected = 100;
+          expect(actual, equals(expected));
+        });
+      });
+      group('thumbnail', () {
+        test('changed layer not active', () {
+          final document = Document(
+            width: 1,
+            height: 1,
+            layers: [
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer.filled(
+                  width: 1,
+                  height: 1,
+                  color: PixelColor.white,
+                ),
+              ),
+              DocumentLayer(
+                name: 'Sketch',
+                pixels: Layer.filled(
+                  width: 1,
+                  height: 1,
+                  color: PixelColor.black,
+                ),
+              ),
+            ],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setLayerOpacity(index: 1, opacity: 40);
+          final actual = editorController.history.entries.single.thumbnail;
+          final expected = Layer.filled(
+            width: 1,
+            height: 1,
+            color: PixelColor.black,
+          );
+          expect(actual, equals(expected));
+        });
+      });
+      group('pixels', () {
+        test('drawing after opacity change', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setLayerOpacity(index: 0, opacity: 50);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          final actual = [
+            document.layers.first.pixels.getPixel(const PixelPoint(x: 0, y: 0)),
+            editorController.history.entries.map((entry) => entry.name),
+          ];
+          const expected = [
+            PixelColor.black,
+            ['Layer opacity', 'Pen'],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter canRemoveLayer', () {
+      group('layer count', () {
+        test('one', () {
+          final editorController = EditorController.forDocument(
+            document: layeredDocument(
+              names: ['Background'],
+              activeLayerIndex: 0,
+            ),
+          );
+          final actual = editorController.canRemoveLayer;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('multiple', () {
+          final editorController = EditorController.forDocument(
+            document: layeredDocument(
+              names: ['Background', 'Sketch'],
+              activeLayerIndex: 0,
+            ),
+          );
+          final actual = editorController.canRemoveLayer;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter canMoveLayerUp', () {
+      group('active layer', () {
+        test('only', () {
+          final editorController = EditorController.forDocument(
+            document: layeredDocument(
+              names: ['Background'],
+              activeLayerIndex: 0,
+            ),
+          );
+          final actual = editorController.canMoveLayerUp;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('bottom', () {
+          final editorController = EditorController.forDocument(
+            document: layeredDocument(
+              names: ['Background', 'Sketch'],
+              activeLayerIndex: 0,
+            ),
+          );
+          final actual = editorController.canMoveLayerUp;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        test('top', () {
+          final editorController = EditorController.forDocument(
+            document: layeredDocument(
+              names: ['Background', 'Sketch'],
+              activeLayerIndex: 1,
+            ),
+          );
+          final actual = editorController.canMoveLayerUp;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter canMoveLayerDown', () {
+      group('active layer', () {
+        test('only', () {
+          final editorController = EditorController.forDocument(
+            document: layeredDocument(
+              names: ['Background'],
+              activeLayerIndex: 0,
+            ),
+          );
+          final actual = editorController.canMoveLayerDown;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('bottom', () {
+          final editorController = EditorController.forDocument(
+            document: layeredDocument(
+              names: ['Background', 'Sketch'],
+              activeLayerIndex: 0,
+            ),
+          );
+          final actual = editorController.canMoveLayerDown;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('top', () {
+          final editorController = EditorController.forDocument(
+            document: layeredDocument(
+              names: ['Background', 'Sketch'],
+              activeLayerIndex: 1,
+            ),
+          );
+          final actual = editorController.canMoveLayerDown;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method selectLayer', () {
+      group('index', () {
+        test('other layer', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.selectLayer(1);
+          final actual = [
+            layerStructure(document),
+            editorController.history.entries.length,
+            notifications,
+          ];
+          const expected = [
+            [
+              ['Background', 'Sketch'],
+              1,
+            ],
+            0,
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('drawing', () {
+        test('selected layer', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectLayer(0);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          final actual = [
+            for (final layer in document.layers) pixelRows(layer.pixels),
+          ];
+          const expected = [
+            [
+              [black, transparent],
+            ],
+            [
+              [transparent, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('selection', () {
+        test('cleared', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectAll();
+          editorController.selectLayer(1);
+          final actual = editorController.selectionArea;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+      group('stroke', () {
+        test('during stroke', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.selectLayer(1);
+          final actual = document.activeLayerIndex;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method addLayer', () {
+      group('position', () {
+        test('above only layer', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.addLayer();
+          final actual = [
+            layerStructure(document),
+            pixelRows(document.activeLayer),
+            notifications,
+          ];
+          const expected = [
+            [
+              ['Background', 'Layer 2'],
+              1,
+            ],
+            [
+              [transparent, transparent],
+            ],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('above middle layer', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch', 'Ink'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.addLayer();
+          final actual = layerStructure(document);
+          const expected = [
+            ['Background', 'Sketch', 'Layer 4', 'Ink'],
+            2,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('names', () {
+        test('two additions', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.addLayer();
+          editorController.addLayer();
+          final actual = layerStructure(document);
+          const expected = [
+            ['Background', 'Layer 2', 'Layer 3'],
+            2,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('after removal', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.addLayer();
+          editorController.removeLayer();
+          editorController.addLayer();
+          final actual = layerStructure(document);
+          const expected = [
+            ['Background', 'Layer 3'],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('recorded', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.addLayer();
+          final actual = editorController.history.entries.map(
+            (entry) => entry.name,
+          );
+          const expected = ['Add layer'];
+          expect(actual, equals(expected));
+        });
+        test('undo', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.addLayer();
+          editorController.undo();
+          final actual = layerStructure(document);
+          const expected = [
+            ['Background'],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('redo', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.addLayer();
+          editorController.undo();
+          editorController.redo();
+          final actual = layerStructure(document);
+          const expected = [
+            ['Background', 'Layer 2'],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('selection', () {
+        test('cleared', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectAll();
+          editorController.addLayer();
+          final actual = editorController.selectionArea;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+      group('stroke', () {
+        test('during stroke', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.addLayer();
+          final actual = [
+            layerStructure(document),
+            editorController.history.entries.length,
+          ];
+          const expected = [
+            [
+              ['Background'],
+              0,
+            ],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method removeLayer', () {
+      group('position', () {
+        test('top layer', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.removeLayer();
+          final actual = [layerStructure(document), notifications];
+          const expected = [
+            [
+              ['Background'],
+              0,
+            ],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('bottom layer', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.removeLayer();
+          final actual = layerStructure(document);
+          const expected = [
+            ['Sketch'],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('middle layer', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch', 'Ink'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.removeLayer();
+          final actual = layerStructure(document);
+          const expected = [
+            ['Background', 'Ink'],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('only layer', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.removeLayer();
+          final actual = [
+            layerStructure(document),
+            editorController.history.entries.length,
+            notifications,
+          ];
+          const expected = [
+            [
+              ['Background'],
+              0,
+            ],
+            0,
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('recorded', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.removeLayer();
+          final actual = editorController.history.entries.map(
+            (entry) => entry.name,
+          );
+          const expected = ['Remove layer'];
+          expect(actual, equals(expected));
+        });
+        test('undo', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.removeLayer();
+          editorController.undo();
+          final actual = layerStructure(document);
+          const expected = [
+            ['Background', 'Sketch'],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('undo restores pixels', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 0));
+          editorController.removeLayer();
+          editorController.undo();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, black],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method moveLayer', () {
+      group('direction', () {
+        test('up', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.moveLayer(up: true);
+          final actual = [layerStructure(document), notifications];
+          const expected = [
+            [
+              ['Sketch', 'Background'],
+              1,
+            ],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('down', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.moveLayer(up: false);
+          final actual = layerStructure(document);
+          const expected = [
+            ['Sketch', 'Background'],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('up from top', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.moveLayer(up: true);
+          final actual = [
+            layerStructure(document),
+            editorController.history.entries.length,
+          ];
+          const expected = [
+            [
+              ['Background', 'Sketch'],
+              1,
+            ],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('down from bottom', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.moveLayer(up: false);
+          final actual = [
+            layerStructure(document),
+            editorController.history.entries.length,
+          ];
+          const expected = [
+            [
+              ['Background', 'Sketch'],
+              0,
+            ],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('recorded', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch', 'Ink'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.moveLayer(up: true);
+          editorController.moveLayer(up: false);
+          final actual = editorController.history.entries.map(
+            (entry) => entry.name,
+          );
+          const expected = ['Move layer up', 'Move layer down'];
+          expect(actual, equals(expected));
+        });
+        test('undo', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.moveLayer(up: true);
+          editorController.undo();
+          final actual = layerStructure(document);
+          const expected = [
+            ['Background', 'Sketch'],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('undo stroke after move', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          editorController.moveLayer(up: false);
+          editorController.jumpToHistory(0);
+          final actual = [
+            layerStructure(document),
+            for (final layer in document.layers) pixelRows(layer.pixels),
+          ];
+          const expected = [
+            [
+              ['Background', 'Sketch'],
+              1,
+            ],
+            [
+              [transparent, transparent],
+            ],
+            [
+              [transparent, transparent],
+            ],
+          ];
           expect(actual, equals(expected));
         });
       });
@@ -1263,7 +2402,7 @@ void main() {
             document: Document(
               width: 2,
               height: 1,
-              layers: [layer],
+              layers: [DocumentLayer(name: 'Background', pixels: layer)],
               activeLayerIndex: 0,
             ),
           );
@@ -1503,7 +2642,7 @@ void main() {
           editorController.pointerUp(point: const PixelPoint(x: 1, y: 0));
           final actual = editorController.history.entries;
           final expected = [
-            HistoryEntry(
+            PixelHistoryEntry(
               name: 'Pen',
               layerIndex: 0,
               before: LayerSnapshot(
@@ -1558,7 +2697,7 @@ void main() {
           editorController.pointerUp(point: const PixelPoint(x: 2, y: 0));
           final actual = editorController.history.entries;
           final expected = [
-            HistoryEntry(
+            PixelHistoryEntry(
               name: 'Pen',
               layerIndex: 0,
               before: LayerSnapshot(
@@ -1623,7 +2762,7 @@ void main() {
           editorController.pointerUp(point: const PixelPoint(x: 2, y: 0));
           final actual = editorController.history.entries;
           final expected = [
-            HistoryEntry(
+            PixelHistoryEntry(
               name: 'Eraser',
               layerIndex: 0,
               before: LayerSnapshot(
@@ -1678,7 +2817,7 @@ void main() {
           editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
           final actual = editorController.history.entries;
           final expected = [
-            HistoryEntry(
+            PixelHistoryEntry(
               name: 'Fill',
               layerIndex: 0,
               before: LayerSnapshot(
@@ -1739,7 +2878,7 @@ void main() {
           editorController.pointerUp(point: const PixelPoint(x: 1, y: 0));
           final actual = editorController.history.entries;
           final expected = [
-            HistoryEntry(
+            PixelHistoryEntry(
               name: 'Rectangle',
               layerIndex: 0,
               before: LayerSnapshot(

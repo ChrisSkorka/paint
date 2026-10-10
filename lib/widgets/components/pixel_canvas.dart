@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import '../../editor/canvas/document_layer.dart';
 import '../../editor/canvas/layer.dart';
 import '../../editor/canvas/pixel_point.dart';
 import '../../editor/canvas/pixel_rectangle.dart';
@@ -28,7 +29,7 @@ class PixelCanvas extends StatelessWidget {
   final int width;
   final int height;
   final int zoom;
-  final List<Layer> layers;
+  final List<DocumentLayer> layers;
   final void Function({
     required PixelPoint point,
     required PointerButton button,
@@ -88,28 +89,30 @@ class PixelCanvas extends StatelessWidget {
 class PixelLayersPainter extends CustomPainter {
   const PixelLayersPainter({required this.layers, required this.zoom});
 
-  final List<Layer> layers;
+  final List<DocumentLayer> layers;
   final int zoom;
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (final layer in layers) {
-      for (var y = 0; y < layer.height; y++) {
-        _paintRow(canvas: canvas, layer: layer, y: y);
-      }
+  static void paintPixels({
+    required Canvas canvas,
+    required Layer pixels,
+    required int zoom,
+  }) {
+    for (var y = 0; y < pixels.height; y++) {
+      _paintRow(canvas: canvas, pixels: pixels, y: y, zoom: zoom);
     }
   }
 
-  void _paintRow({
+  static void _paintRow({
     required Canvas canvas,
-    required Layer layer,
+    required Layer pixels,
     required int y,
+    required int zoom,
   }) {
     var runStart = 0;
-    for (var x = 1; x <= layer.width; x++) {
-      final runColor = layer.getPixel(PixelPoint(x: runStart, y: y));
-      if (x < layer.width &&
-          layer.getPixel(PixelPoint(x: x, y: y)) == runColor) {
+    for (var x = 1; x <= pixels.width; x++) {
+      final runColor = pixels.getPixel(PixelPoint(x: runStart, y: y));
+      if (x < pixels.width &&
+          pixels.getPixel(PixelPoint(x: x, y: y)) == runColor) {
         continue;
       }
       if (runColor.alpha > 0) {
@@ -126,6 +129,27 @@ class PixelLayersPainter extends CustomPainter {
         );
       }
       runStart = x;
+    }
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final layer in layers) {
+      final translucent = layer.opacity < DocumentLayer.maximumOpacity;
+      if (translucent) {
+        canvas.saveLayer(
+          Offset.zero & size,
+          Paint()
+            ..color = Color.fromRGBO(
+              0,
+              0,
+              0,
+              layer.opacity / DocumentLayer.maximumOpacity,
+            ),
+        );
+      }
+      paintPixels(canvas: canvas, pixels: layer.pixels, zoom: zoom);
+      if (translucent) canvas.restore();
     }
   }
 

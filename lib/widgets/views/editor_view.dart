@@ -7,13 +7,17 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../editor/canvas/document.dart';
 import '../../editor/canvas/pixel_color.dart';
 import '../../editor/editor_controller.dart';
+import '../../editor/canvas/layer.dart';
+import '../../editor/history/history.dart';
 import '../../editor/history/history_entry.dart';
+import '../../editor/history/pixel_history_entry.dart';
 import '../../editor/tools/brush_tip.dart';
 import '../../editor/tools/color_palettes.dart';
 import '../../editor/tools/tool_kind.dart';
 import '../components/color_dialog.dart';
 import '../components/edge_shadow.dart';
 import '../components/history_list.dart';
+import '../components/layer_list.dart';
 import '../components/pixel_canvas.dart';
 import '../components/numeric_value_range.dart';
 import '../components/paint_bar.dart';
@@ -153,7 +157,21 @@ class _EditorViewState extends State<EditorView> {
       ),
   ];
 
-  Rect _thumbnailOutline(HistoryEntry entry) {
+  List<LayerListItem> _layerItems() => [
+    for (final layer in widget.document.layers)
+      LayerListItem(
+        name: layer.name,
+        thumbnail: Layer.thumbnail(
+          layer: layer.pixels,
+          maximumSize: History.thumbnailSize,
+        ),
+        visible: layer.visible,
+        opacity: layer.opacity,
+      ),
+  ];
+
+  Rect? _thumbnailOutline(HistoryEntry entry) {
+    if (entry is! PixelHistoryEntry) return null;
     final scaleX = entry.thumbnail.width / widget.document.width;
     final scaleY = entry.thumbnail.height / widget.document.height;
     final area = entry.after.area;
@@ -236,6 +254,54 @@ class _EditorViewState extends State<EditorView> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLayersPane() {
+    return Column(
+      children: [
+        Expanded(
+          child: LayerList(
+            items: _layerItems(),
+            activeIndex: widget.document.activeLayerIndex,
+            onSelect: controller.selectLayer,
+            onVisibilityChanged: controller.setLayerVisibility,
+            onOpacityChanged: controller.previewLayerOpacity,
+            onOpacityChangeEnd: controller.setLayerOpacity,
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            PaintIconButton(
+              icon: FontAwesomeIcons.plus,
+              tooltip: 'Add layer',
+              onPressed: controller.addLayer,
+            ),
+            PaintIconButton(
+              icon: FontAwesomeIcons.trashCan,
+              tooltip: 'Remove layer',
+              onPressed: controller.canRemoveLayer
+                  ? controller.removeLayer
+                  : null,
+            ),
+            PaintIconButton(
+              icon: FontAwesomeIcons.arrowUp,
+              tooltip: 'Move layer up',
+              onPressed: controller.canMoveLayerUp
+                  ? () => controller.moveLayer(up: true)
+                  : null,
+            ),
+            PaintIconButton(
+              icon: FontAwesomeIcons.arrowDown,
+              tooltip: 'Move layer down',
+              onPressed: controller.canMoveLayerDown
+                  ? () => controller.moveLayer(up: false)
+                  : null,
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -510,13 +576,28 @@ class _EditorViewState extends State<EditorView> {
                   ],
                 ),
               ),
-              SidePanel(
-                title: 'History',
-                child: HistoryList(
-                  items: _historyItems(),
-                  position: controller.history.position,
-                  onSelect: controller.jumpToHistory,
-                ),
+              Column(
+                children: [
+                  Expanded(
+                    child: SidePanel(
+                      title: 'Layers',
+                      border: const Border(
+                        bottom: BorderSide(color: PaintStyle.separatorColor),
+                      ),
+                      child: _buildLayersPane(),
+                    ),
+                  ),
+                  Expanded(
+                    child: SidePanel(
+                      title: 'History',
+                      child: HistoryList(
+                        items: _historyItems(),
+                        position: controller.history.position,
+                        onSelect: controller.jumpToHistory,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

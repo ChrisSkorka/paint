@@ -113,10 +113,7 @@ class ThumbnailPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     canvas.save();
     canvas.scale(scale);
-    PixelLayersPainter(
-      layers: [thumbnail],
-      zoom: 1,
-    ).paint(canvas, size / scale);
+    PixelLayersPainter.paintPixels(canvas: canvas, pixels: thumbnail, zoom: 1);
     canvas.restore();
     final outline = this.outline;
     if (outline == null) return;

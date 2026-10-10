@@ -491,6 +491,201 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('change end', () {
+        testWidgets('slider tap', (tester) async {
+          final changes = <int>[];
+          final ends = <int>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: Center(
+                  child: NumericValueRange(
+                    label: 'Size:',
+                    value: 1,
+                    minimum: 0,
+                    maximum: 10,
+                    onChanged: changes.add,
+                    onChangeEnd: ends.add,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byType(Slider));
+          final actual = [changes, ends];
+          const expected = [
+            [5],
+            [5],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('slider drag', (tester) async {
+          final changes = <int>[];
+          final ends = <int>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: Center(
+                  child: NumericValueRange(
+                    label: 'Size:',
+                    value: 1,
+                    minimum: 0,
+                    maximum: 10,
+                    onChanged: changes.add,
+                    onChangeEnd: ends.add,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.drag(find.byType(Slider), const Offset(20, 0));
+          final actual = [changes, ends];
+          const expected = [
+            [5, 7],
+            [7],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('plus', (tester) async {
+          final changes = <int>[];
+          final ends = <int>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: Center(
+                  child: NumericValueRange(
+                    label: 'Size:',
+                    value: 5,
+                    minimum: 0,
+                    maximum: 10,
+                    onChanged: changes.add,
+                    onChangeEnd: ends.add,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Increase'));
+          final actual = [changes, ends];
+          const expected = [
+            [6],
+            [6],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('minus', (tester) async {
+          final changes = <int>[];
+          final ends = <int>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: Center(
+                  child: NumericValueRange(
+                    label: 'Size:',
+                    value: 5,
+                    minimum: 0,
+                    maximum: 10,
+                    onChanged: changes.add,
+                    onChangeEnd: ends.add,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Decrease'));
+          final actual = [changes, ends];
+          const expected = [
+            [4],
+            [4],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('typing', (tester) async {
+          final changes = <int>[];
+          final ends = <int>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: Center(
+                  child: NumericValueRange(
+                    label: 'Size:',
+                    value: 5,
+                    minimum: 0,
+                    maximum: 10,
+                    onChanged: changes.add,
+                    onChangeEnd: ends.add,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.enterText(find.byType(TextField), '7');
+          final actual = [changes, ends];
+          const expected = [
+            [7],
+            <int>[],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('submitting', (tester) async {
+          final changes = <int>[];
+          final ends = <int>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: Center(
+                  child: NumericValueRange(
+                    label: 'Size:',
+                    value: 5,
+                    minimum: 0,
+                    maximum: 10,
+                    onChanged: changes.add,
+                    onChangeEnd: ends.add,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.enterText(find.byType(TextField), '7');
+          await tester.testTextInput.receiveAction(TextInputAction.done);
+          await tester.pump();
+          final actual = [changes, ends];
+          const expected = [
+            [7, 7],
+            [7],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('submitting unchanged', (tester) async {
+          final changes = <int>[];
+          final ends = <int>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: Center(
+                  child: NumericValueRange(
+                    label: 'Size:',
+                    value: 5,
+                    minimum: 0,
+                    maximum: 10,
+                    onChanged: changes.add,
+                    onChangeEnd: ends.add,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.enterText(find.byType(TextField), '5');
+          await tester.testTextInput.receiveAction(TextInputAction.done);
+          await tester.pump();
+          final actual = [changes, ends];
+          const expected = [
+            <int>[],
+            [5],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
     });
 
     group('lifecycle', () {

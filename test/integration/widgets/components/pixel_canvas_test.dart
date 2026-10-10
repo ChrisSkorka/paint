@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paint/editor/canvas/document_layer.dart';
 import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
@@ -45,7 +46,7 @@ void main() {
                 width: 3,
                 height: 2,
                 zoom: 4,
-                layers: [layer],
+                layers: [DocumentLayer(name: 'Background', pixels: layer)],
                 onPointerDown: ({required point, required button}) {},
                 onPointerMove: ({required point}) {},
                 onPointerUp: ({required point}) {},
@@ -65,7 +66,7 @@ void main() {
               .single;
           final actual = [pixelLayersPainter.layers, pixelLayersPainter.zoom];
           final expected = [
-            [layer],
+            [DocumentLayer(name: 'Background', pixels: layer)],
             4,
           ];
           expect(actual, equals(expected));

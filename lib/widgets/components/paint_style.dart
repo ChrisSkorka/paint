@@ -41,6 +41,12 @@ abstract final class PaintStyle {
     fontWeight: FontWeight.bold,
   );
 
+  static const sliderTheme = SliderThemeData(
+    trackHeight: 2,
+    thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6),
+    overlayShape: RoundSliderOverlayShape(overlayRadius: 12),
+  );
+
   static const barShadow = [BoxShadow(color: Color(0x1A000000), blurRadius: 5)];
   static const faintShadow = [
     BoxShadow(color: Color(0x80000000), blurRadius: 3, spreadRadius: -2),

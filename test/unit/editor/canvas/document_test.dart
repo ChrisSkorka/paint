@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document.dart';
+import 'package:paint/editor/canvas/document_layer.dart';
 import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 
@@ -15,10 +16,13 @@ void main() {
             width: 2,
             height: 1,
             layers: [
-              Layer(
-                width: 2,
-                height: 1,
-                rgba: Uint8List.fromList([0, 0, 0, 0, 0, 0, 0, 0]),
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer(
+                  width: 2,
+                  height: 1,
+                  rgba: Uint8List.fromList([0, 0, 0, 0, 0, 0, 0, 0]),
+                ),
               ),
             ],
             activeLayerIndex: 0,
@@ -35,19 +39,22 @@ void main() {
             width: 2,
             height: 1,
             layers: [
-              Layer(
-                width: 2,
-                height: 1,
-                rgba: Uint8List.fromList([
-                  0xff,
-                  0xff,
-                  0xff,
-                  0xff,
-                  0xff,
-                  0xff,
-                  0xff,
-                  0xff,
-                ]),
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer(
+                  width: 2,
+                  height: 1,
+                  rgba: Uint8List.fromList([
+                    0xff,
+                    0xff,
+                    0xff,
+                    0xff,
+                    0xff,
+                    0xff,
+                    0xff,
+                    0xff,
+                  ]),
+                ),
               ),
             ],
             activeLayerIndex: 0,
@@ -64,10 +71,13 @@ void main() {
             width: 1,
             height: 1,
             layers: [
-              Layer(
-                width: 1,
-                height: 1,
-                rgba: Uint8List.fromList([1, 2, 3, 4]),
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer(
+                  width: 1,
+                  height: 1,
+                  rgba: Uint8List.fromList([1, 2, 3, 4]),
+                ),
               ),
             ],
             activeLayerIndex: 0,
@@ -87,15 +97,21 @@ void main() {
             width: 1,
             height: 1,
             layers: [
-              Layer(
-                width: 1,
-                height: 1,
-                rgba: Uint8List.fromList([1, 2, 3, 4]),
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer(
+                  width: 1,
+                  height: 1,
+                  rgba: Uint8List.fromList([1, 2, 3, 4]),
+                ),
               ),
-              Layer(
-                width: 1,
-                height: 1,
-                rgba: Uint8List.fromList([5, 6, 7, 8]),
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer(
+                  width: 1,
+                  height: 1,
+                  rgba: Uint8List.fromList([5, 6, 7, 8]),
+                ),
               ),
             ],
             activeLayerIndex: 0,
@@ -113,15 +129,21 @@ void main() {
             width: 1,
             height: 1,
             layers: [
-              Layer(
-                width: 1,
-                height: 1,
-                rgba: Uint8List.fromList([1, 2, 3, 4]),
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer(
+                  width: 1,
+                  height: 1,
+                  rgba: Uint8List.fromList([1, 2, 3, 4]),
+                ),
               ),
-              Layer(
-                width: 1,
-                height: 1,
-                rgba: Uint8List.fromList([5, 6, 7, 8]),
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer(
+                  width: 1,
+                  height: 1,
+                  rgba: Uint8List.fromList([5, 6, 7, 8]),
+                ),
               ),
             ],
             activeLayerIndex: 1,
@@ -274,8 +296,22 @@ void main() {
             width: 2,
             height: 1,
             layers: [
-              Layer.filled(width: 2, height: 1, color: PixelColor.transparent),
-              Layer.filled(width: 2, height: 1, color: PixelColor.transparent),
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer.filled(
+                  width: 2,
+                  height: 1,
+                  color: PixelColor.transparent,
+                ),
+              ),
+              DocumentLayer(
+                name: 'Background',
+                pixels: Layer.filled(
+                  width: 2,
+                  height: 1,
+                  color: PixelColor.transparent,
+                ),
+              ),
             ],
             activeLayerIndex: 1,
           );

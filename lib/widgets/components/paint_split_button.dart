@@ -11,6 +11,7 @@ class PaintSplitButton extends StatefulWidget {
     required this.tooltip,
     required this.onPressed,
     required this.dropdown,
+    this.dropdownTooltip,
     this.color = PaintStyle.iconColor,
     this.selected = false,
   });
@@ -19,6 +20,7 @@ class PaintSplitButton extends StatefulWidget {
   final String tooltip;
   final VoidCallback onPressed;
   final Widget dropdown;
+  final String? dropdownTooltip;
   final Color color;
   final bool selected;
 
@@ -62,7 +64,7 @@ class _PaintSplitButtonState extends State<PaintSplitButton> {
               alignmentOffset: const Offset(0, 4),
               menuChildren: [widget.dropdown],
               child: Tooltip(
-                message: '${widget.tooltip} options',
+                message: widget.dropdownTooltip ?? '${widget.tooltip} options',
                 waitDuration: const Duration(milliseconds: 500),
                 child: GestureDetector(
                   onTap: () => menuController.isOpen

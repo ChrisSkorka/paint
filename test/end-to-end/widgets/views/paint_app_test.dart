@@ -56,7 +56,7 @@ void main() {
           await gesture.moveTo(topLeft + const Offset(9, 1));
           await gesture.up();
           await tester.pump();
-          final documentLayer = canvasLayers(tester).first;
+          final documentLayer = canvasLayers(tester).first.pixels;
           final actual = [
             for (var x = 0; x < 4; x++)
               documentLayer.getPixel(PixelPoint(x: x, y: 0)),
@@ -81,7 +81,7 @@ void main() {
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           await tester.tapAt(topLeft + const Offset(1, 1));
           await tester.pump();
-          final documentLayer = canvasLayers(tester).first;
+          final documentLayer = canvasLayers(tester).first.pixels;
           final drawn = documentLayer.getPixel(const PixelPoint(x: 0, y: 0));
           await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
           await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
@@ -119,7 +119,7 @@ void main() {
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           await tester.tapAt(topLeft + const Offset(1, 1));
           await tester.pump();
-          final documentLayer = canvasLayers(tester).first;
+          final documentLayer = canvasLayers(tester).first.pixels;
           final actual = documentLayer.getPixel(const PixelPoint(x: 0, y: 0));
           const expected = PixelColor(argb: 0x80FF0000);
           expect(actual, equals(expected));

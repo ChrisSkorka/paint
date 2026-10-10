@@ -170,22 +170,22 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 #### 2.3 layers
 
-- [ ] layers pane in right panel: preview, visibility toggle, transparency slider
-- [ ] add, remove, reorder layers, select active layer
-- [ ] history records layer changes: add, remove, reorder, visibility, transparency
+- [x] layers pane in right panel: preview, visibility toggle, transparency slider
+- [x] add, remove, reorder layers, select active layer
+- [x] history records layer changes: add, remove, reorder, visibility, transparency
 
-### phase 3: files & persistence
+### phase 3: clipboard
+
+- [ ] copy, cut & paste selection to / from system clipboard
+- [ ] paste into new layer when larger than selection
+- [ ] create from clipboard (new document tab)
+
+### phase 4: files & persistence
 
 - [ ] decode & encode png & jpg (`image` package), flatten visible layers on export
 - [ ] open from real file (new document tab), save & download to real file (file pane)
 - [ ] save to & open from shared_preferences (document list in new document tab)
 - [ ] unsaved changes indicator
-
-### phase 4: clipboard
-
-- [ ] copy, cut & paste selection to / from system clipboard
-- [ ] paste into new layer when larger than selection
-- [ ] create from clipboard (new document tab)
 
 ### phase 5: animations
 
@@ -226,10 +226,14 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 6.4: history
 
-- [ ] history item preview enlarges on hover
+- [ ] history & layer item preview enlarges on hover
 - [ ] history slider
 - [ ] feature to convert history diff into layer
 
 ### phase 6.5: misc
 
 - [ ] allow zoom less than 1x
+- [ ] allow change image size
+- [ ] move layer & history image previews to left
+- [ ] allow renaming layers
+- [ ] text inputs have unit text on right side

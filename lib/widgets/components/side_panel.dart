@@ -3,17 +3,26 @@ import 'package:flutter/material.dart';
 import 'paint_style.dart';
 
 class SidePanel extends StatelessWidget {
-  const SidePanel({super.key, required this.title, required this.child});
+  const SidePanel({
+    super.key,
+    required this.title,
+    required this.child,
+    this.border,
+  });
 
   final String title;
   final Widget child;
+  final BoxBorder? border;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: PaintStyle.sidePanelWidth,
       padding: const EdgeInsets.all(5),
-      color: PaintStyle.barBackground,
+      decoration: BoxDecoration(
+        color: PaintStyle.barBackground,
+        border: border,
+      ),
       child: Column(
         children: [
           Padding(

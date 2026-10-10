@@ -1,13 +1,17 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 
 import 'canvas/document.dart';
+import 'canvas/document_layer.dart';
 import 'canvas/layer.dart';
 import 'canvas/pixel_color.dart';
 import 'canvas/pixel_point.dart';
 import 'canvas/pixel_rectangle.dart';
 import 'history/history.dart';
-import 'history/history_entry.dart';
 import 'history/layer_snapshot.dart';
+import 'history/layers_history_entry.dart';
+import 'history/pixel_history_entry.dart';
 import 'pointer_button.dart';
 import 'selection/selection.dart';
 import 'tools/brush_tip.dart';
@@ -65,6 +69,8 @@ class EditorController extends ChangeNotifier {
   Selection? _selection;
   var _strokeArea = _noArea;
   var _recentColors = const <PixelColor>[];
+  late var _layerCount = document.layers.length;
+  List<DocumentLayer>? _layersBeforeOpacityPreview;
 
   static const _noArea = PixelRectangle(left: 0, top: 0, width: 0, height: 0);
   static const recentColorLimit = 5;
@@ -90,10 +96,18 @@ class EditorController extends ChangeNotifier {
         selection.area.contains(cursor);
   }
 
+  bool get canRemoveLayer => document.layers.length > 1;
+  bool get canMoveLayerUp =>
+      document.activeLayerIndex < document.layers.length - 1;
+  bool get canMoveLayerDown => document.activeLayerIndex > 0;
+
   PixelColor get editedColor =>
       _editingPrimary ? _primaryColor : _secondaryColor;
 
-  List<Layer> get visibleLayers => [...document.layers, pointerLayer];
+  List<DocumentLayer> get visibleLayers => [
+    ...document.layers.where((layer) => layer.visible),
+    DocumentLayer(name: 'Pointer', pixels: pointerLayer),
+  ];
 
   Tool? get _tool => switch (_toolKind) {
     ToolKind.pen => Pen(size: _penSize, tip: _penTip),
@@ -136,6 +150,127 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setLayerVisibility({required int index, required bool visible}) {
+    _changeLayers(
+      name: visible ? 'Show layer' : 'Hide layer',
+      changedLayerIndex: index,
+      change: () => document.layers[index] = document.layers[index].copyWith(
+        visible: visible,
+      ),
+    );
+  }
+
+  void previewLayerOpacity({required int index, required int opacity}) {
+    _layersBeforeOpacityPreview ??= List.of(document.layers);
+    document.layers[index] = document.layers[index].copyWith(opacity: opacity);
+    notifyListeners();
+  }
+
+  void setLayerOpacity({required int index, required int opacity}) {
+    final layersBefore =
+        _layersBeforeOpacityPreview ?? List.of(document.layers);
+    _layersBeforeOpacityPreview = null;
+    if (layersBefore[index].opacity == opacity) {
+      document.layers
+        ..clear()
+        ..addAll(layersBefore);
+      notifyListeners();
+      return;
+    }
+    _changeLayers(
+      name: 'Layer opacity',
+      layersBefore: layersBefore,
+      changedLayerIndex: index,
+      change: () => document.layers[index] = document.layers[index].copyWith(
+        opacity: opacity,
+      ),
+    );
+  }
+
+  void selectLayer(int index) {
+    if (_strokePoint != null) return;
+    _selection = null;
+    document.activeLayerIndex = index;
+    notifyListeners();
+  }
+
+  void addLayer() {
+    _changeLayers(
+      name: 'Add layer',
+      change: () {
+        _selection = null;
+        _layerCount++;
+        final index = document.activeLayerIndex + 1;
+        document.layers.insert(
+          index,
+          DocumentLayer(
+            name: 'Layer $_layerCount',
+            pixels: Layer.filled(
+              width: document.width,
+              height: document.height,
+              color: PixelColor.transparent,
+            ),
+          ),
+        );
+        document.activeLayerIndex = index;
+      },
+    );
+  }
+
+  void removeLayer() {
+    if (!canRemoveLayer) return;
+    _changeLayers(
+      name: 'Remove layer',
+      change: () {
+        _selection = null;
+        document.layers.removeAt(document.activeLayerIndex);
+        document.activeLayerIndex = max(0, document.activeLayerIndex - 1);
+      },
+    );
+  }
+
+  void moveLayer({required bool up}) {
+    if (!(up ? canMoveLayerUp : canMoveLayerDown)) return;
+    _changeLayers(
+      name: up ? 'Move layer up' : 'Move layer down',
+      change: () {
+        _selection = null;
+        final target = document.activeLayerIndex + (up ? 1 : -1);
+        final layer = document.layers.removeAt(document.activeLayerIndex);
+        document.layers.insert(target, layer);
+        document.activeLayerIndex = target;
+      },
+    );
+  }
+
+  void _changeLayers({
+    required String name,
+    required VoidCallback change,
+    List<DocumentLayer>? layersBefore,
+    int? changedLayerIndex,
+  }) {
+    if (_strokePoint != null) return;
+    layersBefore ??= List.of(document.layers);
+    final activeIndexBefore = document.activeLayerIndex;
+    change();
+    history.record(
+      LayersHistoryEntry(
+        name: name,
+        layersBefore: layersBefore,
+        activeIndexBefore: activeIndexBefore,
+        layersAfter: List.of(document.layers),
+        activeIndexAfter: document.activeLayerIndex,
+        thumbnail: Layer.thumbnail(
+          layer: document
+              .layers[changedLayerIndex ?? document.activeLayerIndex]
+              .pixels,
+          maximumSize: History.thumbnailSize,
+        ),
+      ),
+    );
+    notifyListeners();
+  }
+
   void setZoom(int zoom) {
     _zoom = zoom;
     notifyListeners();
@@ -162,6 +297,7 @@ class EditorController extends ChangeNotifier {
   void jumpToHistory(int position) {
     if (_strokePoint != null) return;
     _selection = null;
+    _layersBeforeOpacityPreview = null;
     history.jumpTo(position);
     notifyListeners();
   }
@@ -348,7 +484,7 @@ class EditorController extends ChangeNotifier {
     required Layer before,
     required PixelRectangle area,
   }) {
-    final entry = HistoryEntry(
+    final entry = PixelHistoryEntry(
       name: name,
       layerIndex: document.activeLayerIndex,
       before: LayerSnapshot.capture(layer: before, area: area),

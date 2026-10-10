@@ -73,6 +73,55 @@ void main() {
           expect(actual, findsNothing);
         });
       });
+      group('dropdown tooltip', () {
+        testWidgets('default', (tester) async {
+          void stubOnPressed() {}
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: PaintSplitButton(
+                  icon: FontAwesomeIcons.pencil,
+                  tooltip: 'Pen',
+                  onPressed: stubOnPressed,
+                  dropdown: const Text('dropdown'),
+                ),
+              ),
+            ),
+          );
+          final actual = [
+            for (final tooltip in tester.widgetList<Tooltip>(
+              find.byType(Tooltip),
+            ))
+              tooltip.message,
+          ];
+          const expected = ['Pen', 'Pen options'];
+          expect(actual, equals(expected));
+        });
+        testWidgets('custom', (tester) async {
+          void stubOnPressed() {}
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: PaintSplitButton(
+                  icon: FontAwesomeIcons.eye,
+                  tooltip: 'Hide layer',
+                  dropdownTooltip: 'Layer opacity',
+                  onPressed: stubOnPressed,
+                  dropdown: const Text('dropdown'),
+                ),
+              ),
+            ),
+          );
+          final actual = [
+            for (final tooltip in tester.widgetList<Tooltip>(
+              find.byType(Tooltip),
+            ))
+              tooltip.message,
+          ];
+          const expected = ['Hide layer', 'Layer opacity'];
+          expect(actual, equals(expected));
+        });
+      });
     });
 
     group('interactions', () {

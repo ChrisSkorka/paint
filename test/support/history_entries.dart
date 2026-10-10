@@ -3,15 +3,15 @@ import 'dart:typed_data';
 import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
-import 'package:paint/editor/history/history_entry.dart';
 import 'package:paint/editor/history/layer_snapshot.dart';
+import 'package:paint/editor/history/pixel_history_entry.dart';
 
-HistoryEntry pixelEntry({
+PixelHistoryEntry pixelEntry({
   required String name,
   required int x,
   required int before,
   required int after,
-}) => HistoryEntry(
+}) => PixelHistoryEntry(
   name: name,
   layerIndex: 0,
   before: LayerSnapshot(

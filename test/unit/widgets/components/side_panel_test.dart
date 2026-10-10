@@ -35,8 +35,36 @@ void main() {
                   matching: find.byType(Container),
                 ),
               )
-              .color;
-          const expected = PaintStyle.barBackground;
+              .decoration;
+          const expected = BoxDecoration(color: PaintStyle.barBackground);
+          expect(actual, equals(expected));
+        });
+        testWidgets('border', (tester) async {
+          await tester.pumpWidget(
+            const MaterialApp(
+              home: SidePanel(
+                title: 'title',
+                border: Border(
+                  bottom: BorderSide(color: PaintStyle.separatorColor),
+                ),
+                child: Text('child'),
+              ),
+            ),
+          );
+          final actual = tester
+              .widget<Container>(
+                find.descendant(
+                  of: find.byType(SidePanel),
+                  matching: find.byType(Container),
+                ),
+              )
+              .decoration;
+          const expected = BoxDecoration(
+            color: PaintStyle.barBackground,
+            border: Border(
+              bottom: BorderSide(color: PaintStyle.separatorColor),
+            ),
+          );
           expect(actual, equals(expected));
         });
         testWidgets('width', (tester) async {
