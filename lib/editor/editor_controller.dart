@@ -10,6 +10,7 @@ import 'history/history_entry.dart';
 import 'history/layer_snapshot.dart';
 import 'pointer_button.dart';
 import 'tools/brush_tip.dart';
+import 'tools/bucket_fill.dart';
 import 'tools/eraser.dart';
 import 'tools/pen.dart';
 import 'tools/tool.dart';
@@ -77,6 +78,7 @@ class EditorController extends ChangeNotifier {
   Tool? get _tool => switch (_toolKind) {
     ToolKind.pen => Pen(size: _penSize, tip: _penTip),
     ToolKind.eraser => Eraser(size: _eraserSize),
+    ToolKind.bucketFill => const BucketFill(),
     ToolKind.colorPicker => null,
   };
 
@@ -136,7 +138,9 @@ class EditorController extends ChangeNotifier {
       PointerButton.secondary => _secondaryColor,
     };
     _strokeButton = button;
-    if (_toolKind == ToolKind.pen) _rememberColor(_strokeColor);
+    if (_toolKind case ToolKind.pen || ToolKind.bucketFill) {
+      _rememberColor(_strokeColor);
+    }
     _sampleColor(point: point);
     final tool = _tool;
     if (tool != null) {

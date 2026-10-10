@@ -269,6 +269,15 @@ class _EditorViewState extends State<EditorView> {
                         RibbonColumn(
                           children: [
                             PaintIconButton(
+                              icon: FontAwesomeIcons.fill,
+                              tooltip: 'Fill',
+                              color: PaintStyle.fillColor,
+                              selected:
+                                  controller.toolKind == ToolKind.bucketFill,
+                              onPressed: () =>
+                                  controller.selectTool(ToolKind.bucketFill),
+                            ),
+                            PaintIconButton(
                               icon: FontAwesomeIcons.eyeDropper,
                               tooltip: 'Color picker',
                               color: PaintStyle.colorPickerColor,

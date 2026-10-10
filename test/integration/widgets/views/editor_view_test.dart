@@ -40,7 +40,7 @@ void main() {
             ),
           );
           final actual = selectedTools(tester);
-          const expected = [true, false, false];
+          const expected = [true, false, false, false];
           expect(actual, equals(expected));
         });
         testWidgets('colors', (tester) async {
@@ -314,6 +314,26 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
+        testWidgets('bucket fill', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          await tester.tap(find.byTooltip('Fill'));
+          await tester.pump();
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [black, black],
+            [black, black],
+          ];
+          expect(actual, equals(expected));
+        });
       });
       group('cursor', () {
         testWidgets('hover', (tester) async {
@@ -396,7 +416,22 @@ void main() {
           await tester.tap(find.byTooltip('Eraser'));
           await tester.pump();
           final actual = selectedTools(tester);
-          const expected = [false, true, false];
+          const expected = [false, true, false, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('bucket fill', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Fill'));
+          await tester.pump();
+          final actual = selectedTools(tester);
+          const expected = [false, false, true, false];
           expect(actual, equals(expected));
         });
         testWidgets('color picker', (tester) async {
@@ -411,7 +446,7 @@ void main() {
           await tester.tap(find.byTooltip('Color picker'));
           await tester.pump();
           final actual = selectedTools(tester);
-          const expected = [false, false, true];
+          const expected = [false, false, false, true];
           expect(actual, equals(expected));
         });
         testWidgets('back to pen', (tester) async {
@@ -428,7 +463,7 @@ void main() {
           await tester.tap(find.byTooltip('Pen'));
           await tester.pump();
           final actual = selectedTools(tester);
-          const expected = [true, false, false];
+          const expected = [true, false, false, false];
           expect(actual, equals(expected));
         });
       });
@@ -654,7 +689,7 @@ void main() {
           await tester.tapAt(topLeft + const Offset(1, 1));
           await tester.pump();
           final actual = selectedTools(tester);
-          const expected = [false, true, false];
+          const expected = [false, true, false, false];
           expect(actual, equals(expected));
         });
       });

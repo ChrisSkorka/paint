@@ -164,9 +164,10 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 #### 2.2 more tools
 
-- [ ] bucket fill (4-connected, exact color match)
-- [ ] shapes: line, rectangle, circle, outline width from tool config, preview while dragging
-- [ ] select: rectangle selection, move contents, rotate 90°, mirror horizontally & vertically
+- [x] bucket fill (4-connected, exact color match)
+- [ ] shapes: line, rectangle, circle, outline width from tool config, outline centered on selection edge, preview while dragging, outline color is primary color, fill is secondary color
+- [ ] select: rectangle selection, move contents, rotate 90°, mirror horizontally & vertically, delete key performs eraser on selection
+- [ ] colors: add no-color option, no-color button below dialog button
 
 #### 2.3 layers
 
@@ -215,3 +216,4 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] scroll image to the right & bottom
 - [ ] history item preview enlarges on hover
 - [ ] allow zoom less than 1x
+- [ ] history slider

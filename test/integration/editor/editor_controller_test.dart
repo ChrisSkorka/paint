@@ -641,6 +641,22 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
+        test('bucket fill', () {
+          final document = Document.blank(width: 3, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.bucketFill);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [black, black, black],
+          ];
+          expect(actual, equals(expected));
+        });
         test('color picker', () {
           final document = Document.blank(width: 3, height: 1);
           final editorController = EditorController.forDocument(
@@ -856,6 +872,19 @@ void main() {
           const expected = <PixelColor>[];
           expect(actual, equals(expected));
         });
+        test('bucket fill', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.selectTool(ToolKind.bucketFill);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = editorController.recentColors;
+          const expected = [PixelColor.black];
+          expect(actual, equals(expected));
+        });
         test('color picker', () {
           final editorController = EditorController.forDocument(
             document: Document.blank(width: 2, height: 1),
@@ -948,6 +977,18 @@ void main() {
           final actual = pixelRows(editorController.pointerLayer);
           const expected = [
             [transparent, grey, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('bucket fill pointer', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 1),
+          );
+          editorController.selectTool(ToolKind.bucketFill);
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 0));
+          final actual = pixelRows(editorController.pointerLayer);
+          const expected = [
+            [transparent, black, transparent],
           ];
           expect(actual, equals(expected));
         });
@@ -1053,6 +1094,27 @@ void main() {
           const expected = [
             [black, black, black, transparent],
             [transparent, transparent, black, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('bucket fill drag', () {
+          final document = Document.blank(width: 3, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.bucketFill);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 2, y: 0),
+            color: PixelColor.transparent,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 0));
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [black, black, transparent],
           ];
           expect(actual, equals(expected));
         });
@@ -1386,6 +1448,66 @@ void main() {
                   0,
                   0,
                   0,
+                ]),
+              ),
+            ),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('bucket fill', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.selectTool(ToolKind.bucketFill);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.secondary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          final actual = editorController.history.entries;
+          final expected = [
+            HistoryEntry(
+              name: 'Fill',
+              layerIndex: 0,
+              before: LayerSnapshot(
+                area: const PixelRectangle(
+                  left: 0,
+                  top: 0,
+                  width: 2,
+                  height: 1,
+                ),
+                rgba: Uint8List.fromList([0, 0, 0, 0, 0, 0, 0, 0]),
+              ),
+              after: LayerSnapshot(
+                area: const PixelRectangle(
+                  left: 0,
+                  top: 0,
+                  width: 2,
+                  height: 1,
+                ),
+                rgba: Uint8List.fromList([
+                  255,
+                  255,
+                  255,
+                  255,
+                  255,
+                  255,
+                  255,
+                  255,
+                ]),
+              ),
+              thumbnail: Layer(
+                width: 2,
+                height: 1,
+                rgba: Uint8List.fromList([
+                  255,
+                  255,
+                  255,
+                  255,
+                  255,
+                  255,
+                  255,
+                  255,
                 ]),
               ),
             ),

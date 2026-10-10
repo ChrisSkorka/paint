@@ -26,6 +26,14 @@ List<bool> selectedTools(WidgetTester tester) => [
   tester
       .widget<PaintIconButton>(
         find.ancestor(
+          of: find.byTooltip('Fill'),
+          matching: find.byType(PaintIconButton),
+        ),
+      )
+      .selected,
+  tester
+      .widget<PaintIconButton>(
+        find.ancestor(
           of: find.byTooltip('Color picker'),
           matching: find.byType(PaintIconButton),
         ),
