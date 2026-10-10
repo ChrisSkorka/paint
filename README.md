@@ -197,6 +197,16 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 6: performance
 
+benchmarks live in `benchmark/` (excluded from the default `flutter test` run & pre-commit hook), results are printed as `BENCHMARK ...` lines:
+
+```sh
+flutter test benchmark/ --reporter expanded | grep BENCHMARK
+```
+
+- `benchmark/widgets/views/editor_view_test.dart`: full frame (pointer event, build, layout, paint) for hover, stroke start / move / end
+- `benchmark/editor/editor_controller_test.dart`: model only, same interactions without widgets
+
+
 - [ ] check memory consumption & performance of history stack
   - a 4096*4096 canvas is unusable
 - [ ] history stack memory management
