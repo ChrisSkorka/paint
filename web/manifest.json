@@ -1,11 +1,12 @@
 {
-    "name": "paint",
-    "short_name": "paint",
+    "id": "info.skorka.chris.paint",
+    "name": "Paint",
+    "short_name": "Paint",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Simple Image & GIF Editor",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

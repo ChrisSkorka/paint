@@ -7,6 +7,7 @@ import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
+import 'package:paint/editor/files/export_format.dart';
 import 'package:paint/widgets/components/edge_shadow.dart';
 import 'package:paint/widgets/components/numeric_value_range.dart';
 import 'package:paint/widgets/components/paint_bar.dart';
@@ -23,6 +24,8 @@ import '../../../support/hover.dart';
 import '../../../support/keyboard.dart';
 import '../../../support/layer_probes.dart';
 import '../../../support/view_probes.dart';
+import '../../../support/stub_document_store.dart';
+import '../../../support/stub_file_access.dart';
 import '../../../support/stub_image_clipboard.dart';
 
 void main() {
@@ -39,6 +42,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -55,6 +60,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -71,6 +78,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -87,6 +96,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -102,6 +113,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -117,6 +130,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -135,6 +150,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -157,6 +174,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -180,6 +199,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -205,6 +226,48 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('file status', () {
+        testWidgets('new document', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(name: 'Cat', width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          final actual = [
+            find.text('Cat').evaluate().length,
+            find.text('Not saved').evaluate().length,
+          ];
+          const expected = [1, 1];
+          expect(actual, equals(expected));
+        });
+        testWidgets('stored document', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1)..storeId = '1',
+                ),
+              ),
+            ),
+          );
+          final actual = find.text('Saved').evaluate().length;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+      });
+
       group('layout', () {
         testWidgets('side panel beside top bar', (tester) async {
           useDesktopView(tester);
@@ -212,6 +275,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -239,6 +304,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -259,6 +326,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -295,6 +364,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -316,6 +387,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -340,6 +413,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -361,6 +436,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -377,6 +454,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(
                     width: 2,
@@ -403,6 +482,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -426,6 +507,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -453,6 +536,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -484,6 +569,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -509,6 +596,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -534,6 +623,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -565,6 +656,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -581,6 +674,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -601,6 +696,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -621,6 +718,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -645,6 +744,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -663,6 +764,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -681,6 +784,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -699,6 +804,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -720,6 +827,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -741,6 +850,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -762,6 +873,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -783,6 +896,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -805,6 +920,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -830,6 +947,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -855,6 +974,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -882,6 +1003,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -900,6 +1023,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -920,6 +1045,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -944,6 +1071,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -969,6 +1098,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -1001,6 +1132,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(
                     width: 2,
@@ -1026,6 +1159,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(
                     width: 2,
@@ -1057,6 +1192,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -1082,6 +1219,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -1104,6 +1243,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -1128,6 +1269,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -1157,6 +1300,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -1183,6 +1328,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -1214,6 +1361,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -1252,6 +1401,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -1278,6 +1429,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -1305,6 +1458,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -1332,6 +1487,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -1359,6 +1516,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -1396,6 +1555,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -1424,6 +1585,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -1452,6 +1615,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -1479,6 +1644,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -1497,6 +1664,302 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('save', () {
+        testWidgets('button', (tester) async {
+          useDesktopView(tester);
+          final stubStore = StubDocumentStore();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(store: stubStore),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Save'));
+          await tester.pump();
+          final actual = [
+            stubStore.entries.length,
+            find.text('Saved').evaluate().length,
+          ];
+          const expected = [1, 1];
+          expect(actual, equals(expected));
+        });
+        testWidgets('ctrl s', (tester) async {
+          useDesktopView(tester);
+          final stubStore = StubDocumentStore();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(store: stubStore),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await pressControlShortcut(tester, key: LogicalKeyboardKey.keyS);
+          await tester.pump();
+          final actual = [
+            stubStore.entries.length,
+            find.text('Saved').evaluate().length,
+          ];
+          const expected = [1, 1];
+          expect(actual, equals(expected));
+        });
+        testWidgets('save twice', (tester) async {
+          useDesktopView(tester);
+          final stubStore = StubDocumentStore();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(store: stubStore),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Save'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Save'));
+          await tester.pump();
+          final actual = stubStore.entries.length;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        testWidgets('change after save', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Save'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Add layer'));
+          await tester.pump();
+          final actual = find.text('Unsaved changes').evaluate().length;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        testWidgets('undo after save', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Add layer'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Save'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Undo'));
+          await tester.pump();
+          final actual = find.text('Unsaved changes').evaluate().length;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        testWidgets('change during save', (tester) async {
+          useDesktopView(tester);
+          final stubStore = StubDocumentStore(holdSaves: true);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(store: stubStore),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Save'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Add layer'));
+          await tester.pump();
+          stubStore.pendingSaves.single.complete();
+          await tester.pump();
+          final actual = find.text('Unsaved changes').evaluate().length;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        testWidgets('failure', (tester) async {
+          useDesktopView(tester);
+          final stubStore = StubDocumentStore(saveError: Exception('disk'));
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(store: stubStore),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Save'));
+          await tester.pump();
+          final actual = [
+            find.text('Could not save').evaluate().length,
+            find.text('Not saved').evaluate().length,
+          ];
+          const expected = [1, 1];
+          expect(actual, equals(expected));
+        });
+        testWidgets('after close', (tester) async {
+          useDesktopView(tester);
+          final stubStore = StubDocumentStore(holdSaves: true);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(store: stubStore),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Save'));
+          await tester.pumpWidget(const SizedBox());
+          stubStore.pendingSaves.single.complete();
+          await tester.pump();
+          final actual = [stubStore.entries.length, tester.takeException()];
+          const expected = [1, null];
+          expect(actual, equals(expected));
+        });
+        testWidgets('failure after close', (tester) async {
+          useDesktopView(tester);
+          final stubStore = StubDocumentStore(
+            saveError: Exception('disk'),
+            holdSaves: true,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(store: stubStore),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Save'));
+          await tester.pumpWidget(const SizedBox());
+          stubStore.pendingSaves.single.complete();
+          await tester.pump();
+          final actual = tester.takeException();
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('export', () {
+        testWidgets('default format', (tester) async {
+          useDesktopView(tester);
+          final stubFiles = StubFileAccess();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: stubFiles,
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(name: 'Cat', width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Export as PNG'));
+          await tester.pump();
+          final actual = [
+            for (final file in stubFiles.saved) [file.fileName, file.format],
+          ];
+          const expected = [
+            ['Cat.png', ExportFormat.png],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('chosen format', (tester) async {
+          useDesktopView(tester);
+          final stubFiles = StubFileAccess();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: stubFiles,
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(name: 'Cat', width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Export formats'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('Export as ORA'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Export as ORA'));
+          await tester.pump();
+          final actual = [
+            for (final file in stubFiles.saved) [file.fileName, file.format],
+          ];
+          const expected = [
+            ['Cat.ora', ExportFormat.ora],
+            ['Cat.ora', ExportFormat.ora],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('failure', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(saveError: Exception('denied')),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Export as PNG'));
+          await tester.pump();
+          final actual = find.text('Could not export').evaluate().length;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+      });
+
       group('clipboard', () {
         testWidgets('actions without selection', (tester) async {
           useDesktopView(tester);
@@ -1504,6 +1967,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 1),
                 ),
@@ -1520,6 +1985,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 1),
                 ),
@@ -1543,7 +2010,12 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(clipboard: stubClipboard, document: document),
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: stubClipboard,
+                  document: document,
+                ),
               ),
             ),
           );
@@ -1583,7 +2055,12 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(clipboard: stubClipboard, document: document),
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: stubClipboard,
+                  document: document,
+                ),
               ),
             ),
           );
@@ -1619,6 +2096,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(
                     image: layerFromRows([
                       [black],
@@ -1661,6 +2140,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 1),
                 ),
@@ -1683,7 +2164,12 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(clipboard: stubClipboard, document: document),
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: stubClipboard,
+                  document: document,
+                ),
               ),
             ),
           );
@@ -1706,6 +2192,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: stubClipboard,
                   document: Document.blank(
                     width: 2,
@@ -1736,6 +2224,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: stubClipboard,
                   document: Document.blank(width: 2, height: 1),
                 ),
@@ -1758,7 +2248,12 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(clipboard: stubClipboard, document: document),
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: stubClipboard,
+                  document: document,
+                ),
               ),
             ),
           );
@@ -1788,6 +2283,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: stubClipboard,
                   document: Document.blank(width: 2, height: 1),
                 ),
@@ -1812,6 +2309,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(
                     image: layerFromRows([
                       [black],
@@ -1851,6 +2350,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -1891,6 +2392,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -1925,6 +2428,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -1963,6 +2468,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -1984,6 +2491,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -2010,6 +2519,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 48, height: 48),
                 ),
@@ -2040,6 +2551,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -2076,6 +2589,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -2114,6 +2629,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -2155,6 +2672,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -2193,6 +2712,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -2238,6 +2759,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -2276,6 +2799,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -2318,6 +2843,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -2352,6 +2879,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -2388,6 +2917,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -2424,6 +2955,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -2462,6 +2995,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -2498,6 +3033,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -2534,6 +3071,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 1),
                 ),
@@ -2556,6 +3095,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: document,
                 ),
@@ -2586,6 +3127,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -2620,6 +3163,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -2656,6 +3201,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -2702,6 +3249,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -2740,6 +3289,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -2779,6 +3330,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -2821,6 +3374,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 1),
                 ),
@@ -2845,6 +3400,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -2863,6 +3420,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),
@@ -2881,6 +3440,8 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2),
                 ),

@@ -2,6 +2,8 @@ import '../canvas/document.dart';
 import '../canvas/layer.dart';
 import 'history_entry.dart';
 
+typedef HistoryPoint = ({int position, HistoryEntry? entry});
+
 class History {
   History({required this.document, required this.startThumbnail});
 
@@ -21,11 +23,21 @@ class History {
   final Layer startThumbnail;
   final _entries = <HistoryEntry>[];
   var _position = 0;
+  HistoryPoint _savedPoint = (position: 0, entry: null);
 
   List<HistoryEntry> get entries => List.unmodifiable(_entries);
   int get position => _position;
   bool get canUndo => _position > 0;
   bool get canRedo => _position < _entries.length;
+  HistoryPoint get point => (
+    position: _position,
+    entry: _position == 0 ? null : _entries[_position - 1],
+  );
+  bool get isAtSavedPoint =>
+      _savedPoint.position == _position &&
+      identical(_savedPoint.entry, point.entry);
+
+  void markSaved(HistoryPoint point) => _savedPoint = point;
 
   void record(HistoryEntry entry) {
     _entries

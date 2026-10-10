@@ -72,17 +72,18 @@ class HistoryThumbnail extends StatelessWidget {
     super.key,
     required this.thumbnail,
     required this.outline,
+    this.size = PaintStyle.thumbnailSize,
   });
 
   final Layer thumbnail;
   final Rect? outline;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
-    final scale =
-        PaintStyle.thumbnailSize / max(thumbnail.width, thumbnail.height);
+    final scale = size / max(thumbnail.width, thumbnail.height);
     return SizedBox.square(
-      dimension: PaintStyle.thumbnailSize,
+      dimension: size,
       child: Center(
         child: CustomPaint(
           painter: const ChessGridPainter(),

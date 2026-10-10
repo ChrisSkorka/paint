@@ -8,6 +8,9 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../editor/canvas/document.dart';
 import '../../editor/canvas/pixel_color.dart';
 import '../../editor/editor_controller.dart';
+import '../../editor/files/document_library.dart';
+import '../../editor/files/export_format.dart';
+import '../../editor/files/file_access.dart';
 import '../../editor/files/image_clipboard.dart';
 import '../../editor/canvas/layer.dart';
 import '../../editor/history/history.dart';
@@ -35,10 +38,14 @@ class EditorView extends StatefulWidget {
     super.key,
     required this.document,
     required this.clipboard,
+    required this.files,
+    required this.library,
   });
 
   final Document document;
   final ImageClipboard clipboard;
+  final FileAccess files;
+  final DocumentLibrary library;
 
   @override
   State<EditorView> createState() => _EditorViewState();
@@ -48,6 +55,7 @@ class _EditorViewState extends State<EditorView> {
   late final controller = EditorController.forDocument(
     document: widget.document,
   );
+  var exportFormat = ExportFormat.png;
 
   @override
   void dispose() {
@@ -206,7 +214,50 @@ class _EditorViewState extends State<EditorView> {
     if (image != null && mounted) controller.paste(image);
   }
 
+  Future<void> _save() async {
+    final point = controller.history.point;
+    final saved = await _attempt(
+      failure: 'Could not save',
+      action: () => widget.library.save(document: widget.document),
+    );
+    if (saved && mounted) controller.markSaved(point);
+  }
+
+  Future<void> _export(ExportFormat format) async {
+    setState(() => exportFormat = format);
+    await _attempt(
+      failure: 'Could not export',
+      action: () => widget.files.save(
+        fileName: format.fileName(document: widget.document),
+        format: format,
+        bytes: format.encode(document: widget.document),
+      ),
+    );
+  }
+
+  Future<bool> _attempt({
+    required String failure,
+    required Future<void> Function() action,
+  }) async {
+    try {
+      await action();
+      return true;
+    } on Exception {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(failure)));
+      }
+      return false;
+    }
+  }
+
   late final _keyActions = <SingleActivator, VoidCallback>{
+    const SingleActivator(
+      LogicalKeyboardKey.keyS,
+      control: true,
+      includeRepeats: false,
+    ): _save,
     const SingleActivator(LogicalKeyboardKey.delete, includeRepeats: false):
         controller.deleteSelection,
     const SingleActivator(LogicalKeyboardKey.backspace, includeRepeats: false):
@@ -373,11 +424,37 @@ class _EditorViewState extends State<EditorView> {
                         RibbonColumn(
                           children: [
                             PaintIconButton(
+                              icon: FontAwesomeIcons.floppyDisk,
+                              tooltip: 'Save',
+                              color: PaintStyle.saveColor,
+                              onPressed: _save,
+                            ),
+                            PaintIconButton(
                               icon: FontAwesomeIcons.rotateLeft,
                               tooltip: 'Undo',
                               onPressed: controller.history.canUndo
                                   ? controller.undo
                                   : null,
+                            ),
+                          ],
+                        ),
+                        RibbonColumn(
+                          children: [
+                            PaintSplitButton(
+                              icon: FontAwesomeIcons.download,
+                              tooltip: 'Export as ${exportFormat.label}',
+                              dropdownTooltip: 'Export formats',
+                              onPressed: () => _export(exportFormat),
+                              dropdown: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  for (final format in ExportFormat.values)
+                                    MenuItemButton(
+                                      onPressed: () => _export(format),
+                                      child: Text('Export as ${format.label}'),
+                                    ),
+                                ],
+                              ),
                             ),
                             PaintIconButton(
                               icon: FontAwesomeIcons.rotateRight,
@@ -686,6 +763,24 @@ class _EditorViewState extends State<EditorView> {
                     Text(
                       '${widget.document.width} × ${widget.document.height}',
                     ),
+                  ],
+                ),
+              ),
+              PaintBarSection(
+                child: Row(
+                  spacing: 6,
+                  children: [
+                    const FaIcon(FontAwesomeIcons.file, size: 14),
+                    Text(widget.document.name),
+                  ],
+                ),
+              ),
+              PaintBarSection(
+                child: Row(
+                  spacing: 6,
+                  children: [
+                    const FaIcon(FontAwesomeIcons.floppyDisk, size: 14),
+                    Text(controller.saveStatus.label),
                   ],
                 ),
               ),

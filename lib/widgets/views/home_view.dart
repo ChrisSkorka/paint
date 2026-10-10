@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
 
 import '../../editor/canvas/document.dart';
+import '../../editor/files/document_library.dart';
+import '../../editor/files/file_access.dart';
 import '../../editor/files/image_clipboard.dart';
 import '../components/paint_style.dart';
 import 'editor_view.dart';
 import 'new_document_view.dart';
 
 class HomeView extends StatefulWidget {
-  const HomeView({super.key, required this.clipboard});
+  const HomeView({
+    super.key,
+    required this.clipboard,
+    required this.files,
+    required this.library,
+  });
 
   final ImageClipboard clipboard;
+  final FileAccess files;
+  final DocumentLibrary library;
 
   @override
   State<HomeView> createState() => _HomeViewState();
@@ -68,6 +77,8 @@ class _HomeViewState extends State<HomeView>
               children: [
                 NewDocumentView(
                   clipboard: widget.clipboard,
+                  files: widget.files,
+                  library: widget.library,
                   onCreate: _openDocument,
                 ),
                 document == null
@@ -76,6 +87,8 @@ class _HomeViewState extends State<HomeView>
                         key: ObjectKey(document),
                         document: document,
                         clipboard: widget.clipboard,
+                        files: widget.files,
+                        library: widget.library,
                       ),
               ],
             ),

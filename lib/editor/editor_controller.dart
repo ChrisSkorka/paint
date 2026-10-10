@@ -8,6 +8,7 @@ import 'canvas/layer.dart';
 import 'canvas/pixel_color.dart';
 import 'canvas/pixel_point.dart';
 import 'canvas/pixel_rectangle.dart';
+import 'files/save_status.dart';
 import 'history/history.dart';
 import 'history/layer_snapshot.dart';
 import 'history/layers_history_entry.dart';
@@ -101,6 +102,17 @@ class EditorController extends ChangeNotifier {
   bool get canMoveLayerUp =>
       document.activeLayerIndex < document.layers.length - 1;
   bool get canMoveLayerDown => document.activeLayerIndex > 0;
+
+  SaveStatus get saveStatus => switch (document.storeId) {
+    null => SaveStatus.notSaved,
+    _ when history.isAtSavedPoint => SaveStatus.saved,
+    _ => SaveStatus.unsavedChanges,
+  };
+
+  void markSaved(HistoryPoint point) {
+    history.markSaved(point);
+    notifyListeners();
+  }
 
   PixelColor get editedColor =>
       _editingPrimary ? _primaryColor : _secondaryColor;

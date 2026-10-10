@@ -592,5 +592,99 @@ void main() {
         });
       });
     });
+
+    group('getter point', () {
+      group('position', () {
+        test('start', () {
+          final history = History.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          final actual = history.point;
+          const HistoryPoint expected = (position: 0, entry: null);
+          expect(actual, equals(expected));
+        });
+        test('after entry', () {
+          final history = History.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          history.record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1));
+          final actual = history.point;
+          final HistoryPoint expected = (
+            position: 1,
+            entry: pixelEntry(name: 'Pen', x: 0, before: 0, after: 1),
+          );
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter isAtSavedPoint', () {
+      group('never marked', () {
+        test('start', () {
+          final history = History.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          final actual = history.isAtSavedPoint;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        test('after entry', () {
+          final history = History.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          history.record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1));
+          final actual = history.isAtSavedPoint;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('marked', () {
+        test('at point', () {
+          final history = History.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          history.record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1));
+          history.markSaved(history.point);
+          final actual = history.isAtSavedPoint;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        test('entry after point', () {
+          final history = History.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          history.markSaved(history.point);
+          history.record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1));
+          final actual = history.isAtSavedPoint;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('undo to point', () {
+          final history = History.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          history.record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1));
+          history.markSaved(history.point);
+          history.record(pixelEntry(name: 'Pen', x: 1, before: 0, after: 1));
+          history.undo();
+          final actual = history.isAtSavedPoint;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        test('replaced entry at point', () {
+          final history = History.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          history.record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1));
+          history.markSaved(history.point);
+          history.undo();
+          history.record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1));
+          final actual = history.isAtSavedPoint;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+      });
+    });
   });
 }

@@ -53,6 +53,23 @@ void main() {
       });
     });
 
+    group('method encodeJpg', () {
+      group('round trip', () {
+        test('grey pixels', () {
+          final layer = layerFromRows([
+            [0xFF808080, 0xFF000000],
+          ]);
+          final actual = pixelRows(
+            ImageCodec.decode(bytes: ImageCodec.encodeJpg(layer: layer))!,
+          );
+          final expected = [
+            [0xFF808080, 0xFF000000],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method decode', () {
       group('formats', () {
         test('rgb png', () {

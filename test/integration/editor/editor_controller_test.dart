@@ -8,6 +8,7 @@ import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
 import 'package:paint/editor/editor_controller.dart';
+import 'package:paint/editor/files/save_status.dart';
 import 'package:paint/editor/history/layer_snapshot.dart';
 import 'package:paint/editor/history/pixel_history_entry.dart';
 import 'package:paint/editor/pointer_button.dart';
@@ -3914,6 +3915,76 @@ void main() {
             ],
             ['Mirror vertically'],
           ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter saveStatus', () {
+      group('store id', () {
+        test('none', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          final actual = editorController.saveStatus;
+          const expected = SaveStatus.notSaved;
+          expect(actual, equals(expected));
+        });
+        test('opened from store', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)..storeId = '1',
+          );
+          final actual = editorController.saveStatus;
+          const expected = SaveStatus.saved;
+          expect(actual, equals(expected));
+        });
+        test('changed after open', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)..storeId = '1',
+          );
+          editorController.addLayer();
+          final actual = editorController.saveStatus;
+          const expected = SaveStatus.unsavedChanges;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method markSaved', () {
+      group('history', () {
+        test('current point', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)..storeId = '1',
+          );
+          editorController.addLayer();
+          editorController.markSaved(editorController.history.point);
+          final actual = editorController.saveStatus;
+          const expected = SaveStatus.saved;
+          expect(actual, equals(expected));
+        });
+        test('earlier point', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)..storeId = '1',
+          );
+          final point = editorController.history.point;
+          editorController.addLayer();
+          editorController.markSaved(point);
+          final actual = editorController.saveStatus;
+          const expected = SaveStatus.unsavedChanges;
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('listeners', () {
+        test('notified', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.markSaved(editorController.history.point);
+          final actual = notifications;
+          const expected = 1;
           expect(actual, equals(expected));
         });
       });

@@ -404,6 +404,36 @@ void main() {
           const expected = [Size(24, 24), Size(8, 24)];
           expect(actual, equals(expected));
         });
+        testWidgets('custom size', (tester) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: HistoryThumbnail(
+                  thumbnail: Layer.filled(
+                    width: 4,
+                    height: 2,
+                    color: PixelColor.transparent,
+                  ),
+                  outline: null,
+                  size: 40,
+                ),
+              ),
+            ),
+          );
+          final actual = [
+            tester.getSize(find.byType(HistoryThumbnail)),
+            tester
+                .widget<CustomPaint>(
+                  find.descendant(
+                    of: find.byType(HistoryThumbnail),
+                    matching: find.byType(CustomPaint),
+                  ),
+                )
+                .size,
+          ];
+          const expected = [Size(40, 40), Size(40, 20)];
+          expect(actual, equals(expected));
+        });
       });
       group('painter', () {
         testWidgets('no outline', (tester) async {

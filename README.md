@@ -15,13 +15,14 @@ Simple Image & GIF Editor
 - single page
 - tabs
   - new document
-    - create new (pick size in pixels)
+    - create new (name, size in pixels)
     - create from clipboard
-    - open from shared_preferences
+    - open from real file (ora, png, jpg)
+    - document list from in-app storage (open, delete)
   - editor
     - top panel: MS Paint style panes
       - file
-        - save & download
+        - save (in-app storage) & export (real file)
         - undo & redo
       - selection
         - copy, cut & paste
@@ -63,10 +64,24 @@ Simple Image & GIF Editor
 - canvas
   - background: light grey transparency chess grid pattern
   - layers support transparency
-- support image types: jpg, png, gif
+- file formats
+  - ora (OpenRaster): native format, keeps layers, names, visibility & opacity, includes merged image & thumbnail
+  - animations stored in ora via namespaced extensions (per-frame layers as stacks, frame durations), other apps show frame 1
+  - png & jpg: open as single layer, export flattens visible layers (jpg onto white)
+  - gif: animation import & export
+- documents have a name: entered when creating new, file name when opened from file
 - saving
-  - start from & save to real files
-  - save to shared_preferences
+  - save: explicit only (no autosave), writes to in-app storage, `ctrl+s`
+  - files opened from disk are not copied to in-app storage until first save
+  - unsaved changes indicator reflects in-app storage status
+  - export: writes a real file (save dialog on desktop, download on web), does not affect the indicator
+- in-app storage
+  - `DocumentStore` interface, platform implementation picked via conditional import
+  - desktop: `<app support dir>/documents/<id>.ora` + `index.json` (name, modified time, thumbnail)
+  - web: IndexedDB via `idb_shim` (in-memory factory for tests)
+  - mobile: not supported yet, added later as another implementation
+- platforms: desktop (linux, windows, macos) & web
+- application id: `info.skorka.chris.paint`
 
 ## project structure
 
@@ -182,18 +197,22 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 4: files & persistence
 
-- [ ] decode & encode png & jpg (`image` package), flatten visible layers on export
-- [ ] open from real file (new document tab), save & download to real file (file pane)
-- [ ] save to & open from shared_preferences (document list in new document tab)
-- [ ] unsaved changes indicator
+- [x] application id `info.skorka.chris.paint` (linux, macos, windows, web)
+- [x] decode & encode png & jpg (`image` package), flatten visible layers on export
+- [x] decode & encode ora: layers, names, visibility, opacity, merged image & thumbnail
+- [x] document name: name field when creating new, file name when opened from file
+- [x] open from real file (new document tab), export to real file (file pane, `file_selector`): save dialog on desktop, download on web
+- [x] in-app storage: `DocumentStore` interface, desktop files in app support dir, web IndexedDB (`idb_shim`)
+- [x] save to in-app storage (file pane, `ctrl+s`), document list in new document tab (open, delete)
+- [x] unsaved changes indicator (in-app storage status)
 
 ### phase 5: animations
 
 - [ ] document frames & frame duration in model
-- [ ] layer timeframe mode: constant (shown in every frame) or image per frame
+- [ ] layer timeframe mode: constant (shown in every frame) or image per frame (set per layer)
 - [ ] timeline in bottom panel: play / pause button, frame slider, add / remove frame
 - [ ] gif import (frames → image-per-frame layer) & export
-- [ ] save animations to shared_preferences
+- [ ] save animations in ora (namespaced extensions: per-frame layers as stacks, frame durations)
 
 ### phase 6: polish
 
@@ -217,6 +236,7 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 6.3: improve tools
 
+- [ ] better defaults
 - [ ] pen ribbon: split size & tip into own ribbon, pen, eraser, and shapes use same settings, transparency mode for transparent color & selections
 - [ ] shape tool: constraint to square/level when ctrl is pressed
 - [ ] shape tool: fill with secondary color
@@ -230,11 +250,16 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] history slider
 - [ ] feature to convert history diff into layer
 
-### phase 6.5: misc
+### phase 6.5: image properties
+
+- [ ] allow change image size
+- [ ] allow renaming documents stored in-app
+
+### phase 6.6: misc
 
 - [ ] allow zoom less than 1x
-- [ ] allow change image size
 - [ ] move layer & history image previews to left
 - [ ] allow renaming layers
 - [ ] text inputs have unit text on right side
-- [ ] ctrl + z/y no longer working
+- [ ] right click on web triggers system context menu
+- [ ] save real file when opening real files on native system
