@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paint/widgets/components/history_list.dart';
 import 'package:paint/widgets/components/numeric_value_range.dart';
 import 'package:paint/widgets/components/paint_icon_button.dart';
 import 'package:paint/widgets/components/paint_split_button.dart';
@@ -63,3 +64,21 @@ List<bool> selectedTips(WidgetTester tester) => [
 
 List<List<Color?>> recentSwatches(WidgetTester tester) =>
     tester.widgetList<SwatchGrid>(find.byType(SwatchGrid)).last.colors;
+
+List<Object> historyState(WidgetTester tester) {
+  final historyList = tester.widget<HistoryList>(find.byType(HistoryList));
+  return [historyList.names, historyList.position];
+}
+
+List<bool> undoRedoEnabled(WidgetTester tester) => [
+  for (final tooltip in const ['Undo', 'Redo'])
+    tester
+            .widget<PaintIconButton>(
+              find.ancestor(
+                of: find.byTooltip(tooltip),
+                matching: find.byType(PaintIconButton),
+              ),
+            )
+            .onPressed !=
+        null,
+];

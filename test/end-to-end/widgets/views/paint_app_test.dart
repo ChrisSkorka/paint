@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
@@ -65,6 +66,38 @@ void main() {
             PixelColor.black,
             PixelColor.black,
             PixelColor.transparent,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        testWidgets('undo and redo after typed size', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(PaintApp(key: UniqueKey()));
+          await tester.enterText(find.byKey(const Key('width')), '4');
+          await tester.enterText(find.byKey(const Key('height')), '4');
+          await tester.tap(find.byTooltip('Create'));
+          await tester.pumpAndSettle();
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          final documentLayer = canvasLayers(tester).first;
+          final drawn = documentLayer.getPixel(const PixelPoint(x: 0, y: 0));
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          final undone = documentLayer.getPixel(const PixelPoint(x: 0, y: 0));
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyY);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          final redone = documentLayer.getPixel(const PixelPoint(x: 0, y: 0));
+          final actual = [drawn, undone, redone];
+          const expected = [
+            PixelColor.black,
+            PixelColor.transparent,
+            PixelColor.black,
           ];
           expect(actual, equals(expected));
         });

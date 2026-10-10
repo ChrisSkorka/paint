@@ -85,6 +85,40 @@ void main() {
       });
     });
 
+    group('factory copyOf', () {
+      group('copies', () {
+        test('same pixels', () {
+          final layer = Layer(
+            width: 2,
+            height: 1,
+            rgba: Uint8List.fromList([1, 2, 3, 4, 5, 6, 7, 8]),
+          );
+          final actual = Layer.copyOf(layer);
+          final expected = Layer(
+            width: 2,
+            height: 1,
+            rgba: Uint8List.fromList([1, 2, 3, 4, 5, 6, 7, 8]),
+          );
+          expect(actual, equals(expected));
+        });
+        test('separate pixels', () {
+          final layer = Layer(
+            width: 2,
+            height: 1,
+            rgba: Uint8List.fromList([1, 2, 3, 4, 5, 6, 7, 8]),
+          );
+          final layerCopy = Layer.copyOf(layer);
+          layer.fillRectangle(
+            rectangle: layer.bounds,
+            color: PixelColor.transparent,
+          );
+          final actual = layerCopy.rgba;
+          final expected = Uint8List.fromList([1, 2, 3, 4, 5, 6, 7, 8]);
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('getter bounds', () {
       group('sizes', () {
         test('rectangle', () {

@@ -1,9 +1,14 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document.dart';
 import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
+import 'package:paint/editor/canvas/pixel_rectangle.dart';
 import 'package:paint/editor/editor_controller.dart';
+import 'package:paint/editor/history/history_entry.dart';
+import 'package:paint/editor/history/layer_snapshot.dart';
 import 'package:paint/editor/pointer_button.dart';
 import 'package:paint/editor/tools/brush_tip.dart';
 import 'package:paint/editor/tools/tool_kind.dart';
@@ -33,6 +38,21 @@ void main() {
             Document.blank(width: 3, height: 2),
             Layer.filled(width: 3, height: 2, color: PixelColor.transparent),
           ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('empty', () {
+          final document = Document.blank(width: 3, height: 2);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          final actual = [
+            identical(editorController.history.document, document),
+            editorController.history.entries,
+            editorController.history.position,
+          ];
+          const expected = [true, [], 0];
           expect(actual, equals(expected));
         });
       });
@@ -214,6 +234,316 @@ void main() {
           editorController.editPrimary(primary: false);
           final actual = editorController.editedColor;
           const expected = PixelColor.white;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method undo', () {
+      group('history', () {
+        test('after stroke', () {
+          final document = Document.blank(width: 3, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.undo();
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.history.position,
+            notifications,
+          ];
+          const expected = [
+            [
+              [transparent, transparent, transparent],
+            ],
+            0,
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('after two strokes', () {
+          final document = Document.blank(width: 3, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 0));
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.undo();
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.history.position,
+            notifications,
+          ];
+          const expected = [
+            [
+              [black, transparent, transparent],
+            ],
+            1,
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('empty', () {
+          final document = Document.blank(width: 3, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.undo();
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.history.position,
+            notifications,
+          ];
+          const expected = [
+            [
+              [transparent, transparent, transparent],
+            ],
+            0,
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('during stroke', () {
+          final document = Document.blank(width: 3, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.undo();
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.history.position,
+            notifications,
+          ];
+          const expected = [
+            [
+              [black, black, transparent],
+            ],
+            1,
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method redo', () {
+      group('history', () {
+        test('after undo', () {
+          final document = Document.blank(width: 3, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          editorController.undo();
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.redo();
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.history.position,
+            notifications,
+          ];
+          const expected = [
+            [
+              [black, transparent, transparent],
+            ],
+            1,
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('at end', () {
+          final document = Document.blank(width: 3, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.redo();
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.history.position,
+            notifications,
+          ];
+          const expected = [
+            [
+              [black, transparent, transparent],
+            ],
+            1,
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('during stroke', () {
+          final document = Document.blank(width: 3, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          editorController.undo();
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.redo();
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.history.position,
+            notifications,
+          ];
+          const expected = [
+            [
+              [transparent, black, transparent],
+            ],
+            0,
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method jumpToHistory', () {
+      group('positions', () {
+        test('start', () {
+          final document = Document.blank(width: 3, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 0));
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.jumpToHistory(0);
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.history.position,
+            notifications,
+          ];
+          const expected = [
+            [
+              [transparent, transparent, transparent],
+            ],
+            0,
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('end', () {
+          final document = Document.blank(width: 3, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 0));
+          editorController.jumpToHistory(0);
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.jumpToHistory(2);
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.history.position,
+            notifications,
+          ];
+          const expected = [
+            [
+              [black, black, transparent],
+            ],
+            2,
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('during stroke', () {
+          final document = Document.blank(width: 3, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.jumpToHistory(0);
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.history.position,
+            notifications,
+          ];
+          const expected = [
+            [
+              [black, black, transparent],
+            ],
+            1,
+            0,
+          ];
           expect(actual, equals(expected));
         });
       });
@@ -883,6 +1213,169 @@ void main() {
           editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
           final actual = editorController.toolKind;
           const expected = ToolKind.eraser;
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('history', () {
+        test('pen click', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 1),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 0));
+          final actual = editorController.history.entries;
+          final expected = [
+            HistoryEntry(
+              name: 'Pen',
+              layerIndex: 0,
+              before: LayerSnapshot(
+                area: const PixelRectangle(
+                  left: 1,
+                  top: 0,
+                  width: 1,
+                  height: 1,
+                ),
+                rgba: Uint8List.fromList([0, 0, 0, 0]),
+              ),
+              after: LayerSnapshot(
+                area: const PixelRectangle(
+                  left: 1,
+                  top: 0,
+                  width: 1,
+                  height: 1,
+                ),
+                rgba: Uint8List.fromList([0, 0, 0, 255]),
+              ),
+            ),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('pen drag', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 4, height: 1),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 0));
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 0));
+          final actual = editorController.history.entries;
+          final expected = [
+            HistoryEntry(
+              name: 'Pen',
+              layerIndex: 0,
+              before: LayerSnapshot(
+                area: const PixelRectangle(
+                  left: 0,
+                  top: 0,
+                  width: 3,
+                  height: 1,
+                ),
+                rgba: Uint8List.fromList([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+              ),
+              after: LayerSnapshot(
+                area: const PixelRectangle(
+                  left: 0,
+                  top: 0,
+                  width: 3,
+                  height: 1,
+                ),
+                rgba: Uint8List.fromList([
+                  0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255, //
+                ]),
+              ),
+            ),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('eraser', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(
+              width: 3,
+              height: 1,
+              background: PixelColor.black,
+            ),
+          );
+          editorController.selectTool(ToolKind.eraser);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 2, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 0));
+          final actual = editorController.history.entries;
+          final expected = [
+            HistoryEntry(
+              name: 'Eraser',
+              layerIndex: 0,
+              before: LayerSnapshot(
+                area: const PixelRectangle(
+                  left: 2,
+                  top: 0,
+                  width: 1,
+                  height: 1,
+                ),
+                rgba: Uint8List.fromList([0, 0, 0, 255]),
+              ),
+              after: LayerSnapshot(
+                area: const PixelRectangle(
+                  left: 2,
+                  top: 0,
+                  width: 1,
+                  height: 1,
+                ),
+                rgba: Uint8List.fromList([0, 0, 0, 0]),
+              ),
+            ),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('color picker', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 1),
+          );
+          editorController.selectTool(ToolKind.colorPicker);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 0));
+          final actual = editorController.history.entries;
+          const expected = [];
+          expect(actual, equals(expected));
+        });
+        test('unchanged pixels', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(
+              width: 3,
+              height: 1,
+              background: PixelColor.black,
+            ),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 0));
+          final actual = editorController.history.entries;
+          const expected = [];
+          expect(actual, equals(expected));
+        });
+        test('outside layer', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 1),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 5, y: 5),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 5, y: 5));
+          final actual = editorController.history.entries;
+          const expected = [];
           expect(actual, equals(expected));
         });
       });

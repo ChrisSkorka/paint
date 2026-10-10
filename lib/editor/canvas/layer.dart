@@ -23,6 +23,14 @@ class Layer {
     return layer;
   }
 
+  factory Layer.copyOf(Layer layer) {
+    return Layer(
+      width: layer.width,
+      height: layer.height,
+      rgba: Uint8List.fromList(layer.rgba),
+    );
+  }
+
   final int width;
   final int height;
   final Uint8List rgba;

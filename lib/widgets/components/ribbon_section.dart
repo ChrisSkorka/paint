@@ -17,14 +17,7 @@ class RibbonSection extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: 5),
-            child: Text(
-              title,
-              style: const TextStyle(
-                color: PaintStyle.titleColor,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            child: Text(title, style: PaintStyle.titleStyle),
           ),
           SizedBox(
             height: PaintStyle.ribbonContentHeight,

@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
@@ -117,6 +118,32 @@ void main() {
             [null],
             [null],
             [null],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('history', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          final actual = [
+            pixelRows(document.activeLayer),
+            historyState(tester),
+            undoRedoEnabled(tester),
+          ];
+          const expected = [
+            [
+              [transparent, transparent],
+              [transparent, transparent],
+            ],
+            [
+              ['Start'],
+              0,
+            ],
+            [false, false],
           ];
           expect(actual, equals(expected));
         });
@@ -616,6 +643,313 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('history', () {
+        testWidgets('after stroke', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          final actual = [
+            pixelRows(document.activeLayer),
+            historyState(tester),
+            undoRedoEnabled(tester),
+          ];
+          const expected = [
+            [
+              [black, transparent],
+              [transparent, transparent],
+            ],
+            [
+              ['Start', 'Pen'],
+              1,
+            ],
+            [true, false],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('after two strokes', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          await tester.tapAt(topLeft + const Offset(5, 5));
+          await tester.pump();
+          final actual = [
+            pixelRows(document.activeLayer),
+            historyState(tester),
+            undoRedoEnabled(tester),
+          ];
+          const expected = [
+            [
+              [black, transparent],
+              [transparent, black],
+            ],
+            [
+              ['Start', 'Pen', 'Pen'],
+              2,
+            ],
+            [true, false],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('undo redo buttons', () {
+        testWidgets('undo', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Undo'));
+          await tester.pump();
+          final actual = [
+            pixelRows(document.activeLayer),
+            historyState(tester),
+            undoRedoEnabled(tester),
+          ];
+          const expected = [
+            [
+              [transparent, transparent],
+              [transparent, transparent],
+            ],
+            [
+              ['Start', 'Pen'],
+              0,
+            ],
+            [false, true],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('redo', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Undo'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Redo'));
+          await tester.pump();
+          final actual = [
+            pixelRows(document.activeLayer),
+            historyState(tester),
+            undoRedoEnabled(tester),
+          ];
+          const expected = [
+            [
+              [black, transparent],
+              [transparent, transparent],
+            ],
+            [
+              ['Start', 'Pen'],
+              1,
+            ],
+            [true, false],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('stroke after undo', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Undo'));
+          await tester.pump();
+          await tester.tapAt(topLeft + const Offset(5, 5));
+          await tester.pump();
+          final actual = [
+            pixelRows(document.activeLayer),
+            historyState(tester),
+            undoRedoEnabled(tester),
+          ];
+          const expected = [
+            [
+              [transparent, transparent],
+              [transparent, black],
+            ],
+            [
+              ['Start', 'Pen'],
+              1,
+            ],
+            [true, false],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('shortcuts', () {
+        testWidgets('ctrl z', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          final actual = [
+            pixelRows(document.activeLayer),
+            historyState(tester),
+            undoRedoEnabled(tester),
+          ];
+          const expected = [
+            [
+              [transparent, transparent],
+              [transparent, transparent],
+            ],
+            [
+              ['Start', 'Pen'],
+              0,
+            ],
+            [false, true],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('ctrl y', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyY);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          final actual = [
+            pixelRows(document.activeLayer),
+            historyState(tester),
+            undoRedoEnabled(tester),
+          ];
+          const expected = [
+            [
+              [black, transparent],
+              [transparent, transparent],
+            ],
+            [
+              ['Start', 'Pen'],
+              1,
+            ],
+            [true, false],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('history list', () {
+        testWidgets('jump to start', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          await tester.tapAt(topLeft + const Offset(5, 5));
+          await tester.pump();
+          await tester.tap(find.text('Start'));
+          await tester.pump();
+          final actual = [
+            pixelRows(document.activeLayer),
+            historyState(tester),
+            undoRedoEnabled(tester),
+          ];
+          const expected = [
+            [
+              [transparent, transparent],
+              [transparent, transparent],
+            ],
+            [
+              ['Start', 'Pen', 'Pen'],
+              0,
+            ],
+            [false, true],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('jump forward', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          await tester.tapAt(topLeft + const Offset(5, 5));
+          await tester.pump();
+          await tester.tap(find.text('Start'));
+          await tester.pump();
+          await tester.tap(find.text('Pen').last);
+          await tester.pump();
+          final actual = [
+            pixelRows(document.activeLayer),
+            historyState(tester),
+            undoRedoEnabled(tester),
+          ];
+          const expected = [
+            [
+              [black, transparent],
+              [transparent, black],
+            ],
+            [
+              ['Start', 'Pen', 'Pen'],
+              2,
+            ],
+            [true, false],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
       group('zoom', () {
         testWidgets('increase', (tester) async {
           useDesktopView(tester);

@@ -27,6 +27,13 @@ abstract final class PaintStyle {
   static const swatchSize = 15.0;
   static const chessCellSize = 8.0;
   static const hoverDuration = Duration(milliseconds: 100);
+  static const sidePanelWidth = 200.0;
+
+  static const titleStyle = TextStyle(
+    color: titleColor,
+    fontSize: 11,
+    fontWeight: FontWeight.bold,
+  );
 
   static const barShadow = [BoxShadow(color: Color(0x1A000000), blurRadius: 5)];
   static const faintShadow = [

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../editor/canvas/document.dart';
@@ -10,6 +11,7 @@ import '../../editor/tools/brush_tip.dart';
 import '../../editor/tools/color_palettes.dart';
 import '../../editor/tools/tool_kind.dart';
 import '../components/color_dialog.dart';
+import '../components/history_list.dart';
 import '../components/pixel_canvas.dart';
 import '../components/numeric_value_range.dart';
 import '../components/paint_bar.dart';
@@ -17,6 +19,7 @@ import '../components/paint_icon_button.dart';
 import '../components/paint_split_button.dart';
 import '../components/paint_style.dart';
 import '../components/ribbon_section.dart';
+import '../components/side_panel.dart';
 import '../components/swatch_grid.dart';
 
 class EditorView extends StatefulWidget {
@@ -115,11 +118,52 @@ class _EditorViewState extends State<EditorView> {
     return cursor == null ? '-' : '${cursor.x}, ${cursor.y}';
   }
 
+  List<String> _historyNames() => [
+    'Start',
+    for (final entry in controller.history.entries) entry.name,
+  ];
+
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: controller,
-      builder: (context, _) => _buildEditor(),
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyZ, control: true):
+            controller.undo,
+        const SingleActivator(LogicalKeyboardKey.keyY, control: true):
+            controller.redo,
+      },
+      child: Focus(
+        autofocus: true,
+        child: ListenableBuilder(
+          listenable: controller,
+          builder: (context, _) => _buildEditor(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCanvasArea() {
+    return Container(
+      color: PaintStyle.canvasAreaBackground,
+      child: SingleChildScrollView(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.all(12),
+          child: Container(
+            decoration: const BoxDecoration(boxShadow: PaintStyle.faintShadow),
+            child: PixelCanvas(
+              width: widget.document.width,
+              height: widget.document.height,
+              zoom: controller.zoom,
+              layers: controller.visibleLayers,
+              onPointerDown: controller.pointerDown,
+              onPointerMove: controller.pointerMove,
+              onPointerUp: controller.pointerUp,
+              onPointerExit: controller.pointerExit,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -143,6 +187,29 @@ class _EditorViewState extends State<EditorView> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        RibbonSection(
+                          title: 'File',
+                          columns: [
+                            RibbonColumn(
+                              children: [
+                                PaintIconButton(
+                                  icon: FontAwesomeIcons.rotateLeft,
+                                  tooltip: 'Undo',
+                                  onPressed: controller.history.canUndo
+                                      ? controller.undo
+                                      : null,
+                                ),
+                                PaintIconButton(
+                                  icon: FontAwesomeIcons.rotateRight,
+                                  tooltip: 'Redo',
+                                  onPressed: controller.history.canRedo
+                                      ? controller.redo
+                                      : null,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                         RibbonSection(
                           title: 'Tools',
                           columns: [
@@ -251,29 +318,19 @@ class _EditorViewState extends State<EditorView> {
           ),
         ),
         Expanded(
-          child: Container(
-            color: PaintStyle.canvasAreaBackground,
-            child: SingleChildScrollView(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.all(12),
-                child: Container(
-                  decoration: const BoxDecoration(
-                    boxShadow: PaintStyle.faintShadow,
-                  ),
-                  child: PixelCanvas(
-                    width: widget.document.width,
-                    height: widget.document.height,
-                    zoom: controller.zoom,
-                    layers: controller.visibleLayers,
-                    onPointerDown: controller.pointerDown,
-                    onPointerMove: controller.pointerMove,
-                    onPointerUp: controller.pointerUp,
-                    onPointerExit: controller.pointerExit,
-                  ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: _buildCanvasArea()),
+              SidePanel(
+                title: 'History',
+                child: HistoryList(
+                  names: _historyNames(),
+                  position: controller.history.position,
+                  onSelect: controller.jumpToHistory,
                 ),
               ),
-            ),
+            ],
           ),
         ),
         PaintBar(

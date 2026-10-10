@@ -5,6 +5,9 @@ import 'canvas/layer.dart';
 import 'canvas/pixel_color.dart';
 import 'canvas/pixel_point.dart';
 import 'canvas/pixel_rectangle.dart';
+import 'history/history.dart';
+import 'history/history_entry.dart';
+import 'history/layer_snapshot.dart';
 import 'pointer_button.dart';
 import 'tools/brush_tip.dart';
 import 'tools/eraser.dart';
@@ -13,7 +16,11 @@ import 'tools/tool.dart';
 import 'tools/tool_kind.dart';
 
 class EditorController extends ChangeNotifier {
-  EditorController({required this.document, required this.pointerLayer});
+  EditorController({
+    required this.document,
+    required this.pointerLayer,
+    required this.history,
+  });
 
   factory EditorController.forDocument({required Document document}) {
     return EditorController(
@@ -23,11 +30,13 @@ class EditorController extends ChangeNotifier {
         height: document.height,
         color: PixelColor.transparent,
       ),
+      history: History(document: document),
     );
   }
 
   final Document document;
   final Layer pointerLayer;
+  final History history;
 
   var _toolKind = ToolKind.pen;
   var _drawingToolKind = ToolKind.pen;
@@ -43,6 +52,8 @@ class EditorController extends ChangeNotifier {
   var _strokeColor = PixelColor.black;
   var _strokeButton = PointerButton.primary;
   var _pointerArea = _noArea;
+  Layer? _strokeBefore;
+  var _strokeArea = _noArea;
   var _recentColors = const <PixelColor>[];
 
   static const _noArea = PixelRectangle(left: 0, top: 0, width: 0, height: 0);
@@ -109,6 +120,16 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void undo() => jumpToHistory(history.position - 1);
+
+  void redo() => jumpToHistory(history.position + 1);
+
+  void jumpToHistory(int position) {
+    if (_strokePoint != null) return;
+    history.jumpTo(position);
+    notifyListeners();
+  }
+
   void pointerDown({required PixelPoint point, required PointerButton button}) {
     _strokeColor = switch (button) {
       PointerButton.primary => _primaryColor,
@@ -117,11 +138,15 @@ class EditorController extends ChangeNotifier {
     _strokeButton = button;
     if (_toolKind == ToolKind.pen) _rememberColor(_strokeColor);
     _sampleColor(point: point);
-    _tool?.start(
-      layer: document.activeLayer,
-      point: point,
-      color: _strokeColor,
-    );
+    final tool = _tool;
+    if (tool != null) {
+      _strokeBefore = Layer.copyOf(document.activeLayer);
+      _strokeArea = tool.start(
+        layer: document.activeLayer,
+        point: point,
+        color: _strokeColor,
+      );
+    }
     _strokePoint = point;
     _movePointer(point: point, color: _strokeColor);
   }
@@ -133,20 +158,27 @@ class EditorController extends ChangeNotifier {
       return;
     }
     _sampleColor(point: point);
-    _tool?.stroke(
+    final altered = _tool?.stroke(
       layer: document.activeLayer,
       previous: strokePoint,
       point: point,
       color: _strokeColor,
     );
+    if (altered != null) _strokeArea = _strokeArea.union(altered);
     _strokePoint = point;
     _movePointer(point: point, color: _strokeColor);
   }
 
   void pointerUp({required PixelPoint point}) {
     if (_strokePoint == null) return;
-    _tool?.end(layer: document.activeLayer, point: point, color: _strokeColor);
+    final altered = _tool?.end(
+      layer: document.activeLayer,
+      point: point,
+      color: _strokeColor,
+    );
+    if (altered != null) _strokeArea = _strokeArea.union(altered);
     _strokePoint = null;
+    _recordStroke();
     if (_toolKind == ToolKind.colorPicker) _toolKind = _drawingToolKind;
     notifyListeners();
   }
@@ -155,6 +187,22 @@ class EditorController extends ChangeNotifier {
     _clearPointer();
     _cursor = null;
     notifyListeners();
+  }
+
+  void _recordStroke() {
+    final strokeBefore = _strokeBefore;
+    if (strokeBefore == null) return;
+    _strokeBefore = null;
+    final entry = HistoryEntry(
+      name: _toolKind.label,
+      layerIndex: document.activeLayerIndex,
+      before: LayerSnapshot.capture(layer: strokeBefore, area: _strokeArea),
+      after: LayerSnapshot.capture(
+        layer: document.activeLayer,
+        area: _strokeArea,
+      ),
+    );
+    if (entry.before != entry.after) history.record(entry);
   }
 
   void _rememberColor(PixelColor color) {

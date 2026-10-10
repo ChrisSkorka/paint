@@ -158,9 +158,9 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 #### 2.1 history
 
-- [ ] history stack of altered-area snapshots per action
-- [ ] undo & redo buttons in file pane, `ctrl+z` & `ctrl+y`
-- [ ] history pane in right panel: list of actions, click to jump
+- [x] history stack of altered-area snapshots per action
+- [x] undo & redo buttons in file pane, `ctrl+z` & `ctrl+y`
+- [x] history pane in right panel: list of actions, click to jump
 
 #### 2.2 more tools
 
@@ -195,10 +195,20 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] gif import (frames → image-per-frame layer) & export
 - [ ] save animations to shared_preferences
 
-### phase 6: polish
+### phase 6: performance
+
+- [ ] check memory consumption & performance of history stack
+  - a 4096*4096 canvas is unusable
+- [ ] history stack memory management
+  - [ ] stack limit
+  - [ ] or progressive history item merging
+  - [ ] image compression (package:archive, XOR against previous layer)
+
+### phase 7: polish
 
 - [ ] interchangeable panes: move panes between top & right panels
 - [ ] keyboard shortcuts for tools
 - [ ] performance pass on large canvases (dirty-rect rendering)
 - [ ] color picker: better UI
 - [ ] transparent colors: blend mode
+- [ ] scrollable views always show scroll bars (& scroll bars are thick)
