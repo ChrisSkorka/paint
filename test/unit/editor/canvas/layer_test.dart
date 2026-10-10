@@ -119,6 +119,67 @@ void main() {
       });
     });
 
+    group('factory thumbnail', () {
+      group('sizes', () {
+        test('within maximum', () {
+          final layer = Layer(
+            width: 2,
+            height: 1,
+            rgba: Uint8List.fromList([1, 2, 3, 4, 5, 6, 7, 8]),
+          );
+          final actual = Layer.thumbnail(layer: layer, maximumSize: 4);
+          final expected = Layer(
+            width: 2,
+            height: 1,
+            rgba: Uint8List.fromList([1, 2, 3, 4, 5, 6, 7, 8]),
+          );
+          expect(actual, equals(expected));
+        });
+        test('wide', () {
+          final layer = Layer(
+            width: 4,
+            height: 2,
+            rgba: Uint8List.fromList(List.generate(32, (index) => index)),
+          );
+          final actual = Layer.thumbnail(layer: layer, maximumSize: 2);
+          final expected = Layer(
+            width: 2,
+            height: 1,
+            rgba: Uint8List.fromList([20, 21, 22, 23, 28, 29, 30, 31]),
+          );
+          expect(actual, equals(expected));
+        });
+        test('tall', () {
+          final layer = Layer(
+            width: 1,
+            height: 4,
+            rgba: Uint8List.fromList(List.generate(16, (index) => index)),
+          );
+          final actual = Layer.thumbnail(layer: layer, maximumSize: 2);
+          final expected = Layer(
+            width: 1,
+            height: 2,
+            rgba: Uint8List.fromList([4, 5, 6, 7, 12, 13, 14, 15]),
+          );
+          expect(actual, equals(expected));
+        });
+        test('thin', () {
+          final layer = Layer(
+            width: 8,
+            height: 1,
+            rgba: Uint8List.fromList(List.generate(32, (index) => index)),
+          );
+          final actual = Layer.thumbnail(layer: layer, maximumSize: 2);
+          final expected = Layer(
+            width: 2,
+            height: 1,
+            rgba: Uint8List.fromList([8, 9, 10, 11, 24, 25, 26, 27]),
+          );
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('getter bounds', () {
       group('sizes', () {
         test('rectangle', () {

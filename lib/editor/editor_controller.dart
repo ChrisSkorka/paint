@@ -30,7 +30,7 @@ class EditorController extends ChangeNotifier {
         height: document.height,
         color: PixelColor.transparent,
       ),
-      history: History(document: document),
+      history: History.forDocument(document: document),
     );
   }
 
@@ -200,6 +200,10 @@ class EditorController extends ChangeNotifier {
       after: LayerSnapshot.capture(
         layer: document.activeLayer,
         area: _strokeArea,
+      ),
+      thumbnail: Layer.thumbnail(
+        layer: document.activeLayer,
+        maximumSize: History.thumbnailSize,
       ),
     );
     if (entry.before != entry.after) history.record(entry);

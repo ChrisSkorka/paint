@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 
-import 'package:paint/editor/history/history_entry.dart';
+import 'package:paint/editor/canvas/layer.dart';
+import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
+import 'package:paint/editor/history/history_entry.dart';
 import 'package:paint/editor/history/layer_snapshot.dart';
 
 HistoryEntry pixelEntry({
@@ -20,4 +22,5 @@ HistoryEntry pixelEntry({
     area: PixelRectangle(left: x, top: 0, width: 1, height: 1),
     rgba: Uint8List.fromList([after, after, after, after]),
   ),
+  thumbnail: Layer.filled(width: 1, height: 1, color: PixelColor.transparent),
 );

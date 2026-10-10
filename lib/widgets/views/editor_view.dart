@@ -7,6 +7,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../editor/canvas/document.dart';
 import '../../editor/canvas/pixel_color.dart';
 import '../../editor/editor_controller.dart';
+import '../../editor/history/history_entry.dart';
 import '../../editor/tools/brush_tip.dart';
 import '../../editor/tools/color_palettes.dart';
 import '../../editor/tools/tool_kind.dart';
@@ -118,10 +119,31 @@ class _EditorViewState extends State<EditorView> {
     return cursor == null ? '-' : '${cursor.x}, ${cursor.y}';
   }
 
-  List<String> _historyNames() => [
-    'Start',
-    for (final entry in controller.history.entries) entry.name,
+  List<HistoryListItem> _historyItems() => [
+    HistoryListItem(
+      name: 'Start',
+      thumbnail: controller.history.startThumbnail,
+      outline: null,
+    ),
+    for (final entry in controller.history.entries)
+      HistoryListItem(
+        name: entry.name,
+        thumbnail: entry.thumbnail,
+        outline: _thumbnailOutline(entry),
+      ),
   ];
+
+  Rect _thumbnailOutline(HistoryEntry entry) {
+    final scaleX = entry.thumbnail.width / widget.document.width;
+    final scaleY = entry.thumbnail.height / widget.document.height;
+    final area = entry.after.area;
+    return Rect.fromLTWH(
+      area.left * scaleX,
+      area.top * scaleY,
+      area.width * scaleX,
+      area.height * scaleY,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -325,7 +347,7 @@ class _EditorViewState extends State<EditorView> {
               SidePanel(
                 title: 'History',
                 child: HistoryList(
-                  names: _historyNames(),
+                  items: _historyItems(),
                   position: controller.history.position,
                   onSelect: controller.jumpToHistory,
                 ),

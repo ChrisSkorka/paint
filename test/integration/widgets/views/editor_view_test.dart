@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document.dart';
+import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
+import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/widgets/components/numeric_value_range.dart';
 import 'package:paint/widgets/components/pixel_canvas.dart';
 import 'package:paint/widgets/components/swatch_grid.dart';
@@ -701,6 +703,75 @@ void main() {
               2,
             ],
             [true, false],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('history thumbnails', () {
+        testWidgets('start', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          final actual = historyThumbnails(tester);
+          final expected = [
+            [
+              Layer.filled(width: 2, height: 2, color: PixelColor.transparent),
+              null,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('after stroke', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(5, 1));
+          await tester.pump();
+          final actual = historyThumbnails(tester).last;
+          final expected = [
+            Layer.filled(width: 2, height: 2, color: PixelColor.transparent)
+              ..setPixel(
+                point: const PixelPoint(x: 1, y: 0),
+                color: PixelColor.black,
+              ),
+            const Rect.fromLTWH(1, 0, 1, 1),
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('large document', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  document: Document.blank(width: 48, height: 48),
+                ),
+              ),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(13, 13));
+          await tester.pump();
+          final actual = historyThumbnails(tester).last;
+          final expected = [
+            Layer.filled(width: 24, height: 24, color: PixelColor.transparent)
+              ..setPixel(
+                point: const PixelPoint(x: 1, y: 1),
+                color: PixelColor.black,
+              ),
+            const Rect.fromLTWH(1.5, 1.5, 0.5, 0.5),
           ];
           expect(actual, equals(expected));
         });

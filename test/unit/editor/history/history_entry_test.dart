@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document.dart';
 import 'package:paint/editor/canvas/layer.dart';
+import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
 import 'package:paint/editor/history/history_entry.dart';
 import 'package:paint/editor/history/layer_snapshot.dart';
@@ -28,6 +29,11 @@ void main() {
             after: LayerSnapshot(
               area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
               rgba: Uint8List.fromList([5, 6, 7, 8]),
+            ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
             ),
           );
           historyEntry.undo(document);
@@ -55,6 +61,11 @@ void main() {
             after: LayerSnapshot(
               area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
               rgba: Uint8List.fromList([5, 6, 7, 8]),
+            ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
             ),
           );
           historyEntry.undo(document);
@@ -88,6 +99,11 @@ void main() {
               area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
               rgba: Uint8List.fromList([5, 6, 7, 8]),
             ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
+            ),
           );
           historyEntry.redo(document);
           final actual = document.layers.first.rgba;
@@ -115,6 +131,11 @@ void main() {
               area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
               rgba: Uint8List.fromList([5, 6, 7, 8]),
             ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
+            ),
           );
           historyEntry.redo(document);
           final actual = [for (final layer in document.layers) layer.rgba];
@@ -141,6 +162,11 @@ void main() {
               area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
               rgba: Uint8List.fromList([5, 6, 7, 8]),
             ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
+            ),
           );
           final other = HistoryEntry(
             name: 'Pen',
@@ -152,6 +178,11 @@ void main() {
             after: LayerSnapshot(
               area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
               rgba: Uint8List.fromList([5, 6, 7, 8]),
+            ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
             ),
           );
           final actual = historyEntry == other;
@@ -172,6 +203,11 @@ void main() {
               area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
               rgba: Uint8List.fromList([5, 6, 7, 8]),
             ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
+            ),
           );
           final other = HistoryEntry(
             name: 'Eraser',
@@ -183,6 +219,11 @@ void main() {
             after: LayerSnapshot(
               area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
               rgba: Uint8List.fromList([5, 6, 7, 8]),
+            ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
             ),
           );
           final actual = historyEntry == other;
@@ -201,6 +242,11 @@ void main() {
               area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
               rgba: Uint8List.fromList([5, 6, 7, 8]),
             ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
+            ),
           );
           final other = HistoryEntry(
             name: 'Pen',
@@ -212,6 +258,11 @@ void main() {
             after: LayerSnapshot(
               area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
               rgba: Uint8List.fromList([5, 6, 7, 8]),
+            ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
             ),
           );
           final actual = historyEntry == other;
@@ -230,6 +281,11 @@ void main() {
               area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
               rgba: Uint8List.fromList([5, 6, 7, 8]),
             ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
+            ),
           );
           final other = HistoryEntry(
             name: 'Pen',
@@ -241,6 +297,50 @@ void main() {
             after: LayerSnapshot(
               area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
               rgba: Uint8List.fromList([5, 6, 7, 8]),
+            ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
+            ),
+          );
+          final actual = historyEntry == other;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('different thumbnail', () {
+          final historyEntry = HistoryEntry(
+            name: 'Pen',
+            layerIndex: 0,
+            before: LayerSnapshot(
+              area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
+              rgba: Uint8List.fromList([1, 2, 3, 4]),
+            ),
+            after: LayerSnapshot(
+              area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
+              rgba: Uint8List.fromList([5, 6, 7, 8]),
+            ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
+            ),
+          );
+          final other = HistoryEntry(
+            name: 'Pen',
+            layerIndex: 0,
+            before: LayerSnapshot(
+              area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
+              rgba: Uint8List.fromList([1, 2, 3, 4]),
+            ),
+            after: LayerSnapshot(
+              area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
+              rgba: Uint8List.fromList([5, 6, 7, 8]),
+            ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.black,
             ),
           );
           final actual = historyEntry == other;
@@ -259,6 +359,11 @@ void main() {
               area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
               rgba: Uint8List.fromList([5, 6, 7, 8]),
             ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
+            ),
           );
           final other = HistoryEntry(
             name: 'Pen',
@@ -270,6 +375,11 @@ void main() {
             after: LayerSnapshot(
               area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
               rgba: Uint8List.fromList([9, 9, 9, 9]),
+            ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
             ),
           );
           final actual = historyEntry == other;
@@ -293,6 +403,11 @@ void main() {
               area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
               rgba: Uint8List.fromList([5, 6, 7, 8]),
             ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
+            ),
           );
           final other = HistoryEntry(
             name: 'Pen',
@@ -304,6 +419,11 @@ void main() {
             after: LayerSnapshot(
               area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
               rgba: Uint8List.fromList([5, 6, 7, 8]),
+            ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
             ),
           );
           final actual = historyEntry.hashCode == other.hashCode;
@@ -324,6 +444,11 @@ void main() {
               area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
               rgba: Uint8List.fromList([5, 6, 7, 8]),
             ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
+            ),
           );
           final other = HistoryEntry(
             name: 'Eraser',
@@ -335,6 +460,11 @@ void main() {
             after: LayerSnapshot(
               area: const PixelRectangle(left: 0, top: 0, width: 1, height: 1),
               rgba: Uint8List.fromList([5, 6, 7, 8]),
+            ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
             ),
           );
           final actual = historyEntry.hashCode == other.hashCode;
@@ -357,6 +487,11 @@ void main() {
             after: LayerSnapshot(
               area: const PixelRectangle(left: 0, top: 0, width: 0, height: 0),
               rgba: Uint8List(0),
+            ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
             ),
           );
           final actual = historyEntry.toString();

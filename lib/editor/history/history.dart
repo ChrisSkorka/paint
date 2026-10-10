@@ -1,10 +1,24 @@
 import '../canvas/document.dart';
+import '../canvas/layer.dart';
 import 'history_entry.dart';
 
 class History {
-  History({required this.document});
+  History({required this.document, required this.startThumbnail});
+
+  factory History.forDocument({required Document document}) {
+    return History(
+      document: document,
+      startThumbnail: Layer.thumbnail(
+        layer: document.activeLayer,
+        maximumSize: thumbnailSize,
+      ),
+    );
+  }
+
+  static const thumbnailSize = 24;
 
   final Document document;
+  final Layer startThumbnail;
   final _entries = <HistoryEntry>[];
   var _position = 0;
 

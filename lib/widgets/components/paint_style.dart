@@ -20,6 +20,7 @@ abstract final class PaintStyle {
   static const fillColor = Color(0xFF8A2BE2);
   static const colorPickerColor = Color(0xFF1E90FF);
   static const saveColor = Color(0xFF00BFFF);
+  static const changeOutlineColor = Color(0xFF1E90FF);
 
   static const radius = BorderRadius.all(Radius.circular(5));
   static const fontFamily = 'Arial';
@@ -28,6 +29,7 @@ abstract final class PaintStyle {
   static const chessCellSize = 8.0;
   static const hoverDuration = Duration(milliseconds: 100);
   static const sidePanelWidth = 200.0;
+  static const thumbnailSize = 24.0;
 
   static const titleStyle = TextStyle(
     color: titleColor,

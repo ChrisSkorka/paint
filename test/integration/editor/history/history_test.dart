@@ -3,16 +3,52 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document.dart';
 import 'package:paint/editor/canvas/layer.dart';
+import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/history/history.dart';
 
 import '../../../support/history_entries.dart';
 
 void main() {
   group('class History', () {
+    group('factory forDocument', () {
+      group('start thumbnail', () {
+        test('small document', () {
+          final history = History.forDocument(
+            document: Document.blank(
+              width: 2,
+              height: 1,
+              background: PixelColor.black,
+            ),
+          );
+          final actual = [history.startThumbnail, history.position];
+          final expected = [
+            Layer.filled(width: 2, height: 1, color: PixelColor.black),
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('large document', () {
+          final history = History.forDocument(
+            document: Document.blank(
+              width: 48,
+              height: 24,
+              background: PixelColor.black,
+            ),
+          );
+          final actual = [history.startThumbnail, history.position];
+          final expected = [
+            Layer.filled(width: 24, height: 12, color: PixelColor.black),
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method record', () {
       group('entries', () {
         test('none', () {
-          final history = History(
+          final history = History.forDocument(
             document: Document.blank(width: 2, height: 1),
           );
           final actual = [history.position, history.entries];
@@ -32,7 +68,7 @@ void main() {
             ],
             activeLayerIndex: 0,
           );
-          final history = History(document: document)
+          final history = History.forDocument(document: document)
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           final actual = [history.position, history.entries];
@@ -58,7 +94,7 @@ void main() {
             ],
             activeLayerIndex: 0,
           );
-          final history = History(document: document)
+          final history = History.forDocument(document: document)
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history
@@ -87,7 +123,7 @@ void main() {
             ],
             activeLayerIndex: 0,
           );
-          final history = History(document: document)
+          final history = History.forDocument(document: document)
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history
@@ -118,7 +154,7 @@ void main() {
             ],
             activeLayerIndex: 0,
           );
-          final history = History(document: document)
+          final history = History.forDocument(document: document)
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history.undo();
@@ -142,7 +178,7 @@ void main() {
             ],
             activeLayerIndex: 0,
           );
-          final history = History(document: document)
+          final history = History.forDocument(document: document)
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history
@@ -168,7 +204,7 @@ void main() {
             ],
             activeLayerIndex: 0,
           );
-          final history = History(document: document)
+          final history = History.forDocument(document: document)
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history
@@ -199,7 +235,7 @@ void main() {
             ],
             activeLayerIndex: 0,
           );
-          final history = History(document: document)
+          final history = History.forDocument(document: document)
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history.redo();
@@ -223,7 +259,7 @@ void main() {
             ],
             activeLayerIndex: 0,
           );
-          final history = History(document: document)
+          final history = History.forDocument(document: document)
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history
@@ -249,7 +285,7 @@ void main() {
             ],
             activeLayerIndex: 0,
           );
-          final history = History(document: document)
+          final history = History.forDocument(document: document)
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history
@@ -280,7 +316,7 @@ void main() {
             ],
             activeLayerIndex: 0,
           );
-          final history = History(document: document)
+          final history = History.forDocument(document: document)
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history.jumpTo(0);
@@ -304,7 +340,7 @@ void main() {
             ],
             activeLayerIndex: 0,
           );
-          final history = History(document: document)
+          final history = History.forDocument(document: document)
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history.jumpTo(2);
@@ -328,7 +364,7 @@ void main() {
             ],
             activeLayerIndex: 0,
           );
-          final history = History(document: document)
+          final history = History.forDocument(document: document)
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history
@@ -354,7 +390,7 @@ void main() {
             ],
             activeLayerIndex: 0,
           );
-          final history = History(document: document)
+          final history = History.forDocument(document: document)
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history.jumpTo(-1);
@@ -378,7 +414,7 @@ void main() {
             ],
             activeLayerIndex: 0,
           );
-          final history = History(document: document)
+          final history = History.forDocument(document: document)
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history
@@ -397,7 +433,7 @@ void main() {
     group('getter canUndo', () {
       group('positions', () {
         test('empty', () {
-          final history = History(
+          final history = History.forDocument(
             document: Document.blank(width: 2, height: 1),
           );
           final actual = history.canUndo;
@@ -417,7 +453,7 @@ void main() {
             ],
             activeLayerIndex: 0,
           );
-          final history = History(document: document)
+          final history = History.forDocument(document: document)
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           final actual = history.canUndo;
@@ -437,7 +473,7 @@ void main() {
             ],
             activeLayerIndex: 0,
           );
-          final history = History(document: document)
+          final history = History.forDocument(document: document)
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history.jumpTo(0);
@@ -451,7 +487,7 @@ void main() {
     group('getter canRedo', () {
       group('positions', () {
         test('empty', () {
-          final history = History(
+          final history = History.forDocument(
             document: Document.blank(width: 2, height: 1),
           );
           final actual = history.canRedo;
@@ -471,7 +507,7 @@ void main() {
             ],
             activeLayerIndex: 0,
           );
-          final history = History(document: document)
+          final history = History.forDocument(document: document)
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           final actual = history.canRedo;
@@ -491,7 +527,7 @@ void main() {
             ],
             activeLayerIndex: 0,
           );
-          final history = History(document: document)
+          final history = History.forDocument(document: document)
             ..record(pixelEntry(name: 'Pen', x: 0, before: 0, after: 1))
             ..record(pixelEntry(name: 'Eraser', x: 1, before: 0, after: 2));
           history.undo();

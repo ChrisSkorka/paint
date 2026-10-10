@@ -67,8 +67,16 @@ List<List<Color?>> recentSwatches(WidgetTester tester) =>
 
 List<Object> historyState(WidgetTester tester) {
   final historyList = tester.widget<HistoryList>(find.byType(HistoryList));
-  return [historyList.names, historyList.position];
+  return [
+    [for (final item in historyList.items) item.name],
+    historyList.position,
+  ];
 }
+
+List<List<Object?>> historyThumbnails(WidgetTester tester) => [
+  for (final item in tester.widget<HistoryList>(find.byType(HistoryList)).items)
+    [item.thumbnail, item.outline],
+];
 
 List<bool> undoRedoEnabled(WidgetTester tester) => [
   for (final tooltip in const ['Undo', 'Redo'])

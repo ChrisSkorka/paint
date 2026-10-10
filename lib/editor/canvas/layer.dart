@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
@@ -29,6 +30,28 @@ class Layer {
       height: layer.height,
       rgba: Uint8List.fromList(layer.rgba),
     );
+  }
+
+  factory Layer.thumbnail({required Layer layer, required int maximumSize}) {
+    final scale = min(1.0, maximumSize / max(layer.width, layer.height));
+    final thumbnail = Layer.filled(
+      width: max(1, (layer.width * scale).round()),
+      height: max(1, (layer.height * scale).round()),
+      color: PixelColor.transparent,
+    );
+    for (var y = 0; y < thumbnail.height; y++) {
+      for (var x = 0; x < thumbnail.width; x++) {
+        final source = PixelPoint(
+          x: (x * 2 + 1) * layer.width ~/ (thumbnail.width * 2),
+          y: (y * 2 + 1) * layer.height ~/ (thumbnail.height * 2),
+        );
+        thumbnail.setPixel(
+          point: PixelPoint(x: x, y: y),
+          color: layer.getPixel(source),
+        );
+      }
+    }
+    return thumbnail;
   }
 
   final int width;
