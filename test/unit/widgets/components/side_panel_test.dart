@@ -22,7 +22,7 @@ void main() {
         });
       });
       group('appearance', () {
-        testWidgets('decoration', (tester) async {
+        testWidgets('background', (tester) async {
           await tester.pumpWidget(
             const MaterialApp(
               home: SidePanel(title: 'title', child: Text('child')),
@@ -35,11 +35,8 @@ void main() {
                   matching: find.byType(Container),
                 ),
               )
-              .decoration;
-          const expected = BoxDecoration(
-            color: PaintStyle.barBackground,
-            boxShadow: PaintStyle.barShadow,
-          );
+              .color;
+          const expected = PaintStyle.barBackground;
           expect(actual, equals(expected));
         });
         testWidgets('width', (tester) async {

@@ -12,6 +12,7 @@ import '../../editor/tools/brush_tip.dart';
 import '../../editor/tools/color_palettes.dart';
 import '../../editor/tools/tool_kind.dart';
 import '../components/color_dialog.dart';
+import '../components/edge_shadow.dart';
 import '../components/history_list.dart';
 import '../components/pixel_canvas.dart';
 import '../components/numeric_value_range.dart';
@@ -167,21 +168,175 @@ class _EditorViewState extends State<EditorView> {
   Widget _buildCanvasArea() {
     return Container(
       color: PaintStyle.canvasAreaBackground,
-      child: SingleChildScrollView(
+      child: CustomPaint(
+        foregroundPainter: const EdgeShadowPainter(),
         child: SingleChildScrollView(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.all(12),
+            child: Container(
+              decoration: const BoxDecoration(
+                boxShadow: PaintStyle.faintShadow,
+              ),
+              child: PixelCanvas(
+                width: widget.document.width,
+                height: widget.document.height,
+                zoom: controller.zoom,
+                layers: controller.visibleLayers,
+                onPointerDown: controller.pointerDown,
+                onPointerMove: controller.pointerMove,
+                onPointerUp: controller.pointerUp,
+                onPointerExit: controller.pointerExit,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopBar() {
+    return PaintBar(
+      shadow: false,
+      border: const Border(right: BorderSide(color: PaintStyle.separatorColor)),
+      child: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.all(12),
-          child: Container(
-            decoration: const BoxDecoration(boxShadow: PaintStyle.faintShadow),
-            child: PixelCanvas(
-              width: widget.document.width,
-              height: widget.document.height,
-              zoom: controller.zoom,
-              layers: controller.visibleLayers,
-              onPointerDown: controller.pointerDown,
-              onPointerMove: controller.pointerMove,
-              onPointerUp: controller.pointerUp,
-              onPointerExit: controller.pointerExit,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: constraints.maxWidth),
+            child: Center(
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  border: Border(
+                    left: BorderSide(color: PaintStyle.separatorColor),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    RibbonSection(
+                      title: 'File',
+                      columns: [
+                        RibbonColumn(
+                          children: [
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.rotateLeft,
+                              tooltip: 'Undo',
+                              onPressed: controller.history.canUndo
+                                  ? controller.undo
+                                  : null,
+                            ),
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.rotateRight,
+                              tooltip: 'Redo',
+                              onPressed: controller.history.canRedo
+                                  ? controller.redo
+                                  : null,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    RibbonSection(
+                      title: 'Tools',
+                      columns: [
+                        RibbonColumn(
+                          children: [
+                            PaintSplitButton(
+                              icon: FontAwesomeIcons.pencil,
+                              tooltip: 'Pen',
+                              color: PaintStyle.penColor,
+                              selected: controller.toolKind == ToolKind.pen,
+                              onPressed: () =>
+                                  controller.selectTool(ToolKind.pen),
+                              dropdown: _penDropdown(),
+                            ),
+                            PaintSplitButton(
+                              icon: FontAwesomeIcons.eraser,
+                              tooltip: 'Eraser',
+                              color: PaintStyle.eraserColor,
+                              selected: controller.toolKind == ToolKind.eraser,
+                              onPressed: () =>
+                                  controller.selectTool(ToolKind.eraser),
+                              dropdown: _sizeDropdown(
+                                value: controller.eraserSize,
+                                onChanged: controller.setEraserSize,
+                              ),
+                            ),
+                          ],
+                        ),
+                        RibbonColumn(
+                          children: [
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.eyeDropper,
+                              tooltip: 'Color picker',
+                              color: PaintStyle.colorPickerColor,
+                              selected:
+                                  controller.toolKind == ToolKind.colorPicker,
+                              onPressed: () =>
+                                  controller.selectTool(ToolKind.colorPicker),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    RibbonSection(
+                      title: 'Colors',
+                      columns: [
+                        RibbonColumn(
+                          children: [
+                            ColorWell(
+                              color: Color(controller.primaryColor.argb),
+                              tooltip: 'Primary color',
+                              selected: controller.editingPrimary,
+                              onPressed: () =>
+                                  controller.editPrimary(primary: true),
+                            ),
+                            ColorWell(
+                              color: Color(controller.secondaryColor.argb),
+                              tooltip: 'Secondary color',
+                              selected: !controller.editingPrimary,
+                              onPressed: () =>
+                                  controller.editPrimary(primary: false),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 8),
+                        Center(
+                          child: SwatchGrid(
+                            colors: _toColors(greyPalette),
+                            onSelect: _selectColor,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Center(
+                          child: SwatchGrid(
+                            colors: _toColors(huePalette),
+                            onSelect: _selectColor,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Center(
+                          child: SwatchGrid(
+                            colors: _recentSwatches(),
+                            onSelect: _selectColor,
+                          ),
+                        ),
+                        RibbonColumn(
+                          children: [
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.palette,
+                              tooltip: 'Edit colors',
+                              onPressed: _editColor,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -192,158 +347,19 @@ class _EditorViewState extends State<EditorView> {
   Widget _buildEditor() {
     return Column(
       children: [
-        PaintBar(
-          child: LayoutBuilder(
-            builder: (context, constraints) => SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                child: Center(
-                  child: DecoratedBox(
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        left: BorderSide(color: PaintStyle.separatorColor),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        RibbonSection(
-                          title: 'File',
-                          columns: [
-                            RibbonColumn(
-                              children: [
-                                PaintIconButton(
-                                  icon: FontAwesomeIcons.rotateLeft,
-                                  tooltip: 'Undo',
-                                  onPressed: controller.history.canUndo
-                                      ? controller.undo
-                                      : null,
-                                ),
-                                PaintIconButton(
-                                  icon: FontAwesomeIcons.rotateRight,
-                                  tooltip: 'Redo',
-                                  onPressed: controller.history.canRedo
-                                      ? controller.redo
-                                      : null,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        RibbonSection(
-                          title: 'Tools',
-                          columns: [
-                            RibbonColumn(
-                              children: [
-                                PaintSplitButton(
-                                  icon: FontAwesomeIcons.pencil,
-                                  tooltip: 'Pen',
-                                  color: PaintStyle.penColor,
-                                  selected: controller.toolKind == ToolKind.pen,
-                                  onPressed: () =>
-                                      controller.selectTool(ToolKind.pen),
-                                  dropdown: _penDropdown(),
-                                ),
-                                PaintSplitButton(
-                                  icon: FontAwesomeIcons.eraser,
-                                  tooltip: 'Eraser',
-                                  color: PaintStyle.eraserColor,
-                                  selected:
-                                      controller.toolKind == ToolKind.eraser,
-                                  onPressed: () =>
-                                      controller.selectTool(ToolKind.eraser),
-                                  dropdown: _sizeDropdown(
-                                    value: controller.eraserSize,
-                                    onChanged: controller.setEraserSize,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            RibbonColumn(
-                              children: [
-                                PaintIconButton(
-                                  icon: FontAwesomeIcons.eyeDropper,
-                                  tooltip: 'Color picker',
-                                  color: PaintStyle.colorPickerColor,
-                                  selected:
-                                      controller.toolKind ==
-                                      ToolKind.colorPicker,
-                                  onPressed: () => controller.selectTool(
-                                    ToolKind.colorPicker,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        RibbonSection(
-                          title: 'Colors',
-                          columns: [
-                            RibbonColumn(
-                              children: [
-                                ColorWell(
-                                  color: Color(controller.primaryColor.argb),
-                                  tooltip: 'Primary color',
-                                  selected: controller.editingPrimary,
-                                  onPressed: () =>
-                                      controller.editPrimary(primary: true),
-                                ),
-                                ColorWell(
-                                  color: Color(controller.secondaryColor.argb),
-                                  tooltip: 'Secondary color',
-                                  selected: !controller.editingPrimary,
-                                  onPressed: () =>
-                                      controller.editPrimary(primary: false),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(width: 8),
-                            Center(
-                              child: SwatchGrid(
-                                colors: _toColors(greyPalette),
-                                onSelect: _selectColor,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Center(
-                              child: SwatchGrid(
-                                colors: _toColors(huePalette),
-                                onSelect: _selectColor,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Center(
-                              child: SwatchGrid(
-                                colors: _recentSwatches(),
-                                onSelect: _selectColor,
-                              ),
-                            ),
-                            RibbonColumn(
-                              children: [
-                                PaintIconButton(
-                                  icon: FontAwesomeIcons.palette,
-                                  tooltip: 'Edit colors',
-                                  onPressed: _editColor,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
         Expanded(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(child: _buildCanvasArea()),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildTopBar(),
+                    Expanded(child: _buildCanvasArea()),
+                  ],
+                ),
+              ),
               SidePanel(
                 title: 'History',
                 child: HistoryList(

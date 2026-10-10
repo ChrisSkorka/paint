@@ -13,10 +13,7 @@ class SidePanel extends StatelessWidget {
     return Container(
       width: PaintStyle.sidePanelWidth,
       padding: const EdgeInsets.all(5),
-      decoration: const BoxDecoration(
-        color: PaintStyle.barBackground,
-        boxShadow: PaintStyle.barShadow,
-      ),
+      color: PaintStyle.barBackground,
       child: Column(
         children: [
           Padding(

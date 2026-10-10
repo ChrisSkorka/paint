@@ -34,6 +34,49 @@ void main() {
           );
           expect(actual, equals(expected));
         });
+        testWidgets('no shadow', (tester) async {
+          await tester.pumpWidget(
+            const MaterialApp(
+              home: PaintBar(shadow: false, child: Text('child')),
+            ),
+          );
+          final actual = tester
+              .widget<Container>(
+                find.descendant(
+                  of: find.byType(PaintBar),
+                  matching: find.byType(Container),
+                ),
+              )
+              .decoration;
+          const expected = BoxDecoration(color: PaintStyle.barBackground);
+          expect(actual, equals(expected));
+        });
+        testWidgets('border', (tester) async {
+          await tester.pumpWidget(
+            const MaterialApp(
+              home: PaintBar(
+                border: Border(
+                  right: BorderSide(color: PaintStyle.separatorColor),
+                ),
+                child: Text('child'),
+              ),
+            ),
+          );
+          final actual = tester
+              .widget<Container>(
+                find.descendant(
+                  of: find.byType(PaintBar),
+                  matching: find.byType(Container),
+                ),
+              )
+              .decoration;
+          const expected = BoxDecoration(
+            color: PaintStyle.barBackground,
+            boxShadow: PaintStyle.barShadow,
+            border: Border(right: BorderSide(color: PaintStyle.separatorColor)),
+          );
+          expect(actual, equals(expected));
+        });
       });
     });
   });

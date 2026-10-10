@@ -212,3 +212,6 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] color picker: better UI
 - [ ] transparent colors: blend mode
 - [ ] scrollable views always show scroll bars (& scroll bars are thick)
+- [ ] scroll image to the right & bottom
+- [ ] history item preview enlarges on hover
+- [ ] allow zoom less than 1x
