@@ -10,7 +10,7 @@ Size? canvasSize(WidgetTester tester) => tester
         (widget) =>
             widget is CustomPaint &&
             widget.painter is ChessGridPainter &&
-            widget.foregroundPainter is PixelLayersPainter,
+            widget.foregroundPainter is LayerTilesPainter,
       ),
     )
     .size;
@@ -24,9 +24,9 @@ List<Layer> canvasLayers(WidgetTester tester) =>
                   find.byWidgetPredicate(
                     (widget) =>
                         widget is CustomPaint &&
-                        widget.foregroundPainter is PixelLayersPainter,
+                        widget.foregroundPainter is LayerTilesPainter,
                   ),
                 )
                 .foregroundPainter
-            as PixelLayersPainter)
+            as LayerTilesPainter)
         .layers;

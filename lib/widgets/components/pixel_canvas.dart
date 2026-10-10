@@ -5,8 +5,9 @@ import '../../editor/canvas/layer.dart';
 import '../../editor/canvas/pixel_point.dart';
 import '../../editor/pointer_button.dart';
 import 'chess_grid.dart';
+import 'layer_tile_cache.dart';
 
-class PixelCanvas extends StatelessWidget {
+class PixelCanvas extends StatefulWidget {
   const PixelCanvas({
     super.key,
     required this.width,
@@ -32,9 +33,22 @@ class PixelCanvas extends StatelessWidget {
   final void Function({required PixelPoint point}) onPointerUp;
   final VoidCallback onPointerExit;
 
+  @override
+  State<PixelCanvas> createState() => _PixelCanvasState();
+}
+
+class _PixelCanvasState extends State<PixelCanvas> {
+  final tileCache = LayerTileCache(tileSize: LayerTileCache.defaultTileSize);
+
+  @override
+  void dispose() {
+    tileCache.dispose();
+    super.dispose();
+  }
+
   PixelPoint _toPixel(Offset position) => PixelPoint(
-    x: (position.dx / zoom).floor(),
-    y: (position.dy / zoom).floor(),
+    x: (position.dx / widget.zoom).floor(),
+    y: (position.dy / widget.zoom).floor(),
   );
 
   PointerButton _toButton(int buttons) => buttons & kSecondaryMouseButton != 0
@@ -45,28 +59,54 @@ class PixelCanvas extends StatelessWidget {
   Widget build(BuildContext context) {
     return MouseRegion(
       cursor: SystemMouseCursors.precise,
-      onExit: (_) => onPointerExit(),
+      onExit: (_) => widget.onPointerExit(),
       child: Listener(
-        onPointerDown: (event) => onPointerDown(
+        onPointerDown: (event) => widget.onPointerDown(
           point: _toPixel(event.localPosition),
           button: _toButton(event.buttons),
         ),
         onPointerHover: (event) =>
-            onPointerMove(point: _toPixel(event.localPosition)),
+            widget.onPointerMove(point: _toPixel(event.localPosition)),
         onPointerMove: (event) =>
-            onPointerMove(point: _toPixel(event.localPosition)),
+            widget.onPointerMove(point: _toPixel(event.localPosition)),
         onPointerUp: (event) =>
-            onPointerUp(point: _toPixel(event.localPosition)),
+            widget.onPointerUp(point: _toPixel(event.localPosition)),
         onPointerCancel: (event) =>
-            onPointerUp(point: _toPixel(event.localPosition)),
+            widget.onPointerUp(point: _toPixel(event.localPosition)),
         child: CustomPaint(
           painter: const ChessGridPainter(),
-          foregroundPainter: PixelLayersPainter(layers: layers, zoom: zoom),
-          size: Size(width * zoom.toDouble(), height * zoom.toDouble()),
+          foregroundPainter: LayerTilesPainter(
+            tileCache: tileCache,
+            layers: widget.layers,
+            zoom: widget.zoom,
+          ),
+          size: Size(
+            widget.width * widget.zoom.toDouble(),
+            widget.height * widget.zoom.toDouble(),
+          ),
         ),
       ),
     );
   }
+}
+
+class LayerTilesPainter extends CustomPainter {
+  const LayerTilesPainter({
+    required this.tileCache,
+    required this.layers,
+    required this.zoom,
+  }) : super(repaint: tileCache);
+
+  final LayerTileCache tileCache;
+  final List<Layer> layers;
+  final int zoom;
+
+  @override
+  void paint(Canvas canvas, Size size) =>
+      tileCache.paint(canvas: canvas, layers: layers, zoom: zoom);
+
+  @override
+  bool shouldRepaint(LayerTilesPainter oldDelegate) => true;
 }
 
 class PixelLayersPainter extends CustomPainter {

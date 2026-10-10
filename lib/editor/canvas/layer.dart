@@ -8,7 +8,7 @@ import 'pixel_point.dart';
 import 'pixel_rectangle.dart';
 
 class Layer {
-  const Layer({required this.width, required this.height, required this.rgba});
+  Layer({required this.width, required this.height, required this.rgba});
 
   factory Layer.filled({
     required int width,
@@ -57,6 +57,14 @@ class Layer {
   final int width;
   final int height;
   final Uint8List rgba;
+  var _damage = _undamaged;
+
+  static const _undamaged = PixelRectangle(
+    left: 0,
+    top: 0,
+    width: 0,
+    height: 0,
+  );
 
   PixelRectangle get bounds =>
       PixelRectangle(left: 0, top: 0, width: width, height: height);
@@ -79,6 +87,9 @@ class Layer {
       offset: _offset(x: point.x, y: point.y),
       color: color,
     );
+    markDamaged(
+      PixelRectangle(left: point.x, top: point.y, width: 1, height: 1),
+    );
   }
 
   void fillRectangle({
@@ -94,6 +105,17 @@ class Layer {
         );
       }
     }
+    markDamaged(clipped);
+  }
+
+  void markDamaged(PixelRectangle area) {
+    _damage = _damage.union(area.intersection(bounds));
+  }
+
+  PixelRectangle takeDamage() {
+    final damage = _damage;
+    _damage = _undamaged;
+    return damage;
   }
 
   int _offset({required int x, required int y}) => (y * width + x) * 4;

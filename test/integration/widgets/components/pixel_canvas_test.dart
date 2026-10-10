@@ -53,7 +53,7 @@ void main() {
               ),
             ),
           );
-          final pixelLayersPainter =
+          final layerTilesPainter =
               tester
                       .widget<CustomPaint>(
                         find.descendant(
@@ -62,8 +62,8 @@ void main() {
                         ),
                       )
                       .foregroundPainter
-                  as PixelLayersPainter;
-          final actual = [pixelLayersPainter.layers, pixelLayersPainter.zoom];
+                  as LayerTilesPainter;
+          final actual = [layerTilesPainter.layers, layerTilesPainter.zoom];
           final expected = [
             [layer],
             4,

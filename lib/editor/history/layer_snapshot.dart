@@ -40,6 +40,7 @@ class LayerSnapshot {
         row * area.width * 4,
       );
     }
+    layer.markDamaged(area);
   }
 
   @override
