@@ -21,6 +21,25 @@ class Selection {
     );
   }
 
+  factory Selection.pasted({
+    required Layer layer,
+    required Layer content,
+    required PixelPoint at,
+  }) {
+    final background = Layer.copyOf(layer);
+    layer.paste(source: content, at: at);
+    return Selection(
+      area: PixelRectangle(
+        left: at.x,
+        top: at.y,
+        width: content.width,
+        height: content.height,
+      ),
+      content: content,
+      background: background,
+    );
+  }
+
   final PixelRectangle area;
   final Layer content;
   final Layer background;

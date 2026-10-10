@@ -3401,6 +3401,378 @@ void main() {
       });
     });
 
+    group('getter selectionContent', () {
+      group('selection', () {
+        test('selected area', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          editorController.selectAll();
+          final actual = pixelRows(editorController.selectionContent!);
+          const expected = [
+            [black, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('none', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          final actual = editorController.selectionContent;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method cutSelection', () {
+      group('selection', () {
+        test('selected area', () {
+          final document = Document.blank(
+            width: 3,
+            height: 1,
+            background: PixelColor.black,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 0));
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 0));
+          editorController.cutSelection();
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.selectionArea,
+            editorController.history.entries.map((entry) => entry.name),
+          ];
+          const expected = [
+            [
+              [black, transparent, transparent],
+            ],
+            null,
+            ['Cut'],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('none', () {
+          final document = Document.blank(
+            width: 3,
+            height: 1,
+            background: PixelColor.black,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.cutSelection();
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.history.entries,
+          ];
+          const expected = [
+            [
+              [black, black, black],
+            ],
+            [],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method paste', () {
+      group('into selection', () {
+        test('fits', () {
+          final document = Document.blank(
+            width: 3,
+            height: 1,
+            background: PixelColor.black,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 0));
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 0));
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.paste(
+            layerFromRows([
+              [red],
+            ]),
+          );
+          final actual = [
+            pixelRows(document.activeLayer),
+            document.layers.length,
+            editorController.selectionArea,
+            editorController.history.entries.map((entry) => entry.name),
+            notifications,
+          ];
+          const expected = [
+            [
+              [black, red, black],
+            ],
+            1,
+            PixelRectangle(left: 1, top: 0, width: 1, height: 1),
+            ['Paste'],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('same size', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectAll();
+          editorController.paste(
+            layerFromRows([
+              [red, white],
+            ]),
+          );
+          final actual = [
+            pixelRows(document.activeLayer),
+            document.layers.length,
+          ];
+          const expected = [
+            [
+              [red, white],
+            ],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('move pasted', () {
+          final document = Document.blank(
+            width: 3,
+            height: 1,
+            background: PixelColor.black,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectAll();
+          editorController.paste(
+            layerFromRows([
+              [red],
+            ]),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 0));
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 0));
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [black, black, red],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('no selection', () {
+        test('active layer', () {
+          final document = Document.blank(
+            width: 3,
+            height: 1,
+            background: PixelColor.black,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.paste(
+            layerFromRows([
+              [red],
+            ]),
+          );
+          final actual = [
+            layerStructure(document),
+            pixelRows(document.activeLayer),
+            editorController.selectionArea,
+            editorController.toolKind,
+            editorController.history.entries.map((entry) => entry.name),
+          ];
+          const expected = [
+            [
+              ['Background'],
+              0,
+            ],
+            [
+              [red, black, black],
+            ],
+            PixelRectangle(left: 0, top: 0, width: 1, height: 1),
+            ToolKind.select,
+            ['Paste'],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('larger than document', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.paste(
+            layerFromRows([
+              [red, white],
+            ]),
+          );
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.selectionArea,
+          ];
+          const expected = [
+            [
+              [red],
+            ],
+            PixelRectangle(left: 0, top: 0, width: 2, height: 1),
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('as layer', () {
+        test('wider than selection', () {
+          final document = Document.blank(width: 2, height: 2);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 1),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 2));
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 2));
+          editorController.paste(
+            layerFromRows([
+              [red, red],
+            ]),
+          );
+          final actual = [
+            document.layers.length,
+            pixelRows(document.activeLayer),
+          ];
+          const expected = [
+            2,
+            [
+              [red, red],
+              [transparent, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('taller than selection', () {
+          final document = Document.blank(width: 2, height: 2);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 1),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 2));
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 2));
+          editorController.paste(
+            layerFromRows([
+              [red],
+              [red],
+            ]),
+          );
+          final actual = [
+            document.layers.length,
+            pixelRows(document.activeLayer),
+          ];
+          const expected = [
+            2,
+            [
+              [red, transparent],
+              [red, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('undo', () {
+          final document = Document.blank(width: 2, height: 2);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 1),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 2));
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 2));
+          editorController.paste(
+            layerFromRows([
+              [red, red],
+            ]),
+          );
+          final pasted = [
+            layerStructure(document),
+            editorController.history.entries.map((entry) => entry.name),
+          ];
+          editorController.undo();
+          final actual = [
+            pasted,
+            layerStructure(document),
+            editorController.selectionArea,
+          ];
+          const expected = [
+            [
+              [
+                ['Background', 'Layer 2'],
+                1,
+              ],
+              ['Paste as layer'],
+            ],
+            [
+              ['Background'],
+              0,
+            ],
+            null,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('stroke', () {
+        test('ignored', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.paste(
+            layerFromRows([
+              [red],
+            ]),
+          );
+          final actual = [
+            document.layers.length,
+            editorController.toolKind,
+            editorController.hasSelection,
+          ];
+          const expected = [1, ToolKind.pen, false];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method rotateSelection', () {
       group('directions', () {
         test('clockwise', () {

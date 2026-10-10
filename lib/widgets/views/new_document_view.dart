@@ -3,12 +3,18 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../editor/canvas/document.dart';
+import '../../editor/files/image_clipboard.dart';
 import '../components/paint_icon_button.dart';
 import '../components/paint_style.dart';
 
 class NewDocumentView extends StatefulWidget {
-  const NewDocumentView({super.key, required this.onCreate});
+  const NewDocumentView({
+    super.key,
+    required this.clipboard,
+    required this.onCreate,
+  });
 
+  final ImageClipboard clipboard;
   final ValueChanged<Document> onCreate;
 
   @override
@@ -18,6 +24,7 @@ class NewDocumentView extends StatefulWidget {
 class _NewDocumentViewState extends State<NewDocumentView> {
   final widthController = TextEditingController(text: '64');
   final heightController = TextEditingController(text: '64');
+  String? clipboardError;
 
   @override
   void dispose() {
@@ -45,6 +52,23 @@ class _NewDocumentViewState extends State<NewDocumentView> {
     final height = _parseSize(heightController.text);
     if (width == null || height == null) return;
     widget.onCreate(Document.blank(width: width, height: height));
+  }
+
+  Future<void> _createFromClipboard() async {
+    final image = await widget.clipboard.read();
+    if (!mounted) return;
+    final error = switch (image) {
+      null => 'Clipboard has no image',
+      _
+          when image.width > Document.maximumSize ||
+              image.height > Document.maximumSize =>
+        'Image is larger than ${Document.maximumSize} × ${Document.maximumSize}',
+      _ => null,
+    };
+    setState(() => clipboardError = error);
+    if (image != null && error == null) {
+      widget.onCreate(Document.fromImage(image: image));
+    }
   }
 
   @override
@@ -101,6 +125,32 @@ class _NewDocumentViewState extends State<NewDocumentView> {
                     onPressed: valid ? _create : null,
                   ),
                 ),
+                const Divider(height: 1, color: PaintStyle.separatorColor),
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'From clipboard',
+                        style: TextStyle(
+                          color: PaintStyle.titleColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    PaintIconButton(
+                      icon: FontAwesomeIcons.paste,
+                      tooltip: 'Create from clipboard',
+                      onPressed: _createFromClipboard,
+                    ),
+                  ],
+                ),
+                if (clipboardError case final error?)
+                  Text(
+                    error,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
               ],
             );
           },

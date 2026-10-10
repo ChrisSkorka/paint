@@ -51,14 +51,14 @@ fi
 
 echo
 printf "Checking dart formatting... "
-OUTPUT=$(dart format --output=none --set-exit-if-changed . 2>&1)
+OUTPUT=$(git ls-files -z '*.dart' | xargs -0 dart format --output=none --set-exit-if-changed 2>&1)
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
   echo "PASSED"
 else
   PASS=false
   echo "FAILED"
-  echo "$ dart format --output=none --set-exit-if-changed ."
+  echo "$ git ls-files -z '*.dart' | xargs -0 dart format --output=none --set-exit-if-changed"
   echo "$OUTPUT"
   echo "To fix, run: dart format ."
 fi

@@ -20,8 +20,10 @@ import '../../../support/color_dialog_probes.dart';
 import '../../../support/desktop_view.dart';
 import '../../../support/editor_view_probes.dart';
 import '../../../support/hover.dart';
+import '../../../support/keyboard.dart';
 import '../../../support/layer_probes.dart';
 import '../../../support/view_probes.dart';
+import '../../../support/stub_image_clipboard.dart';
 
 void main() {
   const transparent = 0x00000000;
@@ -36,7 +38,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -49,7 +54,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -62,7 +70,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -75,7 +86,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -87,7 +101,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -99,7 +116,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -114,7 +134,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -133,7 +156,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -152,7 +178,12 @@ void main() {
           final document = Document.blank(width: 2, height: 2);
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           final actual = [
@@ -180,7 +211,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -204,7 +238,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -221,7 +258,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -254,7 +294,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -272,7 +315,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -293,7 +339,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -311,7 +360,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -325,6 +377,7 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  clipboard: StubImageClipboard(),
                   document: Document.blank(
                     width: 2,
                     height: 1,
@@ -348,7 +401,12 @@ void main() {
           final document = Document.blank(width: 2, height: 2);
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
@@ -366,7 +424,12 @@ void main() {
           final document = Document.blank(width: 2, height: 2);
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
@@ -388,7 +451,12 @@ void main() {
           final document = Document.blank(width: 2, height: 2);
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
@@ -414,7 +482,12 @@ void main() {
           );
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           await tester.tap(find.byTooltip('Eraser'));
@@ -434,7 +507,12 @@ void main() {
           final document = Document.blank(width: 2, height: 2);
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           await tester.tap(find.byTooltip('Fill'));
@@ -454,7 +532,12 @@ void main() {
           final document = Document.blank(width: 3, height: 3);
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           await tester.tap(find.byTooltip('Rectangle'));
@@ -481,7 +564,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -494,7 +580,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -511,7 +600,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -528,7 +620,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -549,7 +644,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -564,7 +662,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -579,7 +680,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -594,7 +698,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -612,7 +719,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -630,7 +740,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -648,7 +761,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -666,7 +782,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -685,7 +804,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -707,7 +829,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -729,7 +854,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -753,7 +881,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -768,7 +899,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -785,7 +919,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -806,7 +943,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -828,7 +968,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -858,6 +1001,7 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  clipboard: StubImageClipboard(),
                   document: Document.blank(
                     width: 2,
                     height: 2,
@@ -882,6 +1026,7 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  clipboard: StubImageClipboard(),
                   document: Document.blank(
                     width: 2,
                     height: 2,
@@ -911,7 +1056,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -933,7 +1081,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -952,7 +1103,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -973,7 +1127,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -998,7 +1155,12 @@ void main() {
           );
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           await tester.tap(find.byTooltip('Select'));
@@ -1019,7 +1181,12 @@ void main() {
           );
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           await tester.tap(find.byTooltip('Select all'));
@@ -1045,7 +1212,12 @@ void main() {
           );
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           await tester.tap(find.byTooltip('Select'));
@@ -1078,7 +1250,12 @@ void main() {
           );
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           await tester.tap(find.byTooltip('Select all'));
@@ -1099,7 +1276,12 @@ void main() {
           );
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           await tester.tap(find.byTooltip('Select all'));
@@ -1121,7 +1303,12 @@ void main() {
           );
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           await tester.tap(find.byTooltip('Select all'));
@@ -1143,7 +1330,12 @@ void main() {
           );
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           await tester.tap(find.byTooltip('Select all'));
@@ -1165,7 +1357,12 @@ void main() {
           );
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           await tester.tap(find.byTooltip('Select all'));
@@ -1197,7 +1394,12 @@ void main() {
           );
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           await tester.tap(find.byTooltip('Select all'));
@@ -1220,7 +1422,12 @@ void main() {
           );
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           await tester.tap(find.byTooltip('Select all'));
@@ -1243,7 +1450,12 @@ void main() {
           );
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           await tester.tap(find.byTooltip('Select all'));
@@ -1265,7 +1477,12 @@ void main() {
           );
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           await tester.tap(find.byTooltip('Select all'));
@@ -1280,13 +1497,404 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('clipboard', () {
+        testWidgets('actions without selection', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          final actual = clipboardActionsEnabled(tester);
+          const expected = [true, false, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('actions with selection', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          final actual = clipboardActionsEnabled(tester);
+          const expected = [true, true, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('copy button', (tester) async {
+          useDesktopView(tester);
+          final stubClipboard = StubImageClipboard();
+          final document = Document.blank(
+            width: 2,
+            height: 1,
+            background: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(clipboard: stubClipboard, document: document),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Copy'));
+          await tester.pump();
+          final actual = [
+            [for (final image in stubClipboard.written) pixelRows(image)],
+            pixelRows(document.activeLayer),
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              [
+                [black, black],
+              ],
+            ],
+            [
+              [black, black],
+            ],
+            [
+              ['Start'],
+              0,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('cut button', (tester) async {
+          useDesktopView(tester);
+          final stubClipboard = StubImageClipboard();
+          final document = Document.blank(
+            width: 2,
+            height: 1,
+            background: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(clipboard: stubClipboard, document: document),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Cut'));
+          await tester.pump();
+          final actual = [
+            [for (final image in stubClipboard.written) pixelRows(image)],
+            pixelRows(document.activeLayer),
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              [
+                [black, black],
+              ],
+            ],
+            [
+              [transparent, transparent],
+            ],
+            [
+              ['Start', 'Cut'],
+              1,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('paste button', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 1);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(
+                    image: layerFromRows([
+                      [black],
+                    ]),
+                  ),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Paste'));
+          await tester.pump();
+          final actual = [
+            layerState(tester),
+            pixelRows(document.activeLayer),
+            historyState(tester),
+            selectToolSelected(tester),
+          ];
+          const expected = [
+            [
+              ['Background'],
+              [true],
+              [100],
+              0,
+            ],
+            [
+              [black, transparent],
+            ],
+            [
+              ['Start', 'Paste'],
+              1,
+            ],
+            true,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('paste empty clipboard', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Paste'));
+          await tester.pump();
+          final actual = historyState(tester);
+          const expected = [
+            ['Start'],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('paste after close', (tester) async {
+          useDesktopView(tester);
+          final stubClipboard = StubImageClipboard(holdReads: true);
+          final document = Document.blank(width: 2, height: 1);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(clipboard: stubClipboard, document: document),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Paste'));
+          await tester.pumpWidget(const SizedBox());
+          stubClipboard.pendingReads.single.complete(
+            layerFromRows([
+              [black],
+            ]),
+          );
+          await tester.pump();
+          final actual = [document.layers.length, tester.takeException()];
+          const expected = [1, null];
+          expect(actual, equals(expected));
+        });
+        testWidgets('ctrl c', (tester) async {
+          useDesktopView(tester);
+          final stubClipboard = StubImageClipboard();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: stubClipboard,
+                  document: Document.blank(
+                    width: 2,
+                    height: 1,
+                    background: PixelColor.black,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          await pressControlShortcut(tester, key: LogicalKeyboardKey.keyC);
+          final actual = [
+            for (final image in stubClipboard.written) pixelRows(image),
+          ];
+          const expected = [
+            [
+              [black, black],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('ctrl c without selection', (tester) async {
+          useDesktopView(tester);
+          final stubClipboard = StubImageClipboard();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: stubClipboard,
+                  document: Document.blank(width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await pressControlShortcut(tester, key: LogicalKeyboardKey.keyC);
+          final actual = stubClipboard.written;
+          const expected = [];
+          expect(actual, equals(expected));
+        });
+        testWidgets('ctrl x', (tester) async {
+          useDesktopView(tester);
+          final stubClipboard = StubImageClipboard();
+          final document = Document.blank(
+            width: 2,
+            height: 1,
+            background: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(clipboard: stubClipboard, document: document),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          await pressControlShortcut(tester, key: LogicalKeyboardKey.keyX);
+          final actual = [
+            [for (final image in stubClipboard.written) pixelRows(image)],
+            pixelRows(document.activeLayer),
+          ];
+          const expected = [
+            [
+              [
+                [black, black],
+              ],
+            ],
+            [
+              [transparent, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('ctrl x without selection', (tester) async {
+          useDesktopView(tester);
+          final stubClipboard = StubImageClipboard();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: stubClipboard,
+                  document: Document.blank(width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await pressControlShortcut(tester, key: LogicalKeyboardKey.keyX);
+          final actual = [stubClipboard.written, historyState(tester)];
+          const expected = [
+            [],
+            [
+              ['Start'],
+              0,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('ctrl v into selection', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 1);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(
+                    image: layerFromRows([
+                      [black],
+                    ]),
+                  ),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          await pressControlShortcut(tester, key: LogicalKeyboardKey.keyV);
+          final actual = [
+            pixelRows(document.activeLayer),
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              [black, transparent],
+            ],
+            [
+              ['Start', 'Paste'],
+              1,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('copy delete paste', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 1);
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          await pressControlShortcut(tester, key: LogicalKeyboardKey.keyC);
+          await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+          await tester.pump();
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          await pressControlShortcut(tester, key: LogicalKeyboardKey.keyV);
+          final actual = [
+            pixelRows(document.activeLayer),
+            document.layers.length,
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              [black, transparent],
+            ],
+            1,
+            [
+              ['Start', 'Delete selection', 'Paste'],
+              2,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
       group('history', () {
         testWidgets('after stroke', (tester) async {
           useDesktopView(tester);
           final document = Document.blank(width: 2, height: 2);
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
@@ -1315,7 +1923,12 @@ void main() {
           final document = Document.blank(width: 2, height: 2);
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
@@ -1349,7 +1962,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -1367,7 +1983,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -1391,6 +2010,7 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: EditorView(
+                  clipboard: StubImageClipboard(),
                   document: Document.blank(width: 48, height: 48),
                 ),
               ),
@@ -1418,7 +2038,12 @@ void main() {
           final document = Document.blank(width: 2, height: 2);
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
@@ -1449,7 +2074,12 @@ void main() {
           final document = Document.blank(width: 2, height: 2);
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
@@ -1482,7 +2112,12 @@ void main() {
           final document = Document.blank(width: 2, height: 2);
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
@@ -1518,7 +2153,12 @@ void main() {
           final document = Document.blank(width: 2, height: 2);
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
@@ -1551,7 +2191,12 @@ void main() {
           final document = Document.blank(width: 2, height: 2);
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
@@ -1591,7 +2236,12 @@ void main() {
           final document = Document.blank(width: 2, height: 2);
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
@@ -1624,7 +2274,12 @@ void main() {
           final document = Document.blank(width: 2, height: 2);
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
@@ -1662,7 +2317,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -1693,7 +2351,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -1726,7 +2387,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -1759,7 +2423,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -1794,7 +2461,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -1827,7 +2497,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -1860,7 +2533,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 1)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1),
+                ),
               ),
             ),
           );
@@ -1878,7 +2554,12 @@ void main() {
           final document = Document.blank(width: 2, height: 1);
           await tester.pumpWidget(
             MaterialApp(
-              home: Scaffold(body: EditorView(document: document)),
+              home: Scaffold(
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
             ),
           );
           await tester.tap(find.byTooltip('Add layer'));
@@ -1904,7 +2585,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -1935,7 +2619,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -1968,7 +2655,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -2011,7 +2701,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -2046,7 +2739,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -2082,7 +2778,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -2121,7 +2820,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 1)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1),
+                ),
               ),
             ),
           );
@@ -2142,7 +2844,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -2157,7 +2862,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );
@@ -2172,7 +2880,10 @@ void main() {
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
-                body: EditorView(document: Document.blank(width: 2, height: 2)),
+                body: EditorView(
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
               ),
             ),
           );

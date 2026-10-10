@@ -175,3 +175,16 @@ List<bool> layerActionsEnabled(WidgetTester tester) => [
             .onPressed !=
         null,
 ];
+
+List<bool> clipboardActionsEnabled(WidgetTester tester) => [
+  for (final tooltip in ['Paste', 'Cut', 'Copy'])
+    tester
+            .widget<PaintIconButton>(
+              find.ancestor(
+                of: find.byTooltip(tooltip),
+                matching: find.byType(PaintIconButton),
+              ),
+            )
+            .onPressed !=
+        null,
+];

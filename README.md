@@ -176,9 +176,9 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 3: clipboard
 
-- [ ] copy, cut & paste selection to / from system clipboard
-- [ ] paste into new layer when larger than selection
-- [ ] create from clipboard (new document tab)
+- [x] copy, cut & paste selection to / from system clipboard
+- [x] paste into new layer when larger than selection
+- [x] create from clipboard (new document tab)
 
 ### phase 4: files & persistence
 
@@ -237,3 +237,4 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] move layer & history image previews to left
 - [ ] allow renaming layers
 - [ ] text inputs have unit text on right side
+- [ ] ctrl + z/y no longer working

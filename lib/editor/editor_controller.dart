@@ -88,6 +88,7 @@ class EditorController extends ChangeNotifier {
   List<PixelColor> get recentColors => _recentColors;
   PixelRectangle? get selectionArea => _selectingArea ?? _selection?.area;
   bool get hasSelection => _selection != null;
+  Layer? get selectionContent => _selection?.content;
   bool get pointerOverSelection {
     final cursor = _cursor;
     final selection = _selection;
@@ -199,22 +200,25 @@ class EditorController extends ChangeNotifier {
       name: 'Add layer',
       change: () {
         _selection = null;
-        _layerCount++;
-        final index = document.activeLayerIndex + 1;
-        document.layers.insert(
-          index,
-          DocumentLayer(
-            name: 'Layer $_layerCount',
-            pixels: Layer.filled(
-              width: document.width,
-              height: document.height,
-              color: PixelColor.transparent,
-            ),
-          ),
-        );
-        document.activeLayerIndex = index;
+        _insertLayer();
       },
     );
+  }
+
+  Layer _insertLayer() {
+    _layerCount++;
+    final pixels = Layer.filled(
+      width: document.width,
+      height: document.height,
+      color: PixelColor.transparent,
+    );
+    final index = document.activeLayerIndex + 1;
+    document.layers.insert(
+      index,
+      DocumentLayer(name: 'Layer $_layerCount', pixels: pixels),
+    );
+    document.activeLayerIndex = index;
+    return pixels;
   }
 
   void removeLayer() {
@@ -381,7 +385,11 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void deleteSelection() {
+  void deleteSelection() => _eraseSelection(name: 'Delete selection');
+
+  void cutSelection() => _eraseSelection(name: 'Cut');
+
+  void _eraseSelection({required String name}) {
     final selection = _selection;
     if (selection == null || _strokePoint != null) return;
     final before = Layer.copyOf(document.activeLayer);
@@ -390,7 +398,35 @@ class EditorController extends ChangeNotifier {
       color: PixelColor.transparent,
     );
     _selection = null;
-    _record(name: 'Delete selection', before: before, area: selection.area);
+    _record(name: name, before: before, area: selection.area);
+    notifyListeners();
+  }
+
+  void paste(Layer image) {
+    if (_strokePoint != null) return;
+    _toolKind = ToolKind.select;
+    _drawingToolKind = ToolKind.select;
+    final area = _selection?.area;
+    if (area != null &&
+        (image.width > area.width || image.height > area.height)) {
+      _changeLayers(
+        name: 'Paste as layer',
+        change: () => _selection = Selection.pasted(
+          layer: _insertLayer(),
+          content: image,
+          at: const PixelPoint(x: 0, y: 0),
+        ),
+      );
+      return;
+    }
+    final before = Layer.copyOf(document.activeLayer);
+    final pasted = Selection.pasted(
+      layer: document.activeLayer,
+      content: image,
+      at: PixelPoint(x: area?.left ?? 0, y: area?.top ?? 0),
+    );
+    _selection = pasted;
+    _record(name: 'Paste', before: before, area: pasted.area);
     notifyListeners();
   }
 

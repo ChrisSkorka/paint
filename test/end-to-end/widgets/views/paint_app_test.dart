@@ -9,6 +9,7 @@ import 'package:paint/widgets/views/paint_app.dart';
 import '../../../support/color_dialog_probes.dart';
 import '../../../support/desktop_view.dart';
 import '../../../support/view_probes.dart';
+import '../../../support/stub_image_clipboard.dart';
 
 void main() {
   group('class PaintApp', () {
@@ -16,7 +17,9 @@ void main() {
       group('launch', () {
         testWidgets('new document tab', (tester) async {
           useDesktopView(tester);
-          await tester.pumpWidget(PaintApp(key: UniqueKey()));
+          await tester.pumpWidget(
+            PaintApp(key: UniqueKey(), clipboard: StubImageClipboard()),
+          );
           final actual = [
             tabIndex(tester),
             find.text('Create new').evaluate().length,
@@ -31,7 +34,9 @@ void main() {
       group('documents', () {
         testWidgets('create document', (tester) async {
           useDesktopView(tester);
-          await tester.pumpWidget(PaintApp(key: UniqueKey()));
+          await tester.pumpWidget(
+            PaintApp(key: UniqueKey(), clipboard: StubImageClipboard()),
+          );
           await tester.tap(find.byTooltip('Create'));
           await tester.pumpAndSettle();
           final actual = [
@@ -46,7 +51,9 @@ void main() {
       group('drawing', () {
         testWidgets('stroke on new document', (tester) async {
           useDesktopView(tester);
-          await tester.pumpWidget(PaintApp(key: UniqueKey()));
+          await tester.pumpWidget(
+            PaintApp(key: UniqueKey(), clipboard: StubImageClipboard()),
+          );
           await tester.tap(find.byTooltip('Create'));
           await tester.pumpAndSettle();
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
@@ -70,10 +77,39 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('clipboard', () {
+        testWidgets('copy into new document', (tester) async {
+          useDesktopView(tester);
+          final stubClipboard = StubImageClipboard();
+          await tester.pumpWidget(
+            PaintApp(key: UniqueKey(), clipboard: stubClipboard),
+          );
+          await tester.enterText(find.byKey(const Key('width')), '3');
+          await tester.enterText(find.byKey(const Key('height')), '2');
+          await tester.tap(find.byTooltip('Create'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Copy'));
+          await tester.pump();
+          await tester.tap(find.text('New document'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Create from clipboard'));
+          await tester.pumpAndSettle();
+          final actual = [
+            tabIndex(tester),
+            find.text('3 × 2').evaluate().length,
+          ];
+          const expected = [1, 1];
+          expect(actual, equals(expected));
+        });
+      });
       group('history', () {
         testWidgets('undo and redo after typed size', (tester) async {
           useDesktopView(tester);
-          await tester.pumpWidget(PaintApp(key: UniqueKey()));
+          await tester.pumpWidget(
+            PaintApp(key: UniqueKey(), clipboard: StubImageClipboard()),
+          );
           await tester.enterText(find.byKey(const Key('width')), '4');
           await tester.enterText(find.byKey(const Key('height')), '4');
           await tester.tap(find.byTooltip('Create'));
@@ -105,7 +141,9 @@ void main() {
       group('colors', () {
         testWidgets('edit color and draw', (tester) async {
           useDesktopView(tester);
-          await tester.pumpWidget(PaintApp(key: UniqueKey()));
+          await tester.pumpWidget(
+            PaintApp(key: UniqueKey(), clipboard: StubImageClipboard()),
+          );
           await tester.tap(find.byTooltip('Create'));
           await tester.pumpAndSettle();
           await tester.tap(find.byTooltip('Edit colors'));

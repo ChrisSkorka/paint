@@ -30,6 +30,15 @@ class Document {
     );
   }
 
+  factory Document.fromImage({required Layer image}) {
+    return Document(
+      width: image.width,
+      height: image.height,
+      layers: [DocumentLayer(name: 'Background', pixels: image)],
+      activeLayerIndex: 0,
+    );
+  }
+
   static const minimumSize = 1;
   static const maximumSize = 4096;
 

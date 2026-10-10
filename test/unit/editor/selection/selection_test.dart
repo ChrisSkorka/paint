@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
 import 'package:paint/editor/selection/selection.dart';
 
@@ -43,6 +44,88 @@ void main() {
             [
               [red, green, blue],
               [cyan, magenta, yellow],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('factory pasted', () {
+      group('positions', () {
+        test('inside layer', () {
+          final layer = layerFromRows([
+            [red, green, blue],
+            [cyan, magenta, yellow],
+          ]);
+          final selection = Selection.pasted(
+            layer: layer,
+            content: layerFromRows([
+              [transparent],
+            ]),
+            at: const PixelPoint(x: 1, y: 1),
+          );
+          final actual = [
+            selection.area,
+            pixelRows(selection.content),
+            pixelRows(selection.background),
+            pixelRows(layer),
+          ];
+          final expected = [
+            const PixelRectangle(left: 1, top: 1, width: 1, height: 1),
+            [
+              [transparent],
+            ],
+            [
+              [red, green, blue],
+              [cyan, magenta, yellow],
+            ],
+            [
+              [red, green, blue],
+              [cyan, transparent, yellow],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('beyond layer', () {
+          final layer = layerFromRows([
+            [red, green],
+          ]);
+          final selection = Selection.pasted(
+            layer: layer,
+            content: layerFromRows([
+              [cyan, magenta, yellow],
+              [cyan, magenta, yellow],
+            ]),
+            at: const PixelPoint(x: 0, y: 0),
+          );
+          final actual = [selection.area, pixelRows(layer)];
+          final expected = [
+            const PixelRectangle(left: 0, top: 0, width: 3, height: 2),
+            [
+              [cyan, magenta],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('moved', () {
+        test('restores background', () {
+          final layer = layerFromRows([
+            [red, green, blue],
+          ]);
+          final moved = Selection.pasted(
+            layer: layer,
+            content: layerFromRows([
+              [cyan],
+            ]),
+            at: const PixelPoint(x: 0, y: 0),
+          ).moved(layer: layer, offsetX: 2, offsetY: 0);
+          final actual = [moved.area, pixelRows(layer)];
+          final expected = [
+            const PixelRectangle(left: 2, top: 0, width: 1, height: 1),
+            [
+              [red, green, cyan],
             ],
           ];
           expect(actual, equals(expected));

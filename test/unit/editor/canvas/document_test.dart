@@ -64,6 +64,26 @@ void main() {
       });
     });
 
+    group('factory fromImage', () {
+      group('image', () {
+        test('background layer', () {
+          final image = Layer.filled(
+            width: 3,
+            height: 2,
+            color: PixelColor.white,
+          );
+          final actual = Document.fromImage(image: image);
+          final expected = Document(
+            width: 3,
+            height: 2,
+            layers: [DocumentLayer(name: 'Background', pixels: image)],
+            activeLayerIndex: 0,
+          );
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('getter activeLayer', () {
       group('single layer', () {
         test('only', () {

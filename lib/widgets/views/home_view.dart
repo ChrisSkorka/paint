@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../editor/canvas/document.dart';
+import '../../editor/files/image_clipboard.dart';
 import '../components/paint_style.dart';
 import 'editor_view.dart';
 import 'new_document_view.dart';
 
 class HomeView extends StatefulWidget {
-  const HomeView({super.key});
+  const HomeView({super.key, required this.clipboard});
+
+  final ImageClipboard clipboard;
 
   @override
   State<HomeView> createState() => _HomeViewState();
@@ -63,10 +66,17 @@ class _HomeViewState extends State<HomeView>
             child: IndexedStack(
               index: tabController.index,
               children: [
-                NewDocumentView(onCreate: _openDocument),
+                NewDocumentView(
+                  clipboard: widget.clipboard,
+                  onCreate: _openDocument,
+                ),
                 document == null
                     ? const Center(child: Text('No document open'))
-                    : EditorView(key: ObjectKey(document), document: document),
+                    : EditorView(
+                        key: ObjectKey(document),
+                        document: document,
+                        clipboard: widget.clipboard,
+                      ),
               ],
             ),
           ),

@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -7,6 +8,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../editor/canvas/document.dart';
 import '../../editor/canvas/pixel_color.dart';
 import '../../editor/editor_controller.dart';
+import '../../editor/files/image_clipboard.dart';
 import '../../editor/canvas/layer.dart';
 import '../../editor/history/history.dart';
 import '../../editor/history/history_entry.dart';
@@ -29,9 +31,14 @@ import '../components/side_panel.dart';
 import '../components/swatch_grid.dart';
 
 class EditorView extends StatefulWidget {
-  const EditorView({super.key, required this.document});
+  const EditorView({
+    super.key,
+    required this.document,
+    required this.clipboard,
+  });
 
   final Document document;
+  final ImageClipboard clipboard;
 
   @override
   State<EditorView> createState() => _EditorViewState();
@@ -183,18 +190,53 @@ class _EditorViewState extends State<EditorView> {
     );
   }
 
-  static final _deleteKeys = {
-    LogicalKeyboardKey.delete,
-    LogicalKeyboardKey.backspace,
+  Future<void> _copySelection() async {
+    final content = controller.selectionContent;
+    if (content != null) await widget.clipboard.write(content);
+  }
+
+  Future<void> _cutSelection() async {
+    final content = controller.selectionContent;
+    controller.cutSelection();
+    if (content != null) await widget.clipboard.write(content);
+  }
+
+  Future<void> _paste() async {
+    final image = await widget.clipboard.read();
+    if (image != null && mounted) controller.paste(image);
+  }
+
+  late final _keyActions = <SingleActivator, VoidCallback>{
+    const SingleActivator(LogicalKeyboardKey.delete, includeRepeats: false):
+        controller.deleteSelection,
+    const SingleActivator(LogicalKeyboardKey.backspace, includeRepeats: false):
+        controller.deleteSelection,
+    const SingleActivator(
+      LogicalKeyboardKey.keyC,
+      control: true,
+      includeRepeats: false,
+    ): _copySelection,
+    const SingleActivator(
+      LogicalKeyboardKey.keyX,
+      control: true,
+      includeRepeats: false,
+    ): _cutSelection,
+    const SingleActivator(
+      LogicalKeyboardKey.keyV,
+      control: true,
+      includeRepeats: false,
+    ): _paste,
   };
 
   KeyEventResult _handleKey(FocusNode node, KeyEvent event) {
-    if (event is! KeyDownEvent ||
-        !_deleteKeys.contains(event.logicalKey) ||
-        _editingText()) {
-      return KeyEventResult.ignored;
-    }
-    controller.deleteSelection();
+    if (_editingText()) return KeyEventResult.ignored;
+    final action = _keyActions.entries
+        .firstWhereOrNull(
+          (entry) => entry.key.accepts(event, HardwareKeyboard.instance),
+        )
+        ?.value;
+    if (action == null) return KeyEventResult.ignored;
+    action();
     return KeyEventResult.handled;
   }
 
@@ -349,6 +391,82 @@ class _EditorViewState extends State<EditorView> {
                       ],
                     ),
                     RibbonSection(
+                      title: 'Selection',
+                      columns: [
+                        RibbonColumn(
+                          children: [
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.copy,
+                              tooltip: 'Copy',
+                              onPressed: _whenSelected(_copySelection),
+                            ),
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.scissors,
+                              tooltip: 'Cut',
+                              onPressed: _whenSelected(_cutSelection),
+                            ),
+                          ],
+                        ),
+                        RibbonColumn(
+                          children: [
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.paste,
+                              tooltip: 'Paste',
+                              onPressed: _paste,
+                            ),
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.expand,
+                              tooltip: 'Select all',
+                              onPressed: controller.selectAll,
+                            ),
+                          ],
+                        ),
+                        RibbonColumn(
+                          children: [
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.arrowRotateLeft,
+                              tooltip: 'Rotate left',
+                              onPressed: _whenSelected(
+                                () => controller.rotateSelection(
+                                  clockwise: false,
+                                ),
+                              ),
+                            ),
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.arrowsLeftRight,
+                              tooltip: 'Mirror horizontally',
+                              onPressed: _whenSelected(
+                                () => controller.mirrorSelection(
+                                  horizontally: true,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        RibbonColumn(
+                          children: [
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.arrowRotateRight,
+                              tooltip: 'Rotate right',
+                              onPressed: _whenSelected(
+                                () =>
+                                    controller.rotateSelection(clockwise: true),
+                              ),
+                            ),
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.arrowsUpDown,
+                              tooltip: 'Mirror vertically',
+                              onPressed: _whenSelected(
+                                () => controller.mirrorSelection(
+                                  horizontally: false,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    RibbonSection(
                       title: 'Tools',
                       columns: [
                         RibbonColumn(
@@ -435,63 +553,6 @@ class _EditorViewState extends State<EditorView> {
                             _shapeButton(
                               icon: FontAwesomeIcons.arrowRight,
                               toolKind: ToolKind.arrow,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    RibbonSection(
-                      title: 'Selection',
-                      columns: [
-                        RibbonColumn(
-                          children: [
-                            PaintIconButton(
-                              icon: FontAwesomeIcons.expand,
-                              tooltip: 'Select all',
-                              onPressed: controller.selectAll,
-                            ),
-                          ],
-                        ),
-                        RibbonColumn(
-                          children: [
-                            PaintIconButton(
-                              icon: FontAwesomeIcons.arrowRotateLeft,
-                              tooltip: 'Rotate left',
-                              onPressed: _whenSelected(
-                                () => controller.rotateSelection(
-                                  clockwise: false,
-                                ),
-                              ),
-                            ),
-                            PaintIconButton(
-                              icon: FontAwesomeIcons.arrowRotateRight,
-                              tooltip: 'Rotate right',
-                              onPressed: _whenSelected(
-                                () =>
-                                    controller.rotateSelection(clockwise: true),
-                              ),
-                            ),
-                          ],
-                        ),
-                        RibbonColumn(
-                          children: [
-                            PaintIconButton(
-                              icon: FontAwesomeIcons.arrowsLeftRight,
-                              tooltip: 'Mirror horizontally',
-                              onPressed: _whenSelected(
-                                () => controller.mirrorSelection(
-                                  horizontally: true,
-                                ),
-                              ),
-                            ),
-                            PaintIconButton(
-                              icon: FontAwesomeIcons.arrowsUpDown,
-                              tooltip: 'Mirror vertically',
-                              onPressed: _whenSelected(
-                                () => controller.mirrorSelection(
-                                  horizontally: false,
-                                ),
-                              ),
                             ),
                           ],
                         ),
