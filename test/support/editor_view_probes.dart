@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/layer_timeframe.dart';
+import 'package:paint/widgets/components/frame_list.dart';
 import 'package:paint/widgets/components/history_list.dart';
 import 'package:paint/widgets/components/layer_list.dart';
 import 'package:paint/widgets/components/numeric_value_range.dart';
 import 'package:paint/widgets/components/paint_icon_button.dart';
 import 'package:paint/widgets/components/paint_split_button.dart';
-import 'package:paint/widgets/components/pixel_canvas.dart';
 import 'package:paint/widgets/components/swatch_grid.dart';
 import 'package:paint/widgets/components/timeline.dart';
 
@@ -196,14 +196,38 @@ List<Object> timelineState(WidgetTester tester) {
   final timeline = tester.widget<Timeline>(find.byType(Timeline));
   return [
     timeline.frame,
-    timeline.frameCount,
-    timeline.frameDuration,
+    timeline.shownFrames,
+    timeline.fps,
     timeline.playing,
-    tester.widget<PixelCanvas>(find.byType(PixelCanvas)).frame,
+    tester.widget<FrameList>(find.byType(FrameList)).activeIndex,
   ];
 }
 
 List<LayerTimeframe> layerTimeframes(WidgetTester tester) => [
   for (final item in tester.widget<LayerList>(find.byType(LayerList)).items)
     item.timeframe,
+];
+
+List<int> frameHolds(WidgetTester tester) => [
+  for (final item in tester.widget<FrameList>(find.byType(FrameList)).items)
+    item.holds,
+];
+
+List<bool> frameControlsEnabled(WidgetTester tester) => [
+  for (final tooltip in [
+    'Add frame',
+    'Copy frame',
+    'Remove frame',
+    'Move frame up',
+    'Move frame down',
+  ])
+    tester
+            .widget<PaintIconButton>(
+              find.ancestor(
+                of: find.byTooltip(tooltip),
+                matching: find.byType(PaintIconButton),
+              ),
+            )
+            .onPressed !=
+        null,
 ];

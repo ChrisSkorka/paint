@@ -58,7 +58,7 @@ void main() {
       ),
     ],
     activeLayerIndex: 0,
-    frameDurations: [100, 200],
+    frameHolds: [1, 2],
     activeFrameIndex: 1,
   );
 

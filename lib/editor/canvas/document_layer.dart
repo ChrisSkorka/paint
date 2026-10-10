@@ -27,13 +27,14 @@ class DocumentLayer {
   };
 
   DocumentLayer copyWith({
+    String? name,
     List<Layer>? images,
     LayerTimeframe? timeframe,
     bool? visible,
     int? opacity,
   }) {
     return DocumentLayer(
-      name: name,
+      name: name ?? this.name,
       images: images ?? this.images,
       timeframe: timeframe ?? this.timeframe,
       visible: visible ?? this.visible,

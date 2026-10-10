@@ -49,14 +49,14 @@ Document animatedDocument({
     ),
   ],
   activeLayerIndex: 1,
-  frameDurations: [
-    for (var frame = 0; frame < spriteColors.length; frame++) (frame + 1) * 100,
+  frameHolds: [
+    for (var frame = 0; frame < spriteColors.length; frame++) frame + 1,
   ],
   activeFrameIndex: activeFrameIndex,
 );
 
 List<Object> frameStructure(Document document) => [
-  document.frameDurations,
+  document.frameHolds,
   document.activeFrameIndex,
   [
     for (final layer in document.layers)

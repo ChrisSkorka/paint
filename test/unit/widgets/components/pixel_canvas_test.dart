@@ -1,9 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:paint/editor/canvas/document_layer.dart';
+import 'package:paint/editor/canvas/canvas_layer.dart';
 import 'package:paint/editor/canvas/layer.dart';
-import 'package:paint/editor/canvas/layer_timeframe.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
@@ -16,11 +15,7 @@ void main() {
     group('method paint', () {
       group('layers', () {
         test('none', () {
-          const pixelLayersPainter = PixelLayersPainter(
-            layers: [],
-            frame: 0,
-            zoom: 1,
-          );
+          const pixelLayersPainter = PixelLayersPainter(layers: [], zoom: 1);
           final stubCanvas = StubCanvas();
           pixelLayersPainter.paint(stubCanvas, const Size(2, 2));
           final actual = stubCanvas.drawnRectangles;
@@ -30,18 +25,14 @@ void main() {
         test('transparent', () {
           final pixelLayersPainter = PixelLayersPainter(
             layers: [
-              DocumentLayer(
-                name: 'Background',
-                images: [
-                  Layer.filled(
-                    width: 2,
-                    height: 2,
-                    color: PixelColor.transparent,
-                  ),
-                ],
+              CanvasLayer(
+                image: Layer.filled(
+                  width: 2,
+                  height: 2,
+                  color: PixelColor.transparent,
+                ),
               ),
             ],
-            frame: 0,
             zoom: 1,
           );
           final stubCanvas = StubCanvas();
@@ -67,10 +58,9 @@ void main() {
           );
           final pixelLayersPainter = PixelLayersPainter(
             layers: [
-              DocumentLayer(name: 'Background', images: [bottom]),
-              DocumentLayer(name: 'Background', images: [top]),
+              CanvasLayer(image: bottom),
+              CanvasLayer(image: top),
             ],
-            frame: 0,
             zoom: 1,
           );
           final stubCanvas = StubCanvas();
@@ -84,63 +74,18 @@ void main() {
         });
       });
 
-      group('frames', () {
-        test('first', () {
-          final pixelLayersPainter = PixelLayersPainter(
-            layers: [
-              DocumentLayer(
-                name: 'Background',
-                images: [
-                  Layer.filled(width: 1, height: 1, color: PixelColor.white),
-                  Layer.filled(width: 1, height: 1, color: PixelColor.black),
-                ],
-                timeframe: LayerTimeframe.perFrame,
-              ),
-            ],
-            frame: 0,
-            zoom: 1,
-          );
-          final stubCanvas = StubCanvas();
-          pixelLayersPainter.paint(stubCanvas, const Size(1, 1));
-          final actual = stubCanvas.drawnRectangles;
-          const expected = [(Rect.fromLTRB(0, 0, 1, 1), 0xFFFFFFFF)];
-          expect(actual, equals(expected));
-        });
-        test('second', () {
-          final pixelLayersPainter = PixelLayersPainter(
-            layers: [
-              DocumentLayer(
-                name: 'Background',
-                images: [
-                  Layer.filled(width: 1, height: 1, color: PixelColor.white),
-                  Layer.filled(width: 1, height: 1, color: PixelColor.black),
-                ],
-                timeframe: LayerTimeframe.perFrame,
-              ),
-            ],
-            frame: 1,
-            zoom: 1,
-          );
-          final stubCanvas = StubCanvas();
-          pixelLayersPainter.paint(stubCanvas, const Size(1, 1));
-          final actual = stubCanvas.drawnRectangles;
-          const expected = [(Rect.fromLTRB(0, 0, 1, 1), 0xFF000000)];
-          expect(actual, equals(expected));
-        });
-      });
-
       group('runs', () {
         test('single pixel', () {
           final pixelLayersPainter = PixelLayersPainter(
             layers: [
-              DocumentLayer(
-                name: 'Background',
-                images: [
-                  Layer.filled(width: 1, height: 1, color: PixelColor.black),
-                ],
+              CanvasLayer(
+                image: Layer.filled(
+                  width: 1,
+                  height: 1,
+                  color: PixelColor.black,
+                ),
               ),
             ],
-            frame: 0,
             zoom: 1,
           );
           final stubCanvas = StubCanvas();
@@ -160,10 +105,7 @@ void main() {
             color: const PixelColor(argb: 0x80112233),
           );
           final pixelLayersPainter = PixelLayersPainter(
-            layers: [
-              DocumentLayer(name: 'Background', images: [layer]),
-            ],
-            frame: 0,
+            layers: [CanvasLayer(image: layer)],
             zoom: 1,
           );
           final stubCanvas = StubCanvas();
@@ -186,10 +128,7 @@ void main() {
             color: PixelColor.transparent,
           );
           final pixelLayersPainter = PixelLayersPainter(
-            layers: [
-              DocumentLayer(name: 'Background', images: [layer]),
-            ],
-            frame: 0,
+            layers: [CanvasLayer(image: layer)],
             zoom: 1,
           );
           final stubCanvas = StubCanvas();
@@ -204,14 +143,14 @@ void main() {
         test('multiple rows', () {
           final pixelLayersPainter = PixelLayersPainter(
             layers: [
-              DocumentLayer(
-                name: 'Background',
-                images: [
-                  Layer.filled(width: 2, height: 2, color: PixelColor.black),
-                ],
+              CanvasLayer(
+                image: Layer.filled(
+                  width: 2,
+                  height: 2,
+                  color: PixelColor.black,
+                ),
               ),
             ],
-            frame: 0,
             zoom: 1,
           );
           final stubCanvas = StubCanvas();
@@ -237,11 +176,8 @@ void main() {
             color: PixelColor.black,
           );
           final pixelLayersPainter = PixelLayersPainter(
-            layers: [
-              DocumentLayer(name: 'Background', images: [layer]),
-            ],
+            layers: [CanvasLayer(image: layer)],
             zoom: 3,
-            frame: 0,
           );
           final stubCanvas = StubCanvas();
           pixelLayersPainter.paint(stubCanvas, const Size(6, 6));
@@ -254,14 +190,14 @@ void main() {
         test('opaque', () {
           final pixelLayersPainter = PixelLayersPainter(
             layers: [
-              DocumentLayer(
-                name: 'Background',
-                images: [
-                  Layer.filled(width: 1, height: 1, color: PixelColor.black),
-                ],
+              CanvasLayer(
+                image: Layer.filled(
+                  width: 1,
+                  height: 1,
+                  color: PixelColor.black,
+                ),
               ),
             ],
-            frame: 0,
             zoom: 1,
           );
           final stubCanvas = StubCanvas();
@@ -281,15 +217,15 @@ void main() {
         test('translucent', () {
           final pixelLayersPainter = PixelLayersPainter(
             layers: [
-              DocumentLayer(
-                name: 'Background',
-                images: [
-                  Layer.filled(width: 1, height: 1, color: PixelColor.black),
-                ],
+              CanvasLayer(
+                image: Layer.filled(
+                  width: 1,
+                  height: 1,
+                  color: PixelColor.black,
+                ),
                 opacity: 50,
               ),
             ],
-            frame: 0,
             zoom: 1,
           );
           final stubCanvas = StubCanvas();
@@ -309,15 +245,15 @@ void main() {
         test('invisible opacity', () {
           final pixelLayersPainter = PixelLayersPainter(
             layers: [
-              DocumentLayer(
-                name: 'Background',
-                images: [
-                  Layer.filled(width: 1, height: 1, color: PixelColor.black),
-                ],
+              CanvasLayer(
+                image: Layer.filled(
+                  width: 1,
+                  height: 1,
+                  color: PixelColor.black,
+                ),
                 opacity: 0,
               ),
             ],
-            frame: 0,
             zoom: 1,
           );
           final stubCanvas = StubCanvas();
@@ -327,6 +263,98 @@ void main() {
             [(const Rect.fromLTRB(0, 0, 1, 1), 0x00000000)],
             1,
           ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('tint', () {
+        test('opaque tinted', () {
+          final pixelLayersPainter = PixelLayersPainter(
+            layers: [
+              CanvasLayer(
+                image: Layer.filled(
+                  width: 1,
+                  height: 1,
+                  color: PixelColor.black,
+                ),
+                tint: PixelColor.white,
+              ),
+            ],
+            zoom: 1,
+          );
+          final stubCanvas = StubCanvas();
+          pixelLayersPainter.paint(stubCanvas, const Size(1, 1));
+          final actual = [
+            stubCanvas.savedLayers,
+            stubCanvas.savedLayerFilters,
+            stubCanvas.restoreCount,
+          ];
+          final expected = [
+            [(const Rect.fromLTRB(0, 0, 1, 1), 0xFF000000)],
+            [PixelLayersPainter.tintFilter(PixelColor.white)],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('translucent tinted', () {
+          final pixelLayersPainter = PixelLayersPainter(
+            layers: [
+              CanvasLayer(
+                image: Layer.filled(
+                  width: 1,
+                  height: 1,
+                  color: PixelColor.black,
+                ),
+                opacity: 50,
+                tint: PixelColor.white,
+              ),
+            ],
+            zoom: 1,
+          );
+          final stubCanvas = StubCanvas();
+          pixelLayersPainter.paint(stubCanvas, const Size(1, 1));
+          final actual = [stubCanvas.savedLayers, stubCanvas.savedLayerFilters];
+          final expected = [
+            [(const Rect.fromLTRB(0, 0, 1, 1), 0x80000000)],
+            [PixelLayersPainter.tintFilter(PixelColor.white)],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('untinted translucent', () {
+          final pixelLayersPainter = PixelLayersPainter(
+            layers: [
+              CanvasLayer(
+                image: Layer.filled(
+                  width: 1,
+                  height: 1,
+                  color: PixelColor.black,
+                ),
+                opacity: 50,
+              ),
+            ],
+            zoom: 1,
+          );
+          final stubCanvas = StubCanvas();
+          pixelLayersPainter.paint(stubCanvas, const Size(1, 1));
+          final actual = stubCanvas.savedLayerFilters;
+          const expected = [null];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method tintFilter', () {
+      group('colors', () {
+        test('red', () {
+          final actual = PixelLayersPainter.tintFilter(
+            const PixelColor(argb: 0xFFFF0000),
+          );
+          const expected = ColorFilter.matrix([
+            0.5, 0, 0, 0, 127.5, //
+            0, 0.5, 0, 0, 0, //
+            0, 0, 0.5, 0, 0, //
+            0, 0, 0, 1, 0, //
+          ]);
           expect(actual, equals(expected));
         });
       });
@@ -380,13 +408,9 @@ void main() {
     group('method shouldRepaint', () {
       group('old delegate', () {
         test('same painter', () {
-          const pixelLayersPainter = PixelLayersPainter(
-            layers: [],
-            frame: 0,
-            zoom: 1,
-          );
+          const pixelLayersPainter = PixelLayersPainter(layers: [], zoom: 1);
           final actual = pixelLayersPainter.shouldRepaint(
-            const PixelLayersPainter(layers: [], zoom: 1, frame: 0),
+            const PixelLayersPainter(layers: [], zoom: 1),
           );
           const expected = true;
           expect(actual, equals(expected));

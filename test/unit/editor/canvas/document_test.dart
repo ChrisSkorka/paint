@@ -40,7 +40,7 @@ void main() {
       ),
     ],
     activeLayerIndex: 1,
-    frameDurations: [100, 200],
+    frameHolds: [1, 2],
     activeFrameIndex: activeFrameIndex,
   );
 
@@ -119,9 +119,14 @@ void main() {
       group('frames', () {
         test('single frame', () {
           final document = Document.blank(width: 1, height: 1);
-          final actual = [document.frameDurations, document.activeFrameIndex];
+          final actual = [
+            document.frameHolds,
+            document.fps,
+            document.activeFrameIndex,
+          ];
           final expected = [
-            [100],
+            [1],
+            10,
             0,
           ];
           expect(actual, equals(expected));
@@ -486,6 +491,129 @@ void main() {
       });
     });
 
+    group('getter shownFrames', () {
+      group('holds', () {
+        test('all shown', () {
+          final document = animatedDocument(activeFrameIndex: 0);
+          final actual = document.shownFrames;
+          const expected = [0, 1];
+          expect(actual, equals(expected));
+        });
+        test('hidden frame', () {
+          final document = animatedDocument(activeFrameIndex: 0)
+            ..frameHolds = [2, 0, 1];
+          final actual = document.shownFrames;
+          const expected = [0, 2];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method minimumHolds', () {
+      group('frame', () {
+        test('first', () {
+          final actual = Document.minimumHolds(frame: 0);
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        test('later', () {
+          final actual = Document.minimumHolds(frame: 1);
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method frameDuration', () {
+      group('holds', () {
+        test('single', () {
+          final document = animatedDocument(activeFrameIndex: 0);
+          final actual = document.frameDuration(frame: 0);
+          const expected = Duration(milliseconds: 100);
+          expect(actual, equals(expected));
+        });
+        test('multiple', () {
+          final document = animatedDocument(activeFrameIndex: 0);
+          final actual = document.frameDuration(frame: 1);
+          const expected = Duration(milliseconds: 200);
+          expect(actual, equals(expected));
+        });
+        test('zero', () {
+          final document = animatedDocument(activeFrameIndex: 0)
+            ..frameHolds = [1, 0];
+          final actual = document.frameDuration(frame: 1);
+          const expected = Duration.zero;
+          expect(actual, equals(expected));
+        });
+      });
+      group('fps', () {
+        test('fractional', () {
+          final document = animatedDocument(activeFrameIndex: 0)..fps = 3;
+          final actual = document.frameDuration(frame: 0);
+          const expected = Duration(microseconds: 333333);
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method frameThumbnail', () {
+      group('frames', () {
+        test('first', () {
+          final document = animatedDocument(activeFrameIndex: 1);
+          final actual = pixelRows(
+            document.frameThumbnail(frame: 0, maximumSize: 4),
+          );
+          final expected = [
+            [blue],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('second', () {
+          final document = animatedDocument(activeFrameIndex: 0);
+          final actual = pixelRows(
+            document.frameThumbnail(frame: 1, maximumSize: 4),
+          );
+          final expected = [
+            [red],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('layers', () {
+        test('hidden', () {
+          final document = animatedDocument(activeFrameIndex: 0);
+          document.layers[1] = document.layers[1].copyWith(visible: false);
+          final actual = pixelRows(
+            document.frameThumbnail(frame: 0, maximumSize: 4),
+          );
+          final expected = [
+            [red],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('half opacity', () {
+          final document = animatedDocument(activeFrameIndex: 0);
+          document.layers[1] = document.layers[1].copyWith(opacity: 50);
+          final actual = pixelRows(
+            document.frameThumbnail(frame: 0, maximumSize: 4),
+          );
+          final expected = [
+            [0xFF800080],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('size', () {
+        test('scaled down', () {
+          final document = Document.blank(width: 8, height: 4);
+          final thumbnail = document.frameThumbnail(frame: 0, maximumSize: 2);
+          final actual = [thumbnail.width, thumbnail.height];
+          const expected = [2, 1];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('operator ==', () {
       group('equals', () {
         test('same fields', () {
@@ -511,10 +639,17 @@ void main() {
           const expected = false;
           expect(actual, equals(expected));
         });
-        test('different frame durations', () {
+        test('different frame holds', () {
           final document = animatedDocument(activeFrameIndex: 0);
           final other = animatedDocument(activeFrameIndex: 0)
-            ..frameDurations = [100, 300];
+            ..frameHolds = [1, 3];
+          final actual = document == other;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('different fps', () {
+          final document = animatedDocument(activeFrameIndex: 0);
+          final other = animatedDocument(activeFrameIndex: 0)..fps = 12;
           final actual = document == other;
           const expected = false;
           expect(actual, equals(expected));
@@ -639,10 +774,17 @@ void main() {
           const expected = false;
           expect(actual, equals(expected));
         });
-        test('different frame durations', () {
+        test('different frame holds', () {
           final document = animatedDocument(activeFrameIndex: 0);
           final other = animatedDocument(activeFrameIndex: 0)
-            ..frameDurations = [100, 300];
+            ..frameHolds = [1, 3];
+          final actual = document.hashCode == other.hashCode;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('different fps', () {
+          final document = animatedDocument(activeFrameIndex: 0);
+          final other = animatedDocument(activeFrameIndex: 0)..fps = 12;
           final actual = document.hashCode == other.hashCode;
           const expected = false;
           expect(actual, equals(expected));
@@ -674,7 +816,7 @@ void main() {
           final document = Document.blank(width: 2, height: 1);
           final actual = document.toString();
           const expected =
-              'Document(Untitled, 2, 1, layers: 1, active: 0, frames: 1, frame: 0)';
+              'Document(Untitled, 2, 1, layers: 1, active: 0, frames: 1, frame: 0, fps: 10)';
           expect(actual, equals(expected));
         });
         test('multiple', () {
@@ -707,7 +849,7 @@ void main() {
           );
           final actual = document.toString();
           const expected =
-              'Document(Untitled, 2, 1, layers: 2, active: 1, frames: 1, frame: 0)';
+              'Document(Untitled, 2, 1, layers: 2, active: 1, frames: 1, frame: 0, fps: 10)';
           expect(actual, equals(expected));
         });
       });
@@ -716,7 +858,7 @@ void main() {
           final document = animatedDocument(activeFrameIndex: 1);
           final actual = document.toString();
           const expected =
-              'Document(Untitled, 1, 1, layers: 2, active: 1, frames: 2, frame: 1)';
+              'Document(Untitled, 1, 1, layers: 2, active: 1, frames: 2, frame: 1, fps: 10)';
           expect(actual, equals(expected));
         });
       });

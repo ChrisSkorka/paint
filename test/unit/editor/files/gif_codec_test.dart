@@ -43,7 +43,7 @@ void main() {
       ),
     ],
     activeLayerIndex: 1,
-    frameDurations: [100, 250],
+    frameHolds: [1, 2],
   );
 
   Layer gradient({required int colors}) {
@@ -72,6 +72,26 @@ void main() {
   }
 
   group('class GifCodec', () {
+    group('method holdCentiseconds', () {
+      group('fps', () {
+        test('default', () {
+          final actual = GifCodec.holdCentiseconds(fps: 10);
+          const expected = 10;
+          expect(actual, equals(expected));
+        });
+        test('rounded', () {
+          final actual = GifCodec.holdCentiseconds(fps: 30);
+          const expected = 3;
+          expect(actual, equals(expected));
+        });
+        test('faster than a centisecond', () {
+          final actual = GifCodec.holdCentiseconds(fps: 250);
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method encode', () {
       group('round trip', () {
         test('single frame', () {
@@ -124,7 +144,7 @@ void main() {
               ),
             ],
             activeLayerIndex: 0,
-            frameDurations: [100, 250],
+            frameHolds: [1, 2],
           );
           expect(actual, equals(expected));
         });
@@ -165,17 +185,28 @@ void main() {
         });
       });
 
-      group('durations', () {
-        test('rounded', () {
-          final bytes = GifCodec.encode(
-            document: Document.blank(width: 1, height: 1)
-              ..frameDurations = [25, 100],
-          );
-          final actual = GifCodec.decode(
-            name: 'Cat',
-            bytes: bytes,
-          ).frameDurations;
-          final expected = [30, 100];
+      group('timing', () {
+        test('rounded hold', () {
+          final bytes = GifCodec.encode(document: animatedDocument()..fps = 30);
+          final decoded = GifCodec.decode(name: 'Cat', bytes: bytes);
+          final actual = [decoded.fps, decoded.frameHolds];
+          final expected = [
+            33,
+            [1, 2],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('hidden frame', () {
+          final document = animatedDocument()..frameHolds = [1, 0];
+          final bytes = GifCodec.encode(document: document);
+          final decoded = GifCodec.decode(name: 'Cat', bytes: bytes);
+          final actual = [decoded.frameHolds, pixelRows(decoded.activeLayer)];
+          final expected = [
+            [1],
+            [
+              [red, blue],
+            ],
+          ];
           expect(actual, equals(expected));
         });
       });
@@ -206,21 +237,29 @@ void main() {
     });
 
     group('method decode', () {
-      group('durations', () {
-        test('zero', () {
-          final actual = GifCodec.decode(
+      group('timing', () {
+        test('common unit', () {
+          final decoded = GifCodec.decode(
             name: 'Cat',
-            bytes: gifWithDelays([0, 5]),
-          ).frameDurations;
-          final expected = [100, 50];
+            bytes: gifWithDelays([10, 20]),
+          );
+          final actual = [decoded.fps, decoded.frameHolds];
+          final expected = [
+            10,
+            [1, 2],
+          ];
           expect(actual, equals(expected));
         });
-        test('too long', () {
-          final actual = GifCodec.decode(
+        test('zero delay', () {
+          final decoded = GifCodec.decode(
             name: 'Cat',
-            bytes: gifWithDelays([1500, 1]),
-          ).frameDurations;
-          final expected = [10000, 10];
+            bytes: gifWithDelays([0, 5]),
+          );
+          final actual = [decoded.fps, decoded.frameHolds];
+          final expected = [
+            20,
+            [2, 1],
+          ];
           expect(actual, equals(expected));
         });
       });

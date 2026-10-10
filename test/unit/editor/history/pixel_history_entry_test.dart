@@ -110,7 +110,7 @@ void main() {
               ),
             ],
             activeLayerIndex: 0,
-            frameDurations: [100, 100],
+            frameHolds: [1, 1],
           );
           final historyEntry = PixelHistoryEntry(
             name: 'Pen',
@@ -241,7 +241,7 @@ void main() {
               ),
             ],
             activeLayerIndex: 0,
-            frameDurations: [100, 100],
+            frameHolds: [1, 1],
           );
           final historyEntry = PixelHistoryEntry(
             name: 'Pen',

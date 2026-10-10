@@ -13,7 +13,8 @@ class Document {
     required this.height,
     required this.layers,
     required this.activeLayerIndex,
-    this.frameDurations = const [defaultFrameDuration],
+    this.frameHolds = const [1],
+    this.fps = defaultFps,
     this.activeFrameIndex = 0,
     this.storeId,
   });
@@ -58,20 +59,34 @@ class Document {
   static const untitledName = 'Untitled';
   static const minimumSize = 1;
   static const maximumSize = 4096;
-  static const defaultFrameDuration = 100;
-  static const minimumFrameDuration = 10;
-  static const maximumFrameDuration = 10000;
+  static const defaultFps = 10;
+  static const minimumFps = 1;
+  static const maximumFps = 100;
+  static const maximumHolds = 100;
 
   final String name;
   final int width;
   final int height;
   final List<DocumentLayer> layers;
   int activeLayerIndex;
-  List<int> frameDurations;
+  List<int> frameHolds;
+  int fps;
   int activeFrameIndex;
   String? storeId;
 
-  int get frameCount => frameDurations.length;
+  int get frameCount => frameHolds.length;
+
+  List<int> get shownFrames => [
+    for (var frame = 0; frame < frameCount; frame++)
+      if (frameHolds[frame] > 0) frame,
+  ];
+
+  static int minimumHolds({required int frame}) => frame == 0 ? 1 : 0;
+
+  Duration frameDuration({required int frame}) => Duration(
+    microseconds: (frameHolds[frame] * Duration.microsecondsPerSecond / fps)
+        .round(),
+  );
 
   Layer get activeLayer => layers[activeLayerIndex].imageAt(activeFrameIndex);
 
@@ -89,6 +104,36 @@ class Document {
       );
     }
     return flattened;
+  }
+
+  Layer frameThumbnail({required int frame, required int maximumSize}) {
+    final thumbnails = [
+      for (final layer in layers.where((layer) => layer.visible))
+        (
+          image: Layer.thumbnail(
+            layer: layer.imageAt(frame),
+            maximumSize: maximumSize,
+          ),
+          opacity: layer.opacity,
+        ),
+    ];
+    final first = Layer.thumbnail(
+      layer: layers.first.imageAt(frame),
+      maximumSize: maximumSize,
+    );
+    final thumbnail = Layer.filled(
+      width: first.width,
+      height: first.height,
+      color: PixelColor.transparent,
+    );
+    for (final layer in thumbnails) {
+      _blend(
+        target: thumbnail.rgba,
+        source: layer.image.rgba,
+        opacity: layer.opacity / DocumentLayer.maximumOpacity,
+      );
+    }
+    return thumbnail;
   }
 
   static void _blend({
@@ -120,7 +165,8 @@ class Document {
       other.width == width &&
       other.height == height &&
       other.activeLayerIndex == activeLayerIndex &&
-      const ListEquality<int>().equals(other.frameDurations, frameDurations) &&
+      const ListEquality<int>().equals(other.frameHolds, frameHolds) &&
+      other.fps == fps &&
       other.activeFrameIndex == activeFrameIndex &&
       other.storeId == storeId &&
       const ListEquality<DocumentLayer>().equals(other.layers, layers);
@@ -131,7 +177,8 @@ class Document {
     width,
     height,
     activeLayerIndex,
-    const ListEquality<int>().hash(frameDurations),
+    const ListEquality<int>().hash(frameHolds),
+    fps,
     activeFrameIndex,
     storeId,
     const ListEquality<DocumentLayer>().hash(layers),
@@ -139,5 +186,5 @@ class Document {
 
   @override
   String toString() =>
-      'Document($name, $width, $height, layers: ${layers.length}, active: $activeLayerIndex, frames: $frameCount, frame: $activeFrameIndex)';
+      'Document($name, $width, $height, layers: ${layers.length}, active: $activeLayerIndex, frames: $frameCount, frame: $activeFrameIndex, fps: $fps)';
 }

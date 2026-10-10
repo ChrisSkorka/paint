@@ -5,11 +5,14 @@ class StubCanvas implements Canvas {
   final drawnPaths = <(Rect, int)>[];
   final clippedRectangles = <Rect>[];
   final savedLayers = <(Rect?, int)>[];
+  final savedLayerFilters = <ColorFilter?>[];
   var restoreCount = 0;
 
   @override
-  void saveLayer(Rect? bounds, Paint paint) =>
-      savedLayers.add((bounds, paint.color.toARGB32()));
+  void saveLayer(Rect? bounds, Paint paint) {
+    savedLayers.add((bounds, paint.color.toARGB32()));
+    savedLayerFilters.add(paint.colorFilter);
+  }
 
   @override
   void restore() => restoreCount++;

@@ -1,9 +1,11 @@
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:image/image.dart' as image;
 
 import '../canvas/document.dart';
 import '../canvas/document_layer.dart';
+import '../canvas/frame_timing.dart';
 import '../canvas/layer.dart';
 import '../canvas/layer_timeframe.dart';
 import '../canvas/pixel_color.dart';
@@ -15,11 +17,13 @@ abstract final class GifCodec {
   static const paletteSize = 256;
   static const alphaThreshold = 128;
   static const _transparentIndex = 0;
-  static const _millisecondsPerDelay = 10;
+  static int holdCentiseconds({required int fps}) =>
+      max(1, (FrameTiming.centisecondsPerSecond / fps).round());
 
   static Uint8List encode({required Document document}) {
     final encoder = image.GifEncoder(dither: image.DitherKernel.none);
-    for (var frame = 0; frame < document.frameCount; frame++) {
+    final hold = holdCentiseconds(fps: document.fps);
+    for (final frame in document.shownFrames) {
       encoder.addFrame(
         _toPaletteImage(
           layer: document.flatten(
@@ -27,8 +31,7 @@ abstract final class GifCodec {
             frame: frame,
           ),
         ),
-        duration: (document.frameDurations[frame] / _millisecondsPerDelay)
-            .round(),
+        duration: hold * document.frameHolds[frame],
       );
     }
     return encoder.finish()!;
@@ -40,6 +43,12 @@ abstract final class GifCodec {
     DocumentFormatException.checkSize(
       width: decoded.width,
       height: decoded.height,
+    );
+    final timing = FrameTiming.fromDurations(
+      centiseconds: [
+        for (final frame in decoded.frames)
+          frame.frameDuration ~/ FrameTiming.millisecondsPerCentisecond,
+      ],
     );
     return Document(
       name: name,
@@ -56,15 +65,8 @@ abstract final class GifCodec {
         ),
       ],
       activeLayerIndex: 0,
-      frameDurations: [
-        for (final frame in decoded.frames)
-          frame.frameDuration == 0
-              ? Document.defaultFrameDuration
-              : frame.frameDuration.clamp(
-                  Document.minimumFrameDuration,
-                  Document.maximumFrameDuration,
-                ),
-      ],
+      frameHolds: timing.holds,
+      fps: timing.fps,
     );
   }
 

@@ -76,7 +76,7 @@ void main() {
             ),
           );
           final actual = tester.getSize(find.byType(SidePanel)).width;
-          const expected = 200.0;
+          const expected = 220.0;
           expect(actual, equals(expected));
         });
         testWidgets('title style', (tester) async {

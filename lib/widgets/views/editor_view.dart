@@ -24,6 +24,7 @@ import '../../editor/tools/color_palettes.dart';
 import '../../editor/tools/tool_kind.dart';
 import '../components/color_dialog.dart';
 import '../components/edge_shadow.dart';
+import '../components/frame_list.dart';
 import '../components/history_list.dart';
 import '../components/layer_list.dart';
 import '../components/pixel_canvas.dart';
@@ -70,40 +71,35 @@ class _EditorViewState extends State<EditorView> {
   }
 
   void _togglePlayback() {
-    if (playback != null) {
+    if (controller.playing) {
       _stopPlayback();
       return;
     }
-    setState(_scheduleNextFrame);
+    controller.setPlaying(true);
+    _scheduleNextFrame();
   }
 
   void _scheduleNextFrame() {
-    final document = widget.document;
     playback = Timer(
-      Duration(
-        milliseconds: document.frameDurations[document.activeFrameIndex],
-      ),
+      widget.document.frameDuration(frame: widget.document.activeFrameIndex),
       () {
-        controller.selectFrame(
-          (document.activeFrameIndex + 1) % document.frameCount,
-        );
+        controller.stepFrame(forward: true);
         _scheduleNextFrame();
       },
     );
   }
 
   void _stopPlayback() {
-    setState(() {
-      playback?.cancel();
-      playback = null;
-    });
+    playback?.cancel();
+    playback = null;
+    controller.setPlaying(false);
   }
 
   void _pointerDown({
     required PixelPoint point,
     required PointerButton button,
   }) {
-    if (playback != null) _stopPlayback();
+    if (controller.playing) _stopPlayback();
     controller.pointerDown(point: point, button: button);
   }
 
@@ -378,8 +374,7 @@ class _EditorViewState extends State<EditorView> {
                 width: widget.document.width,
                 height: widget.document.height,
                 zoom: controller.zoom,
-                layers: controller.visibleLayers,
-                frame: widget.document.activeFrameIndex,
+                layers: controller.canvasLayers,
                 onPointerDown: _pointerDown,
                 onPointerMove: controller.pointerMove,
                 onPointerUp: controller.pointerUp,
@@ -419,6 +414,11 @@ class _EditorViewState extends State<EditorView> {
               onPressed: controller.addLayer,
             ),
             PaintIconButton(
+              icon: FontAwesomeIcons.copy,
+              tooltip: 'Copy layer',
+              onPressed: controller.copyLayer,
+            ),
+            PaintIconButton(
               icon: FontAwesomeIcons.trashCan,
               tooltip: 'Remove layer',
               onPressed: controller.canRemoveLayer
@@ -437,6 +437,68 @@ class _EditorViewState extends State<EditorView> {
               tooltip: 'Move layer down',
               onPressed: controller.canMoveLayerDown
                   ? () => controller.moveLayer(up: false)
+                  : null,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  List<FrameListItem> _frameItems() => [
+    for (var frame = 0; frame < widget.document.frameCount; frame++)
+      FrameListItem(
+        thumbnail: widget.document.frameThumbnail(
+          frame: frame,
+          maximumSize: History.thumbnailSize,
+        ),
+        holds: widget.document.frameHolds[frame],
+      ),
+  ];
+
+  Widget _buildFramesPane() {
+    return Column(
+      children: [
+        Expanded(
+          child: FrameList(
+            items: _frameItems(),
+            activeIndex: widget.document.activeFrameIndex,
+            onSelect: controller.selectFrame,
+            onHoldsChanged: controller.setFrameHolds,
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            PaintIconButton(
+              icon: FontAwesomeIcons.plus,
+              tooltip: 'Add frame',
+              onPressed: controller.addFrame,
+            ),
+            PaintIconButton(
+              icon: FontAwesomeIcons.copy,
+              tooltip: 'Copy frame',
+              onPressed: controller.copyFrame,
+            ),
+            PaintIconButton(
+              icon: FontAwesomeIcons.trashCan,
+              tooltip: 'Remove frame',
+              onPressed: controller.canRemoveFrame
+                  ? controller.removeFrame
+                  : null,
+            ),
+            PaintIconButton(
+              icon: FontAwesomeIcons.arrowUp,
+              tooltip: 'Move frame up',
+              onPressed: controller.canMoveFrameUp
+                  ? () => controller.moveFrame(up: true)
+                  : null,
+            ),
+            PaintIconButton(
+              icon: FontAwesomeIcons.arrowDown,
+              tooltip: 'Move frame down',
+              onPressed: controller.canMoveFrameDown
+                  ? () => controller.moveFrame(up: false)
                   : null,
             ),
           ],
@@ -735,6 +797,23 @@ class _EditorViewState extends State<EditorView> {
                         ),
                       ],
                     ),
+                    RibbonSection(
+                      title: 'Animation',
+                      columns: [
+                        Timeline(
+                          frame: widget.document.activeFrameIndex,
+                          shownFrames: widget.document.shownFrames,
+                          fps: widget.document.fps,
+                          playing: controller.playing,
+                          onionSkin: controller.onionSkin,
+                          onPlayPause: _togglePlayback,
+                          onStep: controller.stepFrame,
+                          onSelectFrame: controller.selectFrame,
+                          onFpsChanged: controller.setFps,
+                          onOnionSkinChanged: controller.setOnionSkin,
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -770,6 +849,15 @@ class _EditorViewState extends State<EditorView> {
                         bottom: BorderSide(color: PaintStyle.separatorColor),
                       ),
                       child: _buildLayersPane(),
+                    ),
+                  ),
+                  Expanded(
+                    child: SidePanel(
+                      title: 'Frames',
+                      border: const Border(
+                        bottom: BorderSide(color: PaintStyle.separatorColor),
+                      ),
+                      child: _buildFramesPane(),
                     ),
                   ),
                   Expanded(
@@ -831,26 +919,7 @@ class _EditorViewState extends State<EditorView> {
                   ],
                 ),
               ),
-              Expanded(
-                child: PaintBarSection(
-                  child: Timeline(
-                    frame: widget.document.activeFrameIndex,
-                    frameCount: widget.document.frameCount,
-                    frameDuration: widget
-                        .document
-                        .frameDurations[widget.document.activeFrameIndex],
-                    playing: playback != null,
-                    onPlayPause: _togglePlayback,
-                    onSelectFrame: controller.selectFrame,
-                    onAddFrame: controller.addFrame,
-                    onRemoveFrame: controller.canRemoveFrame
-                        ? controller.removeFrame
-                        : null,
-                    onDurationChanged: controller.previewFrameDuration,
-                    onDurationChangeEnd: controller.setFrameDuration,
-                  ),
-                ),
-              ),
+              const Spacer(),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: NumericValueRange(

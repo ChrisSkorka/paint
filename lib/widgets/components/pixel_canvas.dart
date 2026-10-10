@@ -3,8 +3,10 @@ import 'dart:math';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import '../../editor/canvas/canvas_layer.dart';
 import '../../editor/canvas/document_layer.dart';
 import '../../editor/canvas/layer.dart';
+import '../../editor/canvas/pixel_color.dart';
 import '../../editor/canvas/pixel_point.dart';
 import '../../editor/canvas/pixel_rectangle.dart';
 import '../../editor/pointer_button.dart';
@@ -18,7 +20,6 @@ class PixelCanvas extends StatelessWidget {
     required this.height,
     required this.zoom,
     required this.layers,
-    required this.frame,
     required this.onPointerDown,
     required this.onPointerMove,
     required this.onPointerUp,
@@ -30,8 +31,7 @@ class PixelCanvas extends StatelessWidget {
   final int width;
   final int height;
   final int zoom;
-  final List<DocumentLayer> layers;
-  final int frame;
+  final List<CanvasLayer> layers;
   final void Function({
     required PixelPoint point,
     required PointerButton button,
@@ -78,11 +78,7 @@ class PixelCanvas extends StatelessWidget {
             ),
             child: CustomPaint(
               painter: const ChessGridPainter(),
-              foregroundPainter: PixelLayersPainter(
-                layers: layers,
-                frame: frame,
-                zoom: zoom,
-              ),
+              foregroundPainter: PixelLayersPainter(layers: layers, zoom: zoom),
               size: Size(width * zoom.toDouble(), height * zoom.toDouble()),
             ),
           ),
@@ -93,15 +89,17 @@ class PixelCanvas extends StatelessWidget {
 }
 
 class PixelLayersPainter extends CustomPainter {
-  const PixelLayersPainter({
-    required this.layers,
-    required this.frame,
-    required this.zoom,
-  });
+  const PixelLayersPainter({required this.layers, required this.zoom});
 
-  final List<DocumentLayer> layers;
-  final int frame;
+  final List<CanvasLayer> layers;
   final int zoom;
+
+  static ColorFilter tintFilter(PixelColor tint) => ColorFilter.matrix([
+    0.5, 0, 0, 0, tint.red * 0.5, //
+    0, 0.5, 0, 0, tint.green * 0.5, //
+    0, 0, 0.5, 0, tint.blue * 0.5, //
+    0, 0, 0, 1, 0, //
+  ]);
 
   static void paintPixels({
     required Canvas canvas,
@@ -146,8 +144,10 @@ class PixelLayersPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (final layer in layers) {
-      final translucent = layer.opacity < DocumentLayer.maximumOpacity;
-      if (translucent) {
+      final tint = layer.tint;
+      final composited =
+          layer.opacity < DocumentLayer.maximumOpacity || tint != null;
+      if (composited) {
         canvas.saveLayer(
           Offset.zero & size,
           Paint()
@@ -156,11 +156,12 @@ class PixelLayersPainter extends CustomPainter {
               0,
               0,
               layer.opacity / DocumentLayer.maximumOpacity,
-            ),
+            )
+            ..colorFilter = tint == null ? null : tintFilter(tint),
         );
       }
-      paintPixels(canvas: canvas, pixels: layer.imageAt(frame), zoom: zoom);
-      if (translucent) canvas.restore();
+      paintPixels(canvas: canvas, pixels: layer.image, zoom: zoom);
+      if (composited) canvas.restore();
     }
   }
 

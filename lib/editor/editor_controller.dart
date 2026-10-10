@@ -2,10 +2,12 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
+import 'canvas/canvas_layer.dart';
 import 'canvas/document.dart';
 import 'canvas/document_layer.dart';
 import 'canvas/layer.dart';
 import 'canvas/layer_timeframe.dart';
+import 'canvas/onion_skin.dart';
 import 'canvas/pixel_color.dart';
 import 'canvas/pixel_point.dart';
 import 'canvas/pixel_rectangle.dart';
@@ -74,6 +76,8 @@ class EditorController extends ChangeNotifier {
   var _recentColors = const <PixelColor>[];
   late var _layerCount = document.layers.length;
   DocumentStructure? _structureBeforePreview;
+  var _playing = false;
+  var _onionSkin = const OnionSkin();
 
   static const _noArea = PixelRectangle(left: 0, top: 0, width: 0, height: 0);
   static const recentColorLimit = 5;
@@ -105,6 +109,11 @@ class EditorController extends ChangeNotifier {
       document.activeLayerIndex < document.layers.length - 1;
   bool get canMoveLayerDown => document.activeLayerIndex > 0;
   bool get canRemoveFrame => document.frameCount > 1;
+  bool get canMoveFrameUp => document.activeFrameIndex > 0;
+  bool get canMoveFrameDown =>
+      document.activeFrameIndex < document.frameCount - 1;
+  bool get playing => _playing;
+  OnionSkin get onionSkin => _onionSkin;
 
   SaveStatus get saveStatus => switch (document.storeId) {
     null => SaveStatus.notSaved,
@@ -120,10 +129,60 @@ class EditorController extends ChangeNotifier {
   PixelColor get editedColor =>
       _editingPrimary ? _primaryColor : _secondaryColor;
 
-  List<DocumentLayer> get visibleLayers => [
-    ...document.layers.where((layer) => layer.visible),
-    DocumentLayer(name: 'Pointer', images: [pointerLayer]),
+  List<CanvasLayer> get canvasLayers => [
+    for (final layer in document.layers.where((layer) => layer.visible))
+      CanvasLayer(
+        image: layer.imageAt(document.activeFrameIndex),
+        opacity: layer.opacity,
+      ),
+    for (var index = 0; index < document.layers.length; index++)
+      ..._onionSkinLayers(index: index),
+    CanvasLayer(image: pointerLayer),
   ];
+
+  List<CanvasLayer> _onionSkinLayers({required int index}) {
+    final layer = document.layers[index];
+    if (!_onionSkin.enabled ||
+        _playing ||
+        !layer.visible ||
+        layer.timeframe == LayerTimeframe.constant ||
+        (_onionSkin.activeLayerOnly && index != document.activeLayerIndex)) {
+      return const [];
+    }
+    final active = document.activeFrameIndex;
+    final shown = document.shownFrames;
+    final previous = _onionSkin.previous
+        ? shown.where((frame) => frame < active).toList().reversed.toList()
+        : const <int>[];
+    final next = _onionSkin.next
+        ? shown.where((frame) => frame > active).toList()
+        : const <int>[];
+    CanvasLayer ghost({
+      required int frame,
+      required int distance,
+      required PixelColor tint,
+    }) => CanvasLayer(
+      image: layer.imageAt(frame),
+      opacity: (layer.opacity / (1 << distance)).round(),
+      tint: tint,
+    );
+    return [
+      for (var distance = _onionSkin.frameCount; distance > 0; distance--) ...[
+        if (distance <= previous.length)
+          ghost(
+            frame: previous[distance - 1],
+            distance: distance,
+            tint: OnionSkin.previousTint,
+          ),
+        if (distance <= next.length)
+          ghost(
+            frame: next[distance - 1],
+            distance: distance,
+            tint: OnionSkin.nextTint,
+          ),
+      ],
+    ];
+  }
 
   Tool? get _tool => switch (_toolKind) {
     ToolKind.pen => Pen(size: _penSize, tip: _penTip),
@@ -233,18 +292,56 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void stepFrame({required bool forward}) {
+    final shown = document.shownFrames;
+    final active = document.activeFrameIndex;
+    selectFrame(
+      forward
+          ? shown.firstWhere(
+              (frame) => frame > active,
+              orElse: () => shown.first,
+            )
+          : shown.lastWhere(
+              (frame) => frame < active,
+              orElse: () => shown.last,
+            ),
+    );
+  }
+
   void addFrame() {
-    _changeStructure(
+    _insertFrame(
       name: 'Add frame',
+      holds: 1,
+      image: (images) => Layer.filled(
+        width: document.width,
+        height: document.height,
+        color: PixelColor.transparent,
+      ),
+    );
+  }
+
+  void copyFrame() {
+    final source = document.activeFrameIndex;
+    _insertFrame(
+      name: 'Copy frame',
+      holds: document.frameHolds[source],
+      image: (images) => Layer.copyOf(images[source]),
+    );
+  }
+
+  void _insertFrame({
+    required String name,
+    required int holds,
+    required Layer Function(List<Layer> images) image,
+  }) {
+    _changeStructure(
+      name: name,
       change: () {
         _selection = null;
-        final source = document.activeFrameIndex;
-        final index = source + 1;
-        _changePerFrameImages(
-          (images) => images.insert(index, Layer.copyOf(images[source])),
-        );
-        document.frameDurations = List.of(document.frameDurations)
-          ..insert(index, document.frameDurations[source]);
+        final index = document.activeFrameIndex + 1;
+        _changePerFrameImages((images) => images.insert(index, image(images)));
+        document.frameHolds = List.of(document.frameHolds)
+          ..insert(index, holds);
         document.activeFrameIndex = index;
       },
     );
@@ -258,11 +355,62 @@ class EditorController extends ChangeNotifier {
         _selection = null;
         final index = document.activeFrameIndex;
         _changePerFrameImages((images) => images.removeAt(index));
-        document.frameDurations = List.of(document.frameDurations)
-          ..removeAt(index);
+        _changeHolds((holds) => holds.removeAt(index));
         document.activeFrameIndex = max(0, index - 1);
       },
     );
+  }
+
+  void moveFrame({required bool up}) {
+    if (!(up ? canMoveFrameUp : canMoveFrameDown)) return;
+    _changeStructure(
+      name: up ? 'Move frame up' : 'Move frame down',
+      change: () {
+        _selection = null;
+        final index = document.activeFrameIndex;
+        final target = index + (up ? -1 : 1);
+        void move<T>(List<T> items) =>
+            items.insert(target, items.removeAt(index));
+        _changePerFrameImages(move);
+        _changeHolds(move);
+        document.activeFrameIndex = target;
+      },
+    );
+  }
+
+  void setFrameHolds({required int index, required int holds}) {
+    final clamped = holds.clamp(
+      Document.minimumHolds(frame: index),
+      Document.maximumHolds,
+    );
+    if (document.frameHolds[index] == clamped) return;
+    _changeStructure(
+      name: 'Frame holds',
+      change: () => _changeHolds((holds) => holds[index] = clamped),
+    );
+  }
+
+  void setFps(int fps) {
+    final clamped = fps.clamp(Document.minimumFps, Document.maximumFps);
+    if (document.fps == clamped) return;
+    _changeStructure(name: 'Frame rate', change: () => document.fps = clamped);
+  }
+
+  void setPlaying(bool playing) {
+    _playing = playing;
+    notifyListeners();
+  }
+
+  void setOnionSkin(OnionSkin onionSkin) {
+    _onionSkin = onionSkin;
+    notifyListeners();
+  }
+
+  void _changeHolds(void Function(List<int> holds) change) {
+    final holds = List.of(document.frameHolds);
+    change(holds);
+    holds.first = max(holds.first, Document.minimumHolds(frame: 0));
+    document.frameHolds = holds;
   }
 
   void _changePerFrameImages(void Function(List<Layer> images) change) {
@@ -274,30 +422,6 @@ class EditorController extends ChangeNotifier {
       document.layers[index] = layer.copyWith(images: images);
     }
   }
-
-  void previewFrameDuration(int duration) {
-    _structureBeforePreview ??= DocumentStructure.capture(document: document);
-    document.frameDurations = _withActiveFrameDuration(duration);
-    notifyListeners();
-  }
-
-  void setFrameDuration(int duration) {
-    final before = _endPreview();
-    if (before.frameDurations[document.activeFrameIndex] == duration) {
-      before.restore(document);
-      notifyListeners();
-      return;
-    }
-    _changeStructure(
-      name: 'Frame duration',
-      before: before,
-      change: () =>
-          document.frameDurations = _withActiveFrameDuration(duration),
-    );
-  }
-
-  List<int> _withActiveFrameDuration(int duration) =>
-      List.of(document.frameDurations)..[document.activeFrameIndex] = duration;
 
   DocumentStructure _endPreview() {
     final before =
@@ -320,6 +444,25 @@ class EditorController extends ChangeNotifier {
       change: () {
         _selection = null;
         _insertLayer();
+      },
+    );
+  }
+
+  void copyLayer() {
+    _changeStructure(
+      name: 'Copy layer',
+      change: () {
+        _selection = null;
+        final source = document.layers[document.activeLayerIndex];
+        final index = document.activeLayerIndex + 1;
+        document.layers.insert(
+          index,
+          source.copyWith(
+            name: '${source.name} copy',
+            images: [for (final image in source.images) Layer.copyOf(image)],
+          ),
+        );
+        document.activeLayerIndex = index;
       },
     );
   }

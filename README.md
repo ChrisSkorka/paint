@@ -218,14 +218,14 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 5.2: rich controls
 
-- [ ] ribbon (top)
+- [x] ribbon (top)
   - row 1: prev frame, play/pause, next frame, FPS, onion skinning input
   - row 2: slider, #/# indicator
-- [ ] frames pane (right side)
+- [x] frames pane (right side)
   - list item: number, holds input, frame preview
   - controls: plus (create blank), copy (clone selected), delete, move up, move down
   - item is selected when it's frame is shows (follows during playback)
-- [ ] onion skinning: 
+- [x] onion skinning: 
   - onion skinning input: toggle button with dialog
   - dialog: toggle prev frames, toggle next frames, frame counter
   - renders visible per-frame layers from adjacent frame
@@ -234,17 +234,35 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - previous frames are red tinted
   - next frames are green tinted
   - off during playback
-- [ ] frame holds
+- [x] frame holds
   - replace per-frame durations with global FPS
   - GIFs frame durations are rounded (held frame durations are rounded before multiplying by holds)
   - holds input: + & - button with number between
   - allow 0 to disable/hide frame
   - zero-hold frames are excluded from playback, GIF export, onion skinning, and #/# counter (but rendered when exporting images on that frame)
-  - when 
 
-### phase 6: polish
+### phase 6: editor
 
-### phase 6.1: performance
+### phase 6.1: shortcuts & favorites
+
+- [ ] favorite tool configs in bottom bar
+- [ ] keyboard shortcuts for pinned tool configs
+- [ ] keyboard shortcuts for tools
+- [ ] keyboard shortcuts for animations
+
+### phase 6.2: multi document editing
+
+- [ ] tabs: multiple documents, feel like browser tabs
+- [ ] tab: starts as new document, then converts to editor
+- [ ] tab list has a + option at end that creates new tabs
+- [ ] tab title is document name
+- [ ] has a dot when doc has unsaved changes
+- [ ] tabs have close button
+- [ ] closing unsaved doc triggers confirmation dialog
+
+### phase 7: polish
+
+### phase 7.1: performance
 
 - [ ] check memory consumption & performance of history stack
   - a 4096*4096 canvas is unusable
@@ -253,17 +271,15 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - [ ] or progressive history item merging
   - [ ] image compression (package:archive, XOR against previous layer)
 
-### phase 6.2: editor
+### phase 7.2: editor
 
 - [ ] scrollable views always show scroll bars (& scroll bars are thick)
 - [ ] scroll image to the right & bottom
-- [ ] interchangeable panes: move panes between top & right panels
-- [ ] tabs: multiple documents
-- [ ] wide double buttons for pairs: undo/redo, rotate, mirror
 - [ ] right panels are resizable & collapsible
+- [ ] right pane is resizable
 - [ ] bottom items have constant width
 
-### phase 6.3: improve tools
+### phase 7.3: improve tools
 
 - [ ] better defaults
 - [ ] pen ribbon: split size & tip into own ribbon, pen, eraser, and shapes use same settings, transparency mode for transparent color & selections
@@ -273,30 +289,29 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] color picker: better UI
 - [ ] transparent colors: blend mode
 
-### phase 6.4: history
+### phase 7.4: history
 
 - [ ] history & layer item preview enlarges on hover
 - [ ] history slider
 - [ ] feature to convert history diff into layer
 
-### phase 6.5: image properties
+### phase 7.5: image properties
 
 - [ ] allow change image size
 - [ ] allow renaming documents stored in-app
 
-### phase 6.6: shortcuts & favorites
+### phase 7.7: misc
 
-- [ ] favorite tool configs
-- [ ] keyboard shortcuts for pinned tool configs
-- [ ] keyboard shortcuts for tools
-- [ ] keyboard shortcuts for animations
-
-### phase 6.6: misc
-
-- [ ] allow zoom less than 1x
 - [ ] move layer & history image previews to left
-- [ ] allow renaming layers
 - [ ] text inputs have unit text on right side
 - [ ] right click on web triggers system context menu
 - [ ] save real file when opening real files on native system
+- [ ] allow renaming layers
+- [ ] allow zoom less than 1x
+- [ ] new docs tab: in-app docs have duplicate button
+
+### phase x: todo
+
 - [ ] animation loop toggle
+- [ ] interchangeable panes: move panes between top & right panels
+- [ ] wide double buttons for pairs: undo/redo, rotate, mirror

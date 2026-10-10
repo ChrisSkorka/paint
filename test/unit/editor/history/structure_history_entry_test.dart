@@ -23,13 +23,15 @@ void main() {
   final stubBefore = DocumentStructure(
     layers: [stubBackground],
     activeLayerIndex: 0,
-    frameDurations: const [100],
+    frameHolds: const [1],
+    fps: 10,
     activeFrameIndex: 0,
   );
   final stubAfter = DocumentStructure(
     layers: [stubBackground, stubSketch],
     activeLayerIndex: 1,
-    frameDurations: const [100, 200],
+    frameHolds: const [1, 2],
+    fps: 10,
     activeFrameIndex: 1,
   );
 
@@ -42,7 +44,8 @@ void main() {
             height: 1,
             layers: [stubBackground, stubSketch],
             activeLayerIndex: 1,
-            frameDurations: [100, 200],
+            frameHolds: [1, 2],
+            fps: 10,
             activeFrameIndex: 1,
           );
           final structureHistoryEntry = StructureHistoryEntry(
@@ -86,7 +89,8 @@ void main() {
             height: 1,
             layers: [stubBackground, stubSketch],
             activeLayerIndex: 1,
-            frameDurations: [100, 200],
+            frameHolds: [1, 2],
+            fps: 10,
             activeFrameIndex: 1,
           );
           expect(actual, equals(expected));

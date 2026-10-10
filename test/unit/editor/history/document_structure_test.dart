@@ -29,7 +29,8 @@ void main() {
           final expected = DocumentStructure(
             layers: [stubBackground, stubSketch],
             activeLayerIndex: 1,
-            frameDurations: const [100],
+            frameHolds: const [1],
+            fps: 10,
             activeFrameIndex: 0,
           );
           expect(actual, equals(expected));
@@ -40,14 +41,16 @@ void main() {
             height: 1,
             layers: [stubBackground],
             activeLayerIndex: 0,
-            frameDurations: [100, 200],
+            frameHolds: [1, 2],
+            fps: 12,
             activeFrameIndex: 1,
           );
           final actual = DocumentStructure.capture(document: document);
           final expected = DocumentStructure(
             layers: [stubBackground],
             activeLayerIndex: 0,
-            frameDurations: const [100, 200],
+            frameHolds: const [1, 2],
+            fps: 12,
             activeFrameIndex: 1,
           );
           expect(actual, equals(expected));
@@ -84,7 +87,8 @@ void main() {
           final documentStructure = DocumentStructure(
             layers: [stubBackground, stubSketch],
             activeLayerIndex: 1,
-            frameDurations: const [100, 200],
+            frameHolds: const [1, 2],
+            fps: 10,
             activeFrameIndex: 1,
           );
           documentStructure.restore(document);
@@ -94,7 +98,8 @@ void main() {
             height: 1,
             layers: [stubBackground, stubSketch],
             activeLayerIndex: 1,
-            frameDurations: [100, 200],
+            frameHolds: [1, 2],
+            fps: 10,
             activeFrameIndex: 1,
           );
           expect(actual, equals(expected));
@@ -111,7 +116,8 @@ void main() {
           final documentStructure = DocumentStructure(
             layers: [stubBackground],
             activeLayerIndex: 0,
-            frameDurations: const [100],
+            frameHolds: const [1],
+            fps: 10,
             activeFrameIndex: 0,
           );
           documentStructure.restore(document);
@@ -129,13 +135,15 @@ void main() {
           final documentStructure = DocumentStructure(
             layers: [stubBackground],
             activeLayerIndex: 0,
-            frameDurations: const [100],
+            frameHolds: const [1],
+            fps: 10,
             activeFrameIndex: 0,
           );
           final other = DocumentStructure(
             layers: [stubBackground],
             activeLayerIndex: 0,
-            frameDurations: const [100],
+            frameHolds: const [1],
+            fps: 10,
             activeFrameIndex: 0,
           );
           final actual = documentStructure == other;
@@ -148,13 +156,15 @@ void main() {
           final documentStructure = DocumentStructure(
             layers: [stubBackground],
             activeLayerIndex: 0,
-            frameDurations: const [100],
+            frameHolds: const [1],
+            fps: 10,
             activeFrameIndex: 0,
           );
           final other = DocumentStructure(
             layers: [stubSketch],
             activeLayerIndex: 0,
-            frameDurations: const [100],
+            frameHolds: const [1],
+            fps: 10,
             activeFrameIndex: 0,
           );
           final actual = documentStructure == other;
@@ -165,30 +175,53 @@ void main() {
           final documentStructure = DocumentStructure(
             layers: [stubBackground, stubSketch],
             activeLayerIndex: 0,
-            frameDurations: const [100],
+            frameHolds: const [1],
+            fps: 10,
             activeFrameIndex: 0,
           );
           final other = DocumentStructure(
             layers: [stubBackground, stubSketch],
             activeLayerIndex: 1,
-            frameDurations: const [100],
+            frameHolds: const [1],
+            fps: 10,
             activeFrameIndex: 0,
           );
           final actual = documentStructure == other;
           const expected = false;
           expect(actual, equals(expected));
         });
-        test('different frame durations', () {
+        test('different frame holds', () {
           final documentStructure = DocumentStructure(
             layers: [stubBackground],
             activeLayerIndex: 0,
-            frameDurations: const [100],
+            frameHolds: const [1],
+            fps: 10,
             activeFrameIndex: 0,
           );
           final other = DocumentStructure(
             layers: [stubBackground],
             activeLayerIndex: 0,
-            frameDurations: const [200],
+            frameHolds: const [2],
+            fps: 10,
+            activeFrameIndex: 0,
+          );
+          final actual = documentStructure == other;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('different fps', () {
+          final documentStructure = DocumentStructure(
+            layers: [stubBackground],
+            activeLayerIndex: 0,
+            frameHolds: const [1],
+            fps: 10,
+            activeFrameIndex: 0,
+          );
+          final other = DocumentStructure(
+            layers: [stubBackground],
+            activeLayerIndex: 0,
+            frameHolds: const [1],
+            fps: 12,
             activeFrameIndex: 0,
           );
           final actual = documentStructure == other;
@@ -199,13 +232,15 @@ void main() {
           final documentStructure = DocumentStructure(
             layers: [stubBackground],
             activeLayerIndex: 0,
-            frameDurations: const [100, 100],
+            frameHolds: const [1, 1],
+            fps: 10,
             activeFrameIndex: 0,
           );
           final other = DocumentStructure(
             layers: [stubBackground],
             activeLayerIndex: 0,
-            frameDurations: const [100, 100],
+            frameHolds: const [1, 1],
+            fps: 10,
             activeFrameIndex: 1,
           );
           final actual = documentStructure == other;
@@ -216,7 +251,8 @@ void main() {
           final documentStructure = DocumentStructure(
             layers: [stubBackground],
             activeLayerIndex: 0,
-            frameDurations: const [100],
+            frameHolds: const [1],
+            fps: 10,
             activeFrameIndex: 0,
           );
           final Object other = stubBackground;
@@ -233,13 +269,15 @@ void main() {
           final documentStructure = DocumentStructure(
             layers: [stubBackground],
             activeLayerIndex: 0,
-            frameDurations: const [100],
+            frameHolds: const [1],
+            fps: 10,
             activeFrameIndex: 0,
           );
           final other = DocumentStructure(
             layers: [stubBackground],
             activeLayerIndex: 0,
-            frameDurations: const [100],
+            frameHolds: const [1],
+            fps: 10,
             activeFrameIndex: 0,
           );
           final actual = documentStructure.hashCode == other.hashCode;
@@ -248,17 +286,19 @@ void main() {
         });
       });
       group('not equals', () {
-        test('different frame durations', () {
+        test('different frame holds', () {
           final documentStructure = DocumentStructure(
             layers: [stubBackground],
             activeLayerIndex: 0,
-            frameDurations: const [100],
+            frameHolds: const [1],
+            fps: 10,
             activeFrameIndex: 0,
           );
           final other = DocumentStructure(
             layers: [stubBackground],
             activeLayerIndex: 0,
-            frameDurations: const [200],
+            frameHolds: const [2],
+            fps: 10,
             activeFrameIndex: 0,
           );
           final actual = documentStructure.hashCode == other.hashCode;
@@ -274,12 +314,13 @@ void main() {
           final documentStructure = DocumentStructure(
             layers: [stubBackground, stubSketch],
             activeLayerIndex: 1,
-            frameDurations: const [100, 200, 300],
+            frameHolds: const [1, 2, 3],
+            fps: 10,
             activeFrameIndex: 2,
           );
           final actual = documentStructure.toString();
           const expected =
-              'DocumentStructure(layers: 2, active: 1, frames: 3, frame: 2)';
+              'DocumentStructure(layers: 2, active: 1, frames: 3, frame: 2, fps: 10)';
           expect(actual, equals(expected));
         });
       });

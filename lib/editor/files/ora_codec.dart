@@ -6,6 +6,7 @@ import 'package:xml/xml.dart';
 
 import '../canvas/document.dart';
 import '../canvas/document_layer.dart';
+import '../canvas/frame_timing.dart';
 import '../canvas/layer.dart';
 import '../canvas/layer_timeframe.dart';
 import '../canvas/pixel_color.dart';
@@ -21,7 +22,9 @@ abstract final class OraCodec {
   static const thumbnailPath = 'Thumbnails/thumbnail.png';
   static const paintNamespace = 'urn:info.skorka.chris.paint';
   static const paintPrefix = 'paint';
-  static const frameDurationsAttribute = 'frame-durations';
+  static const fpsAttribute = 'fps';
+  static const frameHoldsAttribute = 'frame-holds';
+  static const legacyFrameDurationsAttribute = 'frame-durations';
   static const timeframeAttribute = 'timeframe';
   static const perFrameTimeframe = 'per-frame';
 
@@ -102,8 +105,13 @@ abstract final class OraCodec {
       nest: () {
         builder
           ..attribute(
-            frameDurationsAttribute,
-            document.frameDurations.join(','),
+            fpsAttribute,
+            '${document.fps}',
+            namespaceUri: paintNamespace,
+          )
+          ..attribute(
+            frameHoldsAttribute,
+            document.frameHolds.join(','),
             namespaceUri: paintNamespace,
           )
           ..element(
@@ -185,7 +193,7 @@ abstract final class OraCodec {
       throw DocumentFormatException.unsupported();
     }
     DocumentFormatException.checkSize(width: width, height: height);
-    final frameDurations = _frameDurations(image: image);
+    final timing = _frameTiming(image: image);
     final rootStack = image.getElement('stack');
     final elements = rootStack == null
         ? <XmlElement>[]
@@ -203,27 +211,46 @@ abstract final class OraCodec {
             index: index,
             width: width,
             height: height,
-            frameCount: frameDurations.length,
+            frameCount: timing.holds.length,
           ),
       ],
       activeLayerIndex: _selectedIndex(elements: elements),
-      frameDurations: frameDurations,
+      frameHolds: timing.holds,
+      fps: timing.fps,
     );
   }
 
-  static List<int> _frameDurations({required XmlElement image}) {
-    final text = image.getAttribute(
-      frameDurationsAttribute,
-      namespaceUri: paintNamespace,
+  static FrameTiming _frameTiming({required XmlElement image}) {
+    String? attribute(String name) =>
+        image.getAttribute(name, namespaceUri: paintNamespace);
+    final holds = attribute(frameHoldsAttribute);
+    if (holds != null) {
+      final values = holds.split(',');
+      return FrameTiming(
+        fps:
+            (int.tryParse(attribute(fpsAttribute) ?? '') ?? Document.defaultFps)
+                .clamp(Document.minimumFps, Document.maximumFps),
+        holds: [
+          for (var frame = 0; frame < values.length; frame++)
+            (int.tryParse(values[frame].trim()) ?? 1).clamp(
+              Document.minimumHolds(frame: frame),
+              Document.maximumHolds,
+            ),
+        ],
+      );
+    }
+    final durations = attribute(legacyFrameDurationsAttribute);
+    if (durations == null) {
+      return const FrameTiming(fps: Document.defaultFps, holds: [1]);
+    }
+    return FrameTiming.fromDurations(
+      centiseconds: [
+        for (final duration in durations.split(','))
+          ((int.tryParse(duration.trim()) ?? 0) /
+                  FrameTiming.millisecondsPerCentisecond)
+              .round(),
+      ],
     );
-    if (text == null) return [Document.defaultFrameDuration];
-    return [
-      for (final duration in text.split(','))
-        (int.tryParse(duration.trim()) ?? Document.defaultFrameDuration).clamp(
-          Document.minimumFrameDuration,
-          Document.maximumFrameDuration,
-        ),
-    ];
   }
 
   static bool _isFrameStack(XmlElement element) =>

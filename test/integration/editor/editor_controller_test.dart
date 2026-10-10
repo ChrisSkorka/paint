@@ -1,10 +1,12 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paint/editor/canvas/canvas_layer.dart';
 import 'package:paint/editor/canvas/document.dart';
 import 'package:paint/editor/canvas/document_layer.dart';
 import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/layer_timeframe.dart';
+import 'package:paint/editor/canvas/onion_skin.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
@@ -64,20 +66,17 @@ void main() {
       });
     });
 
-    group('getter visibleLayers', () {
+    group('getter canvasLayers', () {
       group('layers', () {
         test('document then pointer', () {
           final document = Document.blank(width: 3, height: 2);
           final editorController = EditorController.forDocument(
             document: document,
           );
-          final actual = editorController.visibleLayers;
+          final actual = editorController.canvasLayers;
           final expected = [
-            DocumentLayer(name: 'Background', images: [document.activeLayer]),
-            DocumentLayer(
-              name: 'Pointer',
-              images: [editorController.pointerLayer],
-            ),
+            CanvasLayer(image: document.activeLayer),
+            CanvasLayer(image: editorController.pointerLayer),
           ];
           expect(actual, equals(expected));
         });
@@ -107,10 +106,13 @@ void main() {
           final editorController = EditorController.forDocument(
             document: document,
           );
-          final actual = [
-            for (final layer in editorController.visibleLayers) layer.name,
+          final actual = editorController.canvasLayers;
+          final expected = [
+            CanvasLayer(
+              image: Layer.filled(width: 1, height: 1, color: PixelColor.black),
+            ),
+            CanvasLayer(image: editorController.pointerLayer),
           ];
-          const expected = ['Sketch', 'Pointer'];
           expect(actual, equals(expected));
         });
         test('translucent layer', () {
@@ -131,10 +133,536 @@ void main() {
           final editorController = EditorController.forDocument(
             document: document,
           );
-          final actual = [
-            for (final layer in editorController.visibleLayers) layer.name,
+          final actual = editorController.canvasLayers;
+          final expected = [
+            CanvasLayer(
+              image: Layer.filled(width: 1, height: 1, color: PixelColor.white),
+              opacity: 0,
+            ),
+            CanvasLayer(image: editorController.pointerLayer),
           ];
-          const expected = ['Background', 'Pointer'];
+          expect(actual, equals(expected));
+        });
+      });
+      group('frames', () {
+        test('active frame', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          final actual = editorController.canvasLayers;
+          final expected = [
+            CanvasLayer(
+              image: layerFromRows([
+                [white],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [green],
+              ]),
+            ),
+            CanvasLayer(image: editorController.pointerLayer),
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('onion skin', () {
+        test('disabled', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          final actual = editorController.canvasLayers;
+          final expected = [
+            CanvasLayer(
+              image: layerFromRows([
+                [white],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [green],
+              ]),
+            ),
+            CanvasLayer(image: editorController.pointerLayer),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('adjacent frames', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          )..setOnionSkin(const OnionSkin(enabled: true));
+          final actual = editorController.canvasLayers;
+          final expected = [
+            CanvasLayer(
+              image: layerFromRows([
+                [white],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [green],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [red],
+              ]),
+              opacity: 50,
+              tint: OnionSkin.previousTint,
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [blue],
+              ]),
+              opacity: 50,
+              tint: OnionSkin.nextTint,
+            ),
+            CanvasLayer(image: editorController.pointerLayer),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('previous only', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          )..setOnionSkin(const OnionSkin(enabled: true, next: false));
+          final actual = editorController.canvasLayers;
+          final expected = [
+            CanvasLayer(
+              image: layerFromRows([
+                [white],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [green],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [red],
+              ]),
+              opacity: 50,
+              tint: OnionSkin.previousTint,
+            ),
+            CanvasLayer(image: editorController.pointerLayer),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('next only', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          )..setOnionSkin(const OnionSkin(enabled: true, previous: false));
+          final actual = editorController.canvasLayers;
+          final expected = [
+            CanvasLayer(
+              image: layerFromRows([
+                [white],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [green],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [blue],
+              ]),
+              opacity: 50,
+              tint: OnionSkin.nextTint,
+            ),
+            CanvasLayer(image: editorController.pointerLayer),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('two frames', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue, black, grey],
+            activeFrameIndex: 2,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          )..setOnionSkin(const OnionSkin(enabled: true, frameCount: 2));
+          final actual = editorController.canvasLayers;
+          final expected = [
+            CanvasLayer(
+              image: layerFromRows([
+                [white],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [blue],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [red],
+              ]),
+              opacity: 25,
+              tint: OnionSkin.previousTint,
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [grey],
+              ]),
+              opacity: 25,
+              tint: OnionSkin.nextTint,
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [green],
+              ]),
+              opacity: 50,
+              tint: OnionSkin.previousTint,
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [black],
+              ]),
+              opacity: 50,
+              tint: OnionSkin.nextTint,
+            ),
+            CanvasLayer(image: editorController.pointerLayer),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('fewer frames than count', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          )..setOnionSkin(const OnionSkin(enabled: true, frameCount: 3));
+          final actual = editorController.canvasLayers;
+          final expected = [
+            CanvasLayer(
+              image: layerFromRows([
+                [white],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [red],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [green],
+              ]),
+              opacity: 50,
+              tint: OnionSkin.nextTint,
+            ),
+            CanvasLayer(image: editorController.pointerLayer),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('hidden frames', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 2,
+          );
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..setOnionSkin(const OnionSkin(enabled: true, next: false))
+                ..setFrameHolds(index: 1, holds: 0);
+          final actual = editorController.canvasLayers;
+          final expected = [
+            CanvasLayer(
+              image: layerFromRows([
+                [white],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [blue],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [red],
+              ]),
+              opacity: 50,
+              tint: OnionSkin.previousTint,
+            ),
+            CanvasLayer(image: editorController.pointerLayer),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('translucent layer', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..setLayerOpacity(index: 1, opacity: 50)
+                ..setOnionSkin(const OnionSkin(enabled: true));
+          final actual = editorController.canvasLayers;
+          final expected = [
+            CanvasLayer(
+              image: layerFromRows([
+                [white],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [green],
+              ]),
+              opacity: 50,
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [red],
+              ]),
+              opacity: 25,
+              tint: OnionSkin.previousTint,
+            ),
+            CanvasLayer(image: editorController.pointerLayer),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('hidden layer', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..setLayerVisibility(index: 1, visible: false)
+                ..setOnionSkin(const OnionSkin(enabled: true));
+          final actual = editorController.canvasLayers;
+          final expected = [
+            CanvasLayer(
+              image: layerFromRows([
+                [white],
+              ]),
+            ),
+            CanvasLayer(image: editorController.pointerLayer),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('playing', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..setOnionSkin(const OnionSkin(enabled: true))
+                ..setPlaying(true);
+          final actual = editorController.canvasLayers;
+          final expected = [
+            CanvasLayer(
+              image: layerFromRows([
+                [white],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [green],
+              ]),
+            ),
+            CanvasLayer(image: editorController.pointerLayer),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('constant layers', () {
+          final document = Document.blank(
+            width: 1,
+            height: 1,
+            background: PixelColor.white,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          )..setOnionSkin(const OnionSkin(enabled: true));
+          final actual = editorController.canvasLayers;
+          final expected = [
+            CanvasLayer(
+              image: layerFromRows([
+                [white],
+              ]),
+            ),
+            CanvasLayer(image: editorController.pointerLayer),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('multiple layers', () {
+          final document = Document(
+            width: 1,
+            height: 1,
+            layers: [
+              DocumentLayer(
+                name: 'Back',
+                images: [
+                  layerFromRows([
+                    [red],
+                  ]),
+                  layerFromRows([
+                    [green],
+                  ]),
+                ],
+                timeframe: LayerTimeframe.perFrame,
+              ),
+              DocumentLayer(
+                name: 'Front',
+                images: [
+                  layerFromRows([
+                    [blue],
+                  ]),
+                  layerFromRows([
+                    [black],
+                  ]),
+                ],
+                timeframe: LayerTimeframe.perFrame,
+              ),
+            ],
+            activeLayerIndex: 0,
+            frameHolds: [1, 1],
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          )..setOnionSkin(const OnionSkin(enabled: true, previous: false));
+          final actual = editorController.canvasLayers;
+          final expected = [
+            CanvasLayer(
+              image: layerFromRows([
+                [red],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [blue],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [green],
+              ]),
+              opacity: 50,
+              tint: OnionSkin.nextTint,
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [black],
+              ]),
+              opacity: 50,
+              tint: OnionSkin.nextTint,
+            ),
+            CanvasLayer(image: editorController.pointerLayer),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('active layer only', () {
+          final document = Document(
+            width: 1,
+            height: 1,
+            layers: [
+              DocumentLayer(
+                name: 'Back',
+                images: [
+                  layerFromRows([
+                    [red],
+                  ]),
+                  layerFromRows([
+                    [green],
+                  ]),
+                ],
+                timeframe: LayerTimeframe.perFrame,
+              ),
+              DocumentLayer(
+                name: 'Front',
+                images: [
+                  layerFromRows([
+                    [blue],
+                  ]),
+                  layerFromRows([
+                    [black],
+                  ]),
+                ],
+                timeframe: LayerTimeframe.perFrame,
+              ),
+            ],
+            activeLayerIndex: 0,
+            frameHolds: [1, 1],
+          );
+          final editorController =
+              EditorController.forDocument(document: document)..setOnionSkin(
+                const OnionSkin(
+                  enabled: true,
+                  previous: false,
+                  activeLayerOnly: true,
+                ),
+              );
+          final actual = editorController.canvasLayers;
+          final expected = [
+            CanvasLayer(
+              image: layerFromRows([
+                [red],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [blue],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [green],
+              ]),
+              opacity: 50,
+              tint: OnionSkin.nextTint,
+            ),
+            CanvasLayer(image: editorController.pointerLayer),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('active constant layer only', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..selectLayer(0)
+                ..setOnionSkin(
+                  const OnionSkin(enabled: true, activeLayerOnly: true),
+                );
+          final actual = editorController.canvasLayers;
+          final expected = [
+            CanvasLayer(
+              image: layerFromRows([
+                [white],
+              ]),
+            ),
+            CanvasLayer(
+              image: layerFromRows([
+                [red],
+              ]),
+            ),
+            CanvasLayer(image: editorController.pointerLayer),
+          ];
           expect(actual, equals(expected));
         });
       });
@@ -992,6 +1520,188 @@ void main() {
       });
     });
 
+    group('method copyLayer', () {
+      group('position', () {
+        test('above only layer', () {
+          final document = Document.blank(
+            width: 2,
+            height: 1,
+            background: PixelColor.white,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.copyLayer();
+          final actual = [
+            layerStructure(document),
+            pixelRows(document.activeLayer),
+            notifications,
+          ];
+          const expected = [
+            [
+              ['Background', 'Background copy'],
+              1,
+            ],
+            [
+              [white, white],
+            ],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('above middle layer', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch', 'Ink'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.copyLayer();
+          final actual = layerStructure(document);
+          const expected = [
+            ['Background', 'Sketch', 'Sketch copy', 'Ink'],
+            2,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('layer', () {
+        test('settings kept', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          )..setLayerOpacity(index: 1, opacity: 40);
+          editorController.copyLayer();
+          final actual = document.layers[2];
+          final expected = DocumentLayer(
+            name: 'Sprite copy',
+            images: [
+              layerFromRows([
+                [red],
+              ]),
+              layerFromRows([
+                [green],
+              ]),
+            ],
+            timeframe: LayerTimeframe.perFrame,
+            opacity: 40,
+          );
+          expect(actual, equals(expected));
+        });
+        test('images copied', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.copyLayer();
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          final actual = [
+            for (final layer in document.layers) pixelRows(layer.images.first),
+          ];
+          const expected = [
+            [
+              [transparent],
+            ],
+            [
+              [black],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('recorded', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.copyLayer();
+          final actual = editorController.history.entries.map(
+            (entry) => entry.name,
+          );
+          const expected = ['Copy layer'];
+          expect(actual, equals(expected));
+        });
+        test('undo', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.copyLayer();
+          editorController.undo();
+          final actual = layerStructure(document);
+          const expected = [
+            ['Background'],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('redo', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.copyLayer();
+          editorController.undo();
+          editorController.redo();
+          final actual = layerStructure(document);
+          const expected = [
+            ['Background', 'Background copy'],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('selection', () {
+        test('cleared', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectAll();
+          editorController.copyLayer();
+          final actual = editorController.selectionArea;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+      group('stroke', () {
+        test('during stroke', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.copyLayer();
+          final actual = [
+            layerStructure(document),
+            editorController.history.entries.length,
+          ];
+          const expected = [
+            [
+              ['Background'],
+              0,
+            ],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method removeLayer', () {
       group('position', () {
         test('top layer', () {
@@ -1348,7 +2058,7 @@ void main() {
           editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
           final actual = frameStructure(document);
           const expected = [
-            [100, 200],
+            [1, 2],
             1,
             [
               [white],
@@ -1374,7 +2084,7 @@ void main() {
           editorController.undo();
           final actual = frameStructure(document);
           const expected = [
-            [100, 200],
+            [1, 2],
             0,
             [
               [white],
@@ -1421,7 +2131,7 @@ void main() {
       });
     });
 
-    group('method addFrame', () {
+    group('method copyFrame', () {
       group('position', () {
         test('after only frame', () {
           final document = animatedDocument(
@@ -1433,11 +2143,11 @@ void main() {
           );
           var notifications = 0;
           editorController.addListener(() => notifications++);
-          editorController.addFrame();
+          editorController.copyFrame();
           final actual = [frameStructure(document), notifications];
           const expected = [
             [
-              [100, 100],
+              [1, 1],
               1,
               [
                 [white],
@@ -1456,10 +2166,10 @@ void main() {
           final editorController = EditorController.forDocument(
             document: document,
           );
-          editorController.addFrame();
+          editorController.copyFrame();
           final actual = frameStructure(document);
           const expected = [
-            [100, 200, 200, 300],
+            [1, 2, 2, 3],
             2,
             [
               [white],
@@ -1478,7 +2188,7 @@ void main() {
           final editorController = EditorController.forDocument(
             document: document,
           );
-          editorController.addFrame();
+          editorController.copyFrame();
           final images = document.layers[1].images;
           final actual = identical(images[0], images[1]);
           const expected = false;
@@ -1494,11 +2204,11 @@ void main() {
           final editorController = EditorController.forDocument(
             document: document,
           );
-          editorController.addFrame();
+          editorController.copyFrame();
           final actual = editorController.history.entries.map(
             (entry) => entry.name,
           );
-          const expected = ['Add frame'];
+          const expected = ['Copy frame'];
           expect(actual, equals(expected));
         });
         test('undo', () {
@@ -1509,11 +2219,11 @@ void main() {
           final editorController = EditorController.forDocument(
             document: document,
           );
-          editorController.addFrame();
+          editorController.copyFrame();
           editorController.undo();
           final actual = frameStructure(document);
           const expected = [
-            [100],
+            [1],
             0,
             [
               [white],
@@ -1530,12 +2240,12 @@ void main() {
           final editorController = EditorController.forDocument(
             document: document,
           );
-          editorController.addFrame();
+          editorController.copyFrame();
           editorController.undo();
           editorController.redo();
           final actual = frameStructure(document);
           const expected = [
-            [100, 100],
+            [1, 1],
             1,
             [
               [white],
@@ -1555,7 +2265,7 @@ void main() {
             document: document,
           );
           editorController.selectAll();
-          editorController.addFrame();
+          editorController.copyFrame();
           final actual = editorController.selectionArea;
           const expected = null;
           expect(actual, equals(expected));
@@ -1574,7 +2284,7 @@ void main() {
             point: const PixelPoint(x: 0, y: 0),
             button: PointerButton.primary,
           );
-          editorController.addFrame();
+          editorController.copyFrame();
           final actual = [
             document.frameCount,
             editorController.history.entries.length,
@@ -1587,6 +2297,26 @@ void main() {
 
     group('method removeFrame', () {
       group('position', () {
+        test('first frame before hidden', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          )..setFrameHolds(index: 1, holds: 0);
+          editorController.removeFrame();
+          final actual = frameStructure(document);
+          const expected = [
+            [1, 3],
+            0,
+            [
+              [white],
+              [green, blue],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
         test('last frame', () {
           final document = animatedDocument(
             spriteColors: [red, green, blue],
@@ -1601,7 +2331,7 @@ void main() {
           final actual = [frameStructure(document), notifications];
           const expected = [
             [
-              [100, 200],
+              [1, 2],
               1,
               [
                 [white],
@@ -1623,7 +2353,7 @@ void main() {
           editorController.removeFrame();
           final actual = frameStructure(document);
           const expected = [
-            [200, 300],
+            [2, 3],
             0,
             [
               [white],
@@ -1649,7 +2379,7 @@ void main() {
           ];
           const expected = [
             [
-              [100],
+              [1],
               0,
               [
                 [white],
@@ -1689,7 +2419,7 @@ void main() {
           editorController.undo();
           final actual = frameStructure(document);
           const expected = [
-            [100, 200],
+            [1, 2],
             1,
             [
               [white],
@@ -1712,6 +2442,698 @@ void main() {
           editorController.removeFrame();
           final actual = editorController.selectionArea;
           const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter canMoveFrameUp', () {
+      group('active frame', () {
+        test('first', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+
+          final actual = editorController.canMoveFrameUp;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('second', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+
+          final actual = editorController.canMoveFrameUp;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter canMoveFrameDown', () {
+      group('active frame', () {
+        test('first', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+
+          final actual = editorController.canMoveFrameDown;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        test('last', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+
+          final actual = editorController.canMoveFrameDown;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method stepFrame', () {
+      group('forward', () {
+        test('next frame', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.stepFrame(forward: true);
+          final actual = document.activeFrameIndex;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        test('wraps', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 2,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.stepFrame(forward: true);
+          final actual = document.activeFrameIndex;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+        test('skips hidden', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          )..setFrameHolds(index: 1, holds: 0);
+          editorController.stepFrame(forward: true);
+          final actual = document.activeFrameIndex;
+          const expected = 2;
+          expect(actual, equals(expected));
+        });
+      });
+      group('backward', () {
+        test('previous frame', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 2,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.stepFrame(forward: false);
+          final actual = document.activeFrameIndex;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        test('wraps', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.stepFrame(forward: false);
+          final actual = document.activeFrameIndex;
+          const expected = 2;
+          expect(actual, equals(expected));
+        });
+        test('skips hidden', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 2,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          )..setFrameHolds(index: 1, holds: 0);
+          editorController.stepFrame(forward: false);
+          final actual = document.activeFrameIndex;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('not recorded', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.stepFrame(forward: true);
+          final actual = editorController.history.entries.length;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method addFrame', () {
+      group('position', () {
+        test('after only frame', () {
+          final document = animatedDocument(
+            spriteColors: [red],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.addFrame();
+          final actual = [frameStructure(document), notifications];
+          const expected = [
+            [
+              [1, 1],
+              1,
+              [
+                [white],
+                [red, transparent],
+              ],
+            ],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('after middle frame', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.addFrame();
+          final actual = frameStructure(document);
+          const expected = [
+            [1, 2, 1, 3],
+            2,
+            [
+              [white],
+              [red, green, transparent, blue],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('recorded', () {
+          final document = animatedDocument(
+            spriteColors: [red],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.addFrame();
+          final actual = editorController.history.entries.map(
+            (entry) => entry.name,
+          );
+          const expected = ['Add frame'];
+          expect(actual, equals(expected));
+        });
+        test('undo', () {
+          final document = animatedDocument(
+            spriteColors: [red],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.addFrame();
+          editorController.undo();
+          final actual = frameStructure(document);
+          const expected = [
+            [1],
+            0,
+            [
+              [white],
+              [red],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('selection', () {
+        test('cleared', () {
+          final document = animatedDocument(
+            spriteColors: [red],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectAll();
+          editorController.addFrame();
+          final actual = editorController.selectionArea;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method moveFrame', () {
+      group('direction', () {
+        test('up', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 2,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.moveFrame(up: true);
+          final actual = frameStructure(document);
+          const expected = [
+            [1, 3, 2],
+            1,
+            [
+              [white],
+              [red, blue, green],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('down', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.moveFrame(up: false);
+          final actual = frameStructure(document);
+          const expected = [
+            [2, 1, 3],
+            1,
+            [
+              [white],
+              [green, red, blue],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('limits', () {
+        test('first up', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.moveFrame(up: true);
+          final actual = [
+            frameStructure(document),
+            editorController.history.entries.length,
+          ];
+          const expected = [
+            [
+              [1, 2],
+              0,
+              [
+                [white],
+                [red, green],
+              ],
+            ],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('last down', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.moveFrame(up: false);
+          final actual = [
+            frameStructure(document),
+            editorController.history.entries.length,
+          ];
+          const expected = [
+            [
+              [1, 2],
+              1,
+              [
+                [white],
+                [red, green],
+              ],
+            ],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('first frame holds', () {
+        test('hidden frame moved first', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          )..setFrameHolds(index: 1, holds: 0);
+          editorController.moveFrame(up: true);
+          final actual = frameStructure(document);
+          const expected = [
+            [1, 1],
+            0,
+            [
+              [white],
+              [green, red],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('recorded', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.moveFrame(up: true);
+          editorController.moveFrame(up: false);
+          final actual = editorController.history.entries.map(
+            (entry) => entry.name,
+          );
+          const expected = ['Move frame up', 'Move frame down'];
+          expect(actual, equals(expected));
+        });
+        test('undo', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.moveFrame(up: true);
+          editorController.undo();
+          final actual = frameStructure(document);
+          const expected = [
+            [1, 2],
+            1,
+            [
+              [white],
+              [red, green],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('selection', () {
+        test('cleared', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectAll();
+          editorController.moveFrame(up: true);
+          final actual = editorController.selectionArea;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method setFrameHolds', () {
+      group('holds', () {
+        test('changed', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setFrameHolds(index: 1, holds: 4);
+          final actual = [document.frameHolds, notifications];
+          const expected = [
+            [1, 4],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('hidden', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setFrameHolds(index: 1, holds: 0);
+          final actual = document.frameHolds;
+          const expected = [1, 0];
+          expect(actual, equals(expected));
+        });
+        test('unchanged', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setFrameHolds(index: 1, holds: 2);
+          final actual = [
+            editorController.history.entries.length,
+            notifications,
+          ];
+          const expected = [0, 0];
+          expect(actual, equals(expected));
+        });
+      });
+      group('limits', () {
+        test('first frame zero', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setFrameHolds(index: 0, holds: 0);
+          final actual = [
+            document.frameHolds,
+            editorController.history.entries.length,
+          ];
+          const expected = [
+            [1, 2],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('above maximum', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setFrameHolds(index: 1, holds: 500);
+          final actual = document.frameHolds;
+          const expected = [1, 100];
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('recorded', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setFrameHolds(index: 1, holds: 3);
+          final actual = editorController.history.entries.map(
+            (entry) => entry.name,
+          );
+          const expected = ['Frame holds'];
+          expect(actual, equals(expected));
+        });
+        test('undo', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setFrameHolds(index: 1, holds: 3);
+          editorController.undo();
+          final actual = document.frameHolds;
+          const expected = [1, 2];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method setFps', () {
+      group('fps', () {
+        test('changed', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setFps(24);
+          final actual = [document.fps, notifications];
+          const expected = [24, 1];
+          expect(actual, equals(expected));
+        });
+        test('unchanged', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setFps(10);
+          final actual = [
+            editorController.history.entries.length,
+            notifications,
+          ];
+          const expected = [0, 0];
+          expect(actual, equals(expected));
+        });
+      });
+      group('limits', () {
+        test('below minimum', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setFps(0);
+          final actual = document.fps;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        test('above maximum', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setFps(500);
+          final actual = document.fps;
+          const expected = 100;
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('recorded', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setFps(24);
+          final actual = editorController.history.entries.map(
+            (entry) => entry.name,
+          );
+          const expected = ['Frame rate'];
+          expect(actual, equals(expected));
+        });
+        test('undo', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setFps(24);
+          editorController.undo();
+          final actual = document.fps;
+          const expected = 10;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method setPlaying', () {
+      group('playing', () {
+        test('start', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setPlaying(true);
+          final actual = [editorController.playing, notifications];
+          const expected = [true, 1];
+          expect(actual, equals(expected));
+        });
+        test('stop', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setPlaying(false);
+          final actual = [editorController.playing, notifications];
+          const expected = [false, 1];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method setOnionSkin', () {
+      group('settings', () {
+        test('changed', () {
+          final document = Document.blank(width: 1, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setOnionSkin(
+            const OnionSkin(enabled: true, frameCount: 2),
+          );
+          final actual = [
+            editorController.onionSkin,
+            notifications,
+            editorController.history.entries.length,
+          ];
+          const expected = [OnionSkin(enabled: true, frameCount: 2), 1, 0];
           expect(actual, equals(expected));
         });
       });
@@ -1740,7 +3162,7 @@ void main() {
           ];
           const expected = [
             [
-              [100, 200],
+              [1, 2],
               1,
               [
                 [white, white],
@@ -1770,7 +3192,7 @@ void main() {
           ];
           const expected = [
             [
-              [100, 200],
+              [1, 2],
               1,
               [
                 [white],
@@ -1864,7 +3286,7 @@ void main() {
           ];
           const expected = [
             [
-              [100, 200],
+              [1, 2],
               0,
               [
                 [white],
@@ -1915,178 +3337,6 @@ void main() {
           );
           final actual = editorController.selectionArea;
           const expected = null;
-          expect(actual, equals(expected));
-        });
-      });
-    });
-
-    group('method previewFrameDuration', () {
-      group('duration', () {
-        test('active frame', () {
-          final document = animatedDocument(
-            spriteColors: [red, green],
-            activeFrameIndex: 1,
-          );
-          final editorController = EditorController.forDocument(
-            document: document,
-          );
-          var notifications = 0;
-          editorController.addListener(() => notifications++);
-          editorController.previewFrameDuration(50);
-          final actual = [
-            document.frameDurations,
-            editorController.history.entries.length,
-            notifications,
-          ];
-          const expected = [
-            [100, 50],
-            0,
-            1,
-          ];
-          expect(actual, equals(expected));
-        });
-        test('repeated', () {
-          final document = animatedDocument(
-            spriteColors: [red, green],
-            activeFrameIndex: 0,
-          );
-          final editorController = EditorController.forDocument(
-            document: document,
-          );
-          editorController.previewFrameDuration(50);
-          editorController.previewFrameDuration(70);
-          final actual = [
-            document.frameDurations,
-            editorController.history.entries.length,
-          ];
-          const expected = [
-            [70, 200],
-            0,
-          ];
-          expect(actual, equals(expected));
-        });
-      });
-    });
-
-    group('method setFrameDuration', () {
-      group('duration', () {
-        test('without preview', () {
-          final document = animatedDocument(
-            spriteColors: [red, green],
-            activeFrameIndex: 1,
-          );
-          final editorController = EditorController.forDocument(
-            document: document,
-          );
-          var notifications = 0;
-          editorController.addListener(() => notifications++);
-          editorController.setFrameDuration(50);
-          final actual = [
-            document.frameDurations,
-            editorController.history.entries.map((entry) => entry.name),
-            notifications,
-          ];
-          const expected = [
-            [100, 50],
-            ['Frame duration'],
-            1,
-          ];
-          expect(actual, equals(expected));
-        });
-        test('after preview', () {
-          final document = animatedDocument(
-            spriteColors: [red, green],
-            activeFrameIndex: 0,
-          );
-          final editorController = EditorController.forDocument(
-            document: document,
-          );
-          editorController.previewFrameDuration(60);
-          editorController.previewFrameDuration(40);
-          editorController.setFrameDuration(40);
-          final actual = [
-            document.frameDurations,
-            editorController.history.entries.map((entry) => entry.name),
-          ];
-          const expected = [
-            [40, 200],
-            ['Frame duration'],
-          ];
-          expect(actual, equals(expected));
-        });
-        test('unchanged', () {
-          final document = animatedDocument(
-            spriteColors: [red, green],
-            activeFrameIndex: 0,
-          );
-          final editorController = EditorController.forDocument(
-            document: document,
-          );
-          var notifications = 0;
-          editorController.addListener(() => notifications++);
-          editorController.setFrameDuration(100);
-          final actual = [
-            document.frameDurations,
-            editorController.history.entries.length,
-            notifications,
-          ];
-          const expected = [
-            [100, 200],
-            0,
-            1,
-          ];
-          expect(actual, equals(expected));
-        });
-        test('preview back to start', () {
-          final document = animatedDocument(
-            spriteColors: [red, green],
-            activeFrameIndex: 0,
-          );
-          final editorController = EditorController.forDocument(
-            document: document,
-          );
-          editorController.previewFrameDuration(60);
-          editorController.setFrameDuration(100);
-          final actual = [
-            document.frameDurations,
-            editorController.history.entries.length,
-          ];
-          const expected = [
-            [100, 200],
-            0,
-          ];
-          expect(actual, equals(expected));
-        });
-      });
-      group('history', () {
-        test('undo after preview', () {
-          final document = animatedDocument(
-            spriteColors: [red, green],
-            activeFrameIndex: 0,
-          );
-          final editorController = EditorController.forDocument(
-            document: document,
-          );
-          editorController.previewFrameDuration(60);
-          editorController.setFrameDuration(30);
-          editorController.undo();
-          final actual = document.frameDurations;
-          const expected = [100, 200];
-          expect(actual, equals(expected));
-        });
-        test('redo', () {
-          final document = animatedDocument(
-            spriteColors: [red, green],
-            activeFrameIndex: 0,
-          );
-          final editorController = EditorController.forDocument(
-            document: document,
-          );
-          editorController.setFrameDuration(30);
-          editorController.undo();
-          editorController.redo();
-          final actual = document.frameDurations;
-          const expected = [30, 200];
           expect(actual, equals(expected));
         });
       });

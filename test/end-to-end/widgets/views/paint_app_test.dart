@@ -85,7 +85,7 @@ void main() {
           await gesture.moveTo(topLeft + const Offset(9, 1));
           await gesture.up();
           await tester.pump();
-          final documentLayer = canvasLayers(tester).first.images.first;
+          final documentLayer = canvasLayers(tester).first.image;
           final actual = [
             for (var x = 0; x < 4; x++)
               documentLayer.getPixel(PixelPoint(x: x, y: 0)),
@@ -167,7 +167,7 @@ void main() {
             find.text('Saved').evaluate().length,
             canvasLayers(
               tester,
-            ).first.images.first.getPixel(const PixelPoint(x: 0, y: 0)),
+            ).first.image.getPixel(const PixelPoint(x: 0, y: 0)),
           ];
           const expected = [1, 1, 1, PixelColor.black];
           expect(actual, equals(expected));
@@ -197,7 +197,7 @@ void main() {
           );
           await tester.tap(find.text('From file'));
           await tester.pumpAndSettle();
-          final opened = timelineState(tester);
+          final opened = [timelineState(tester), frameHolds(tester)];
           await tester.tap(find.byTooltip('Add frame'));
           await tester.pump();
           await pressControlShortcut(tester, key: LogicalKeyboardKey.keyS);
@@ -211,11 +211,29 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
-          final reopened = timelineState(tester);
+          final reopened = [timelineState(tester), frameHolds(tester)];
           final actual = [opened, reopened];
           const expected = [
-            [0, 2, 100, false, 0],
-            [0, 3, 100, false, 0],
+            [
+              [
+                0,
+                [0, 1],
+                10,
+                false,
+                0,
+              ],
+              [1, 2],
+            ],
+            [
+              [
+                0,
+                [0, 1, 2],
+                10,
+                false,
+                0,
+              ],
+              [1, 1, 2],
+            ],
           ];
           expect(actual, equals(expected));
         });
@@ -239,7 +257,7 @@ void main() {
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           await tester.tapAt(topLeft + const Offset(1, 1));
           await tester.pump();
-          final documentLayer = canvasLayers(tester).first.images.first;
+          final documentLayer = canvasLayers(tester).first.image;
           final drawn = documentLayer.getPixel(const PixelPoint(x: 0, y: 0));
           await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
           await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
@@ -284,7 +302,7 @@ void main() {
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           await tester.tapAt(topLeft + const Offset(1, 1));
           await tester.pump();
-          final documentLayer = canvasLayers(tester).first.images.first;
+          final documentLayer = canvasLayers(tester).first.image;
           final actual = documentLayer.getPixel(const PixelPoint(x: 0, y: 0));
           const expected = PixelColor(argb: 0x80FF0000);
           expect(actual, equals(expected));

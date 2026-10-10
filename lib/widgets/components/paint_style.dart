@@ -31,7 +31,7 @@ abstract final class PaintStyle {
   static const swatchSize = 15.0;
   static const chessCellSize = 8.0;
   static const hoverDuration = Duration(milliseconds: 100);
-  static const sidePanelWidth = 200.0;
+  static const sidePanelWidth = 220.0;
   static const thumbnailSize = 24.0;
   static const selectionDashLength = 4.0;
 

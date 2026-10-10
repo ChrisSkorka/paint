@@ -288,10 +288,18 @@ void main() {
           final actual = [
             timelineState(tester),
             find.text('1 / 1').evaluate().length,
+            frameControlsEnabled(tester),
           ];
           const expected = [
-            [0, 1, 100, false, 0],
+            [
+              0,
+              [0],
+              10,
+              false,
+              0,
+            ],
             1,
+            [true, true, false, false, false],
           ];
           expect(actual, equals(expected));
         });
@@ -312,10 +320,23 @@ void main() {
               ),
             ),
           );
-          final actual = [timelineState(tester), layerTimeframes(tester)];
+          final actual = [
+            timelineState(tester),
+            layerTimeframes(tester),
+            frameHolds(tester),
+            frameControlsEnabled(tester),
+          ];
           const expected = [
-            [0, 2, 100, false, 0],
+            [
+              0,
+              [0, 1],
+              10,
+              false,
+              0,
+            ],
             [LayerTimeframe.constant, LayerTimeframe.perFrame],
+            [1, 2],
+            [true, true, true, false, true],
           ];
           expect(actual, equals(expected));
         });
@@ -431,7 +452,7 @@ void main() {
             ))
               sidePanel.title,
           ];
-          const expected = ['Layers', 'History'];
+          const expected = ['Layers', 'Frames', 'History'];
           expect(actual, equals(expected));
         });
         testWidgets('panel divider', (tester) async {
@@ -455,6 +476,7 @@ void main() {
               sidePanel.border,
           ];
           const expected = [
+            Border(bottom: BorderSide(color: PaintStyle.separatorColor)),
             Border(bottom: BorderSide(color: PaintStyle.separatorColor)),
             null,
           ];
@@ -2059,9 +2081,55 @@ void main() {
           await tester.pump();
           final actual = [timelineState(tester), historyState(tester)];
           const expected = [
-            [1, 2, 100, false, 1],
+            [
+              1,
+              [0, 1],
+              10,
+              false,
+              1,
+            ],
             [
               ['Start', 'Add frame'],
+              1,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('copy frame', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Copy frame'));
+          await tester.pump();
+          final actual = [
+            timelineState(tester),
+            frameHolds(tester),
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              1,
+              [0, 1, 2],
+              10,
+              false,
+              1,
+            ],
+            [1, 1, 2],
+            [
+              ['Start', 'Copy frame'],
               1,
             ],
           ];
@@ -2088,7 +2156,13 @@ void main() {
           await tester.pump();
           final actual = [timelineState(tester), historyState(tester)];
           const expected = [
-            [0, 1, 200, false, 0],
+            [
+              0,
+              [0],
+              10,
+              false,
+              0,
+            ],
             [
               ['Start', 'Remove frame'],
               1,
@@ -2096,7 +2170,38 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
-        testWidgets('select frame', (tester) async {
+        testWidgets('move frame', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Move frame down'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Move frame up'));
+          await tester.pump();
+          final actual = [frameHolds(tester), historyState(tester)];
+          const expected = [
+            [1, 2],
+            [
+              ['Start', 'Move frame down', 'Move frame up'],
+              2,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('select from slider', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
             MaterialApp(
@@ -2116,10 +2221,16 @@ void main() {
           await tester.drag(find.byType(Slider).first, const Offset(2000, 0));
           await tester.pump();
           final actual = timelineState(tester);
-          const expected = [1, 2, 200, false, 1];
+          const expected = [
+            1,
+            [0, 1],
+            10,
+            false,
+            1,
+          ];
           expect(actual, equals(expected));
         });
-        testWidgets('frame duration', (tester) async {
+        testWidgets('select from frames pane', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
             MaterialApp(
@@ -2136,26 +2247,186 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Frame duration'));
-          await tester.pumpAndSettle();
           await tester.tap(
-            find.descendant(
-              of: find.ancestor(
-                of: find.text('Duration (ms):'),
-                matching: find.byType(NumericValueRange),
-              ),
-              matching: find.byTooltip('Increase'),
-            ),
+            find
+                .byWidgetPredicate(
+                  (widget) => widget is Text && widget.data == '2',
+                )
+                .first,
           );
           await tester.pump();
-          final actual = [timelineState(tester), historyState(tester)];
+          final actual = timelineState(tester);
           const expected = [
-            [0, 2, 110, false, 0],
+            1,
+            [0, 1],
+            10,
+            false,
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('next and previous', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Next frame'));
+          await tester.pump();
+          final next = timelineState(tester).first;
+          await tester.tap(find.byTooltip('Previous frame'));
+          await tester.pump();
+          final actual = [next, timelineState(tester).first];
+          const expected = [1, 0];
+          expect(actual, equals(expected));
+        });
+        testWidgets('frame holds', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Fewer holds').last);
+          await tester.pump();
+          final actual = [
+            timelineState(tester),
+            frameHolds(tester),
+            historyState(tester),
+          ];
+          const expected = [
             [
-              ['Start', 'Frame duration'],
+              0,
+              [0, 1],
+              10,
+              false,
+              0,
+            ],
+            [1, 1],
+            [
+              ['Start', 'Frame holds'],
               1,
             ],
           ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('hide frame', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Fewer holds').last);
+          await tester.pump();
+          await tester.tap(find.byTooltip('Fewer holds').last);
+          await tester.pump();
+          final actual = [
+            timelineState(tester),
+            find.text('1 / 1').evaluate().length,
+          ];
+          const expected = [
+            [
+              0,
+              [0],
+              10,
+              false,
+              0,
+            ],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('frame rate', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.ensureVisible(find.byTooltip('Increase frame rate'));
+          await tester.tap(find.byTooltip('Increase frame rate'));
+          await tester.pump();
+          final actual = [timelineState(tester), historyState(tester)];
+          const expected = [
+            [
+              0,
+              [0, 1],
+              11,
+              false,
+              0,
+            ],
+            [
+              ['Start', 'Frame rate'],
+              1,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('onion skinning', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          final before = canvasLayers(tester).length;
+          await tester.ensureVisible(find.byTooltip('Onion skinning'));
+          await tester.tap(find.byTooltip('Onion skinning'));
+          await tester.pump();
+          final actual = [before, canvasLayers(tester).length];
+          const expected = [3, 4];
           expect(actual, equals(expected));
         });
         testWidgets('layer timeframe', (tester) async {
@@ -2218,9 +2489,27 @@ void main() {
           await tester.pump();
           final actual = [started, advanced, wrapped];
           const expected = [
-            [0, 2, 100, true, 0],
-            [1, 2, 200, true, 1],
-            [0, 2, 100, true, 0],
+            [
+              0,
+              [0, 1],
+              10,
+              true,
+              0,
+            ],
+            [
+              1,
+              [0, 1],
+              10,
+              true,
+              1,
+            ],
+            [
+              0,
+              [0, 1],
+              10,
+              true,
+              0,
+            ],
           ];
           expect(actual, equals(expected));
         });
@@ -2247,12 +2536,47 @@ void main() {
           await tester.pump(const Duration(milliseconds: 500));
           final actual = [timelineState(tester), historyState(tester)];
           const expected = [
-            [0, 2, 100, false, 0],
+            [
+              0,
+              [0, 1],
+              10,
+              false,
+              0,
+            ],
             [
               ['Start'],
               0,
             ],
           ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('onion skinning off', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.ensureVisible(find.byTooltip('Onion skinning'));
+          await tester.tap(find.byTooltip('Onion skinning'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Play'));
+          await tester.pump();
+          final playing = canvasLayers(tester).length;
+          await tester.tap(find.byTooltip('Pause'));
+          await tester.pump();
+          final actual = [playing, canvasLayers(tester).length];
+          const expected = [3, 4];
           expect(actual, equals(expected));
         });
         testWidgets('drawing', (tester) async {
@@ -2277,7 +2601,13 @@ void main() {
           await tester.tap(find.byType(PixelCanvas));
           await tester.pump(const Duration(milliseconds: 500));
           final actual = timelineState(tester);
-          const expected = [0, 2, 100, false, 0];
+          const expected = [
+            0,
+            [0, 1],
+            10,
+            false,
+            0,
+          ];
           expect(actual, equals(expected));
         });
         testWidgets('dispose while playing', (tester) async {
@@ -3184,6 +3514,37 @@ void main() {
       });
 
       group('layers pane', () {
+        testWidgets('copy layer', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Copy layer'));
+          await tester.pump();
+          final actual = [layerState(tester), historyState(tester)];
+          const expected = [
+            [
+              ['Background', 'Background copy'],
+              [true, true],
+              [100, 100],
+              1,
+            ],
+            [
+              ['Start', 'Copy layer'],
+              1,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
         testWidgets('add layer', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
@@ -3486,7 +3847,7 @@ void main() {
           await tester.pump();
           final actual = [
             layerState(tester),
-            [for (final layer in canvasLayers(tester)) layer.name],
+            canvasLayers(tester).length,
             historyState(tester),
           ];
           const expected = [
@@ -3496,7 +3857,7 @@ void main() {
               [100],
               0,
             ],
-            ['Pointer'],
+            1,
             [
               ['Start', 'Hide layer'],
               1,
@@ -3524,7 +3885,7 @@ void main() {
           await tester.pump();
           final actual = [
             layerState(tester),
-            [for (final layer in canvasLayers(tester)) layer.name],
+            canvasLayers(tester).length,
             historyState(tester),
           ];
           const expected = [
@@ -3534,7 +3895,7 @@ void main() {
               [100],
               0,
             ],
-            ['Background', 'Pointer'],
+            2,
             [
               ['Start', 'Hide layer', 'Show layer'],
               2,

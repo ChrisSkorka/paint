@@ -75,6 +75,15 @@ void main() {
           );
           expect(actual, equals(expected));
         });
+        test('name', () {
+          final documentLayer = DocumentLayer(
+            name: 'Background',
+            images: [stubPixels],
+          );
+          final actual = documentLayer.copyWith(name: 'Sketch');
+          final expected = DocumentLayer(name: 'Sketch', images: [stubPixels]);
+          expect(actual, equals(expected));
+        });
         test('images', () {
           final documentLayer = DocumentLayer(
             name: 'Background',

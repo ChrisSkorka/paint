@@ -37,5 +37,5 @@ class StructureHistoryEntry implements HistoryEntry {
 
   @override
   String toString() =>
-      'StructureHistoryEntry($name, layers: ${before.layers.length} → ${after.layers.length}, frames: ${before.frameDurations.length} → ${after.frameDurations.length})';
+      'StructureHistoryEntry($name, layers: ${before.layers.length} → ${after.layers.length}, frames: ${before.frameHolds.length} → ${after.frameHolds.length})';
 }

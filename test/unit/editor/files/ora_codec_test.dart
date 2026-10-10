@@ -72,7 +72,7 @@ void main() {
       ),
     ],
     activeLayerIndex: 1,
-    frameDurations: [100, 250],
+    frameHolds: [1, 2],
   );
 
   List<int> png(List<List<int>> rows) =>
@@ -113,7 +113,7 @@ void main() {
           const expected =
               '<?xml version="1.0" encoding="UTF-8"?>\n'
               '<image xmlns:paint="urn:info.skorka.chris.paint" version="0.0.5" '
-              'w="2" h="1" paint:frame-durations="100">\n'
+              'w="2" h="1" paint:fps="10" paint:frame-holds="1">\n'
               '  <stack>\n'
               '    <layer name="Top" src="data/layer1.png" x="0" y="0" '
               'visibility="hidden" opacity="0.50"/>\n'
@@ -216,7 +216,7 @@ void main() {
           const expected =
               '<?xml version="1.0" encoding="UTF-8"?>\n'
               '<image xmlns:paint="urn:info.skorka.chris.paint" version="0.0.5" '
-              'w="2" h="1" paint:frame-durations="100,250">\n'
+              'w="2" h="1" paint:fps="10" paint:frame-holds="1,2">\n'
               '  <stack>\n'
               '    <stack name="Sprite" visibility="visible" opacity="0.50" '
               'selected="true" paint:timeframe="per-frame">\n'
@@ -413,26 +413,102 @@ void main() {
           final expected = animatedDocument();
           expect(actual, equals(expected));
         });
-        test('missing durations', () {
+        test('missing timing', () {
           final bytes = oraArchive(
             stack:
-                '<image w="1" h="1"><stack>'
-                '<layer src="a.png"/>'
-                '</stack></image>',
+                '<image xmlns:paint="urn:info.skorka.chris.paint" w="1" h="1">'
+                '<stack><layer src="a.png"/></stack></image>',
             files: {
               'a.png': png([
                 [blue],
               ]),
             },
           );
-          final actual = OraCodec.decode(
-            name: 'Cat',
-            bytes: bytes,
-          ).frameDurations;
-          final expected = [100];
+          final decoded = OraCodec.decode(name: 'Cat', bytes: bytes);
+          final actual = [decoded.fps, decoded.frameHolds];
+          final expected = [
+            10,
+            [1],
+          ];
           expect(actual, equals(expected));
         });
-        test('invalid durations', () {
+        test('invalid timing', () {
+          final bytes = oraArchive(
+            stack:
+                '<image xmlns:paint="urn:info.skorka.chris.paint" w="1" h="1" paint:fps="abc" paint:frame-holds="abc,0,500">'
+                '<stack><layer src="a.png"/></stack></image>',
+            files: {
+              'a.png': png([
+                [blue],
+              ]),
+            },
+          );
+          final decoded = OraCodec.decode(name: 'Cat', bytes: bytes);
+          final actual = [decoded.fps, decoded.frameHolds];
+          final expected = [
+            10,
+            [1, 0, 100],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('zero first hold', () {
+          final bytes = oraArchive(
+            stack:
+                '<image xmlns:paint="urn:info.skorka.chris.paint" w="1" h="1" paint:fps="0" paint:frame-holds="0,2">'
+                '<stack><layer src="a.png"/></stack></image>',
+            files: {
+              'a.png': png([
+                [blue],
+              ]),
+            },
+          );
+          final decoded = OraCodec.decode(name: 'Cat', bytes: bytes);
+          final actual = [decoded.fps, decoded.frameHolds];
+          final expected = [
+            1,
+            [1, 2],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('fps too high', () {
+          final bytes = oraArchive(
+            stack:
+                '<image xmlns:paint="urn:info.skorka.chris.paint" w="1" h="1" paint:fps="500" paint:frame-holds="1">'
+                '<stack><layer src="a.png"/></stack></image>',
+            files: {
+              'a.png': png([
+                [blue],
+              ]),
+            },
+          );
+          final decoded = OraCodec.decode(name: 'Cat', bytes: bytes);
+          final actual = [decoded.fps, decoded.frameHolds];
+          final expected = [
+            100,
+            [1],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('legacy durations', () {
+          final bytes = oraArchive(
+            stack:
+                '<image xmlns:paint="urn:info.skorka.chris.paint" w="1" h="1" paint:frame-durations="100,200">'
+                '<stack><layer src="a.png"/></stack></image>',
+            files: {
+              'a.png': png([
+                [blue],
+              ]),
+            },
+          );
+          final decoded = OraCodec.decode(name: 'Cat', bytes: bytes);
+          final actual = [decoded.fps, decoded.frameHolds];
+          final expected = [
+            10,
+            [1, 2],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('invalid legacy durations', () {
           final bytes = oraArchive(
             stack:
                 '<image xmlns:paint="urn:info.skorka.chris.paint" w="1" h="1" paint:frame-durations="abc, 50">'
@@ -443,29 +519,12 @@ void main() {
               ]),
             },
           );
-          final actual = OraCodec.decode(
-            name: 'Cat',
-            bytes: bytes,
-          ).frameDurations;
-          final expected = [100, 50];
-          expect(actual, equals(expected));
-        });
-        test('out of range durations', () {
-          final bytes = oraArchive(
-            stack:
-                '<image xmlns:paint="urn:info.skorka.chris.paint" w="1" h="1" paint:frame-durations="1,20000">'
-                '<stack><layer src="a.png"/></stack></image>',
-            files: {
-              'a.png': png([
-                [blue],
-              ]),
-            },
-          );
-          final actual = OraCodec.decode(
-            name: 'Cat',
-            bytes: bytes,
-          ).frameDurations;
-          final expected = [10, 10000];
+          final decoded = OraCodec.decode(name: 'Cat', bytes: bytes);
+          final actual = [decoded.fps, decoded.frameHolds];
+          final expected = [
+            20,
+            [2, 1],
+          ];
           expect(actual, equals(expected));
         });
         test('missing frame images', () {

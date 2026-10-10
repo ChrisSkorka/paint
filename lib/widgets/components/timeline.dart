@@ -4,86 +4,166 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../editor/canvas/document.dart';
-import 'numeric_value_range.dart';
+import '../../editor/canvas/onion_skin.dart';
+import 'number_stepper.dart';
 import 'paint_icon_button.dart';
 import 'paint_split_button.dart';
 import 'paint_style.dart';
+import 'ribbon_section.dart';
 
 class Timeline extends StatelessWidget {
   const Timeline({
     super.key,
     required this.frame,
-    required this.frameCount,
-    required this.frameDuration,
+    required this.shownFrames,
+    required this.fps,
     required this.playing,
+    required this.onionSkin,
     required this.onPlayPause,
+    required this.onStep,
     required this.onSelectFrame,
-    required this.onAddFrame,
-    required this.onRemoveFrame,
-    required this.onDurationChanged,
-    required this.onDurationChangeEnd,
+    required this.onFpsChanged,
+    required this.onOnionSkinChanged,
   });
 
   final int frame;
-  final int frameCount;
-  final int frameDuration;
+  final List<int> shownFrames;
+  final int fps;
   final bool playing;
+  final OnionSkin onionSkin;
   final VoidCallback onPlayPause;
+  final void Function({required bool forward}) onStep;
   final ValueChanged<int> onSelectFrame;
-  final VoidCallback onAddFrame;
-  final VoidCallback? onRemoveFrame;
-  final ValueChanged<int> onDurationChanged;
-  final ValueChanged<int> onDurationChangeEnd;
+  final ValueChanged<int> onFpsChanged;
+  final ValueChanged<OnionSkin> onOnionSkinChanged;
+
+  static const sliderWidth = 260.0;
+  static const counterWidth = 64.0;
 
   @override
   Widget build(BuildContext context) {
-    final lastFrame = max(1, frameCount - 1);
-    return Row(
+    final position = shownFrames.indexOf(frame);
+    final sliderPosition = shownFrames.lastIndexWhere(
+      (shown) => shown <= frame,
+    );
+    final lastPosition = max(1, shownFrames.length - 1);
+    final canStep = shownFrames.length > 1;
+    return RibbonColumn(
       children: [
-        PaintSplitButton(
-          icon: playing ? FontAwesomeIcons.pause : FontAwesomeIcons.play,
-          tooltip: playing ? 'Pause' : 'Play',
-          dropdownTooltip: 'Frame duration',
-          onPressed: onPlayPause,
-          dropdown: NumericValueRange(
-            label: 'Duration (ms):',
-            value: frameDuration,
-            minimum: Document.minimumFrameDuration,
-            maximum: Document.maximumFrameDuration,
-            valueToRange: (value) => log(value) / ln10,
-            rangeToValue: (range) => pow(10, range).round(),
-            decrement: (value) => value - Document.minimumFrameDuration,
-            increment: (value) => value + Document.minimumFrameDuration,
-            onChanged: onDurationChanged,
-            onChangeEnd: onDurationChangeEnd,
-          ),
-        ),
-        Expanded(
-          child: SliderTheme(
-            data: PaintStyle.sliderTheme,
-            child: Slider(
-              value: frame.toDouble(),
-              max: lastFrame.toDouble(),
-              divisions: lastFrame,
-              onChanged: frameCount > 1
-                  ? (value) => onSelectFrame(value.round())
-                  : null,
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            PaintIconButton(
+              icon: FontAwesomeIcons.backwardStep,
+              tooltip: 'Previous frame',
+              onPressed: canStep ? () => onStep(forward: false) : null,
             ),
-          ),
+            PaintIconButton(
+              icon: playing ? FontAwesomeIcons.pause : FontAwesomeIcons.play,
+              tooltip: playing ? 'Pause' : 'Play',
+              onPressed: onPlayPause,
+            ),
+            PaintIconButton(
+              icon: FontAwesomeIcons.forwardStep,
+              tooltip: 'Next frame',
+              onPressed: canStep ? () => onStep(forward: true) : null,
+            ),
+            const SizedBox(width: 8),
+            const Text('FPS'),
+            NumberStepper(
+              value: fps,
+              minimum: Document.minimumFps,
+              maximum: Document.maximumFps,
+              decreaseTooltip: 'Decrease frame rate',
+              increaseTooltip: 'Increase frame rate',
+              onChanged: onFpsChanged,
+            ),
+            PaintSplitButton(
+              icon: FontAwesomeIcons.layerGroup,
+              tooltip: 'Onion skinning',
+              dropdownTooltip: 'Onion skinning options',
+              selected: onionSkin.enabled,
+              onPressed: () => onOnionSkinChanged(
+                onionSkin.copyWith(enabled: !onionSkin.enabled),
+              ),
+              dropdown: _buildOnionSkinOptions(),
+            ),
+          ],
         ),
-        Text('${frame + 1} / $frameCount'),
-        const SizedBox(width: 4),
-        PaintIconButton(
-          icon: FontAwesomeIcons.plus,
-          tooltip: 'Add frame',
-          onPressed: onAddFrame,
-        ),
-        PaintIconButton(
-          icon: FontAwesomeIcons.trashCan,
-          tooltip: 'Remove frame',
-          onPressed: onRemoveFrame,
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: sliderWidth,
+              child: SliderTheme(
+                data: PaintStyle.sliderTheme,
+                child: Slider(
+                  value: sliderPosition.toDouble(),
+                  max: lastPosition.toDouble(),
+                  divisions: lastPosition,
+                  onChanged: canStep
+                      ? (value) => onSelectFrame(shownFrames[value.round()])
+                      : null,
+                ),
+              ),
+            ),
+            SizedBox(
+              width: counterWidth,
+              child: Text(
+                '${position == -1 ? '–' : position + 1} / ${shownFrames.length}',
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
         ),
       ],
+    );
+  }
+
+  Widget _buildOnionSkinOptions() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 4,
+        children: [
+          PaintIconButton(
+            icon: FontAwesomeIcons.backward,
+            tooltip: 'Previous frames',
+            color: Color(OnionSkin.previousTint.argb),
+            selected: onionSkin.previous,
+            onPressed: () => onOnionSkinChanged(
+              onionSkin.copyWith(previous: !onionSkin.previous),
+            ),
+          ),
+          PaintIconButton(
+            icon: FontAwesomeIcons.forward,
+            tooltip: 'Next frames',
+            color: Color(OnionSkin.nextTint.argb),
+            selected: onionSkin.next,
+            onPressed: () =>
+                onOnionSkinChanged(onionSkin.copyWith(next: !onionSkin.next)),
+          ),
+          PaintIconButton(
+            icon: FontAwesomeIcons.filter,
+            tooltip: 'Active layer only',
+            selected: onionSkin.activeLayerOnly,
+            onPressed: () => onOnionSkinChanged(
+              onionSkin.copyWith(activeLayerOnly: !onionSkin.activeLayerOnly),
+            ),
+          ),
+          const Text('Frames:'),
+          NumberStepper(
+            value: onionSkin.frameCount,
+            minimum: OnionSkin.minimumFrameCount,
+            maximum: OnionSkin.maximumFrameCount,
+            decreaseTooltip: 'Fewer onion frames',
+            increaseTooltip: 'More onion frames',
+            onChanged: (frameCount) =>
+                onOnionSkinChanged(onionSkin.copyWith(frameCount: frameCount)),
+          ),
+        ],
+      ),
     );
   }
 }
