@@ -24,6 +24,18 @@ class PixelRectangle {
     );
   }
 
+  factory PixelRectangle.spanning({
+    required PixelPoint from,
+    required PixelPoint to,
+  }) {
+    return PixelRectangle.fromEdges(
+      left: min(from.x, to.x),
+      top: min(from.y, to.y),
+      right: max(from.x, to.x) + 1,
+      bottom: max(from.y, to.y) + 1,
+    );
+  }
+
   final int left;
   final int top;
   final int width;

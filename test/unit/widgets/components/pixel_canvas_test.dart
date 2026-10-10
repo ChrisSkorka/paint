@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
+import 'package:paint/editor/canvas/pixel_rectangle.dart';
 import 'package:paint/widgets/components/pixel_canvas.dart';
 
 import '../../../support/stub_canvas.dart';
@@ -171,6 +172,79 @@ void main() {
           const pixelLayersPainter = PixelLayersPainter(layers: [], zoom: 1);
           final actual = pixelLayersPainter.shouldRepaint(
             const PixelLayersPainter(layers: [], zoom: 1),
+          );
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+  });
+
+  group('class SelectionOutlinePainter', () {
+    group('method paint', () {
+      group('areas', () {
+        test('none', () {
+          const selectionOutlinePainter = SelectionOutlinePainter(
+            area: null,
+            zoom: 2,
+          );
+          final stubCanvas = StubCanvas();
+          selectionOutlinePainter.paint(stubCanvas, const Size(4, 4));
+          final actual = [stubCanvas.drawnRectangles, stubCanvas.drawnPaths];
+          const expected = [<(Rect, int)>[], <(Rect, int)>[]];
+          expect(actual, equals(expected));
+        });
+        test('zoomed', () {
+          const selectionOutlinePainter = SelectionOutlinePainter(
+            area: PixelRectangle(left: 1, top: 1, width: 5, height: 1),
+            zoom: 2,
+          );
+          final stubCanvas = StubCanvas();
+          selectionOutlinePainter.paint(stubCanvas, const Size(12, 4));
+          final actual = [stubCanvas.drawnRectangles, stubCanvas.drawnPaths];
+          const expected = [
+            [(Rect.fromLTRB(2.5, 2.5, 11.5, 3.5), 0xFFFFFFFF)],
+            [(Rect.fromLTRB(2.5, 2.5, 11.5, 3.5), 0xFF000000)],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method shouldRepaint', () {
+      group('old delegate', () {
+        test('same values', () {
+          const selectionOutlinePainter = SelectionOutlinePainter(
+            area: PixelRectangle(left: 0, top: 0, width: 1, height: 1),
+            zoom: 1,
+          );
+          final actual = selectionOutlinePainter.shouldRepaint(
+            const SelectionOutlinePainter(
+              area: PixelRectangle(left: 0, top: 0, width: 1, height: 1),
+              zoom: 1,
+            ),
+          );
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('different area', () {
+          const selectionOutlinePainter = SelectionOutlinePainter(
+            area: PixelRectangle(left: 0, top: 0, width: 1, height: 1),
+            zoom: 1,
+          );
+          final actual = selectionOutlinePainter.shouldRepaint(
+            const SelectionOutlinePainter(area: null, zoom: 1),
+          );
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        test('different zoom', () {
+          const selectionOutlinePainter = SelectionOutlinePainter(
+            area: null,
+            zoom: 1,
+          );
+          final actual = selectionOutlinePainter.shouldRepaint(
+            const SelectionOutlinePainter(area: null, zoom: 2),
           );
           const expected = true;
           expect(actual, equals(expected));

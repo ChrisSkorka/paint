@@ -44,6 +44,35 @@ void main() {
       });
     });
 
+    group('factory spanning', () {
+      group('corners', () {
+        test('forward', () {
+          final actual = PixelRectangle.spanning(
+            from: const PixelPoint(x: 1, y: 2),
+            to: const PixelPoint(x: 3, y: 5),
+          );
+          const expected = PixelRectangle(left: 1, top: 2, width: 3, height: 4);
+          expect(actual, equals(expected));
+        });
+        test('reversed', () {
+          final actual = PixelRectangle.spanning(
+            from: const PixelPoint(x: 3, y: 5),
+            to: const PixelPoint(x: 1, y: 2),
+          );
+          const expected = PixelRectangle(left: 1, top: 2, width: 3, height: 4);
+          expect(actual, equals(expected));
+        });
+        test('same point', () {
+          final actual = PixelRectangle.spanning(
+            from: const PixelPoint(x: 1, y: 1),
+            to: const PixelPoint(x: 1, y: 1),
+          );
+          const expected = PixelRectangle(left: 1, top: 1, width: 1, height: 1);
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('getter isEmpty', () {
       group('not empty', () {
         test('positive size', () {

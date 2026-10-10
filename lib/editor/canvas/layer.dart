@@ -54,6 +54,57 @@ class Layer {
     return thumbnail;
   }
 
+  factory Layer.cropped({required Layer layer, required PixelRectangle area}) {
+    final cropped = Layer.filled(
+      width: area.width,
+      height: area.height,
+      color: PixelColor.transparent,
+    );
+    cropped.paste(
+      source: layer,
+      at: PixelPoint(x: -area.left, y: -area.top),
+    );
+    return cropped;
+  }
+
+  factory Layer.rotated({required Layer layer, required bool clockwise}) {
+    final rotated = Layer.filled(
+      width: layer.height,
+      height: layer.width,
+      color: PixelColor.transparent,
+    );
+    for (var y = 0; y < layer.height; y++) {
+      for (var x = 0; x < layer.width; x++) {
+        rotated.setPixel(
+          point: clockwise
+              ? PixelPoint(x: layer.height - 1 - y, y: x)
+              : PixelPoint(x: y, y: layer.width - 1 - x),
+          color: layer.getPixel(PixelPoint(x: x, y: y)),
+        );
+      }
+    }
+    return rotated;
+  }
+
+  factory Layer.mirrored({required Layer layer, required bool horizontally}) {
+    final mirrored = Layer.filled(
+      width: layer.width,
+      height: layer.height,
+      color: PixelColor.transparent,
+    );
+    for (var y = 0; y < layer.height; y++) {
+      for (var x = 0; x < layer.width; x++) {
+        mirrored.setPixel(
+          point: horizontally
+              ? PixelPoint(x: layer.width - 1 - x, y: y)
+              : PixelPoint(x: x, y: layer.height - 1 - y),
+          color: layer.getPixel(PixelPoint(x: x, y: y)),
+        );
+      }
+    }
+    return mirrored;
+  }
+
   final int width;
   final int height;
   final Uint8List rgba;
@@ -91,6 +142,23 @@ class Layer {
         _write(
           offset: _offset(x: x, y: y),
           color: color,
+        );
+      }
+    }
+  }
+
+  void paste({required Layer source, required PixelPoint at}) {
+    final overlap = PixelRectangle(
+      left: at.x,
+      top: at.y,
+      width: source.width,
+      height: source.height,
+    ).intersection(bounds);
+    for (var y = overlap.top; y < overlap.bottom; y++) {
+      for (var x = overlap.left; x < overlap.right; x++) {
+        _write(
+          offset: _offset(x: x, y: y),
+          color: source.getPixel(PixelPoint(x: x - at.x, y: y - at.y)),
         );
       }
     }

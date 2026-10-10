@@ -20,12 +20,7 @@ enum Shape {
     required int width,
     required PixelColor color,
   }) {
-    final box = PixelRectangle.fromEdges(
-      left: min(from.x, to.x),
-      top: min(from.y, to.y),
-      right: max(from.x, to.x) + 1,
-      bottom: max(from.y, to.y) + 1,
-    );
+    final box = PixelRectangle.spanning(from: from, to: to);
     switch (this) {
       case Shape.line:
         return _drawLine(

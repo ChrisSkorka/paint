@@ -938,6 +938,19 @@ void main() {
           const expected = [PixelColor.black];
           expect(actual, equals(expected));
         });
+        test('select', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = editorController.recentColors;
+          const expected = <PixelColor>[];
+          expect(actual, equals(expected));
+        });
         test('color picker', () {
           final editorController = EditorController.forDocument(
             document: Document.blank(width: 2, height: 1),
@@ -1802,6 +1815,80 @@ void main() {
         });
       });
 
+      group('selection move', () {
+        test('dragged contents', () {
+          final document = Document.blank(width: 3, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 0, y: 0));
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 0));
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 0));
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.selectionArea,
+            editorController.history.entries.map((entry) => entry.name),
+          ];
+          const expected = [
+            [
+              [transparent, transparent, black],
+            ],
+            PixelRectangle(left: 2, top: 0, width: 1, height: 1),
+            ['Move selection'],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('undo', () {
+          final document = Document.blank(width: 3, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 0, y: 0));
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 0));
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 0));
+          editorController.undo();
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.selectionArea,
+          ];
+          const expected = [
+            [
+              [black, transparent, transparent],
+            ],
+            null,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
       group('no stroke', () {
         test('without pointer down', () {
           final document = Document.blank(width: 3, height: 1);
@@ -1817,6 +1904,504 @@ void main() {
               [transparent, transparent, transparent],
             ],
             0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter selectionArea', () {
+      group('selecting', () {
+        test('none', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          final actual = [
+            editorController.selectionArea,
+            editorController.hasSelection,
+          ];
+          const expected = [null, false];
+          expect(actual, equals(expected));
+        });
+        test('while dragging', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 1));
+          final actual = [
+            editorController.selectionArea,
+            editorController.hasSelection,
+          ];
+          const expected = [
+            PixelRectangle(left: 0, top: 0, width: 2, height: 2),
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('after release', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 1));
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 1));
+          final actual = [
+            editorController.selectionArea,
+            editorController.hasSelection,
+            editorController.history.entries.length,
+          ];
+          const expected = [
+            PixelRectangle(left: 0, top: 0, width: 2, height: 2),
+            true,
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('dragged past edge', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 1),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 5, y: 5));
+          editorController.pointerUp(point: const PixelPoint(x: 5, y: 5));
+          final actual = editorController.selectionArea;
+          const expected = PixelRectangle(left: 1, top: 1, width: 2, height: 2);
+          expect(actual, equals(expected));
+        });
+        test('outside layer', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 5, y: 5),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 6, y: 6));
+          editorController.pointerUp(point: const PixelPoint(x: 6, y: 6));
+          final actual = editorController.selectionArea;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+        test('click deselects', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 1));
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 1));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 2, y: 2),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 2));
+          final actual = editorController.selectionArea;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+        test('tool change deselects', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 1));
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 1));
+          editorController.selectTool(ToolKind.pen);
+          final actual = editorController.selectionArea;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter pointerOverSelection', () {
+      group('pointer', () {
+        test('inside', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 1));
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 1));
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 1));
+          final actual = editorController.pointerOverSelection;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        test('outside', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 1));
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 1));
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 2));
+          final actual = editorController.pointerOverSelection;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('exited', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 1));
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 1));
+          editorController.pointerExit();
+          final actual = editorController.pointerOverSelection;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('no selection', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 1));
+          final actual = editorController.pointerOverSelection;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method selectAll', () {
+      group('state', () {
+        test('idle', () {
+          final document = Document.blank(width: 3, height: 2);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.selectAll();
+          final actual = [
+            editorController.toolKind,
+            editorController.selectionArea,
+            notifications,
+          ];
+          const expected = [
+            ToolKind.select,
+            PixelRectangle(left: 0, top: 0, width: 3, height: 2),
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('during stroke', () {
+          final document = Document.blank(width: 3, height: 2);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.selectAll();
+          final actual = [
+            editorController.toolKind,
+            editorController.selectionArea,
+          ];
+          const expected = [ToolKind.pen, null];
+          expect(actual, equals(expected));
+        });
+        test('color picker returns', () {
+          final document = Document.blank(width: 3, height: 2);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectAll();
+          editorController.selectTool(ToolKind.colorPicker);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          final actual = editorController.toolKind;
+          const expected = ToolKind.select;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method deleteSelection', () {
+      group('selection', () {
+        test('selected area', () {
+          final document = Document.blank(
+            width: 3,
+            height: 1,
+            background: PixelColor.black,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 0));
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 0));
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.deleteSelection();
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.selectionArea,
+            editorController.history.entries.map((entry) => entry.name),
+            notifications,
+          ];
+          const expected = [
+            [
+              [black, transparent, transparent],
+            ],
+            null,
+            ['Delete selection'],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('none', () {
+          final document = Document.blank(
+            width: 3,
+            height: 1,
+            background: PixelColor.black,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.deleteSelection();
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.history.entries,
+          ];
+          const expected = [
+            [
+              [black, black, black],
+            ],
+            [],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('during stroke', () {
+          final document = Document.blank(
+            width: 3,
+            height: 1,
+            background: PixelColor.black,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 0));
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 0));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.deleteSelection();
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.hasSelection,
+          ];
+          const expected = [
+            [
+              [black, black, black],
+            ],
+            true,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method rotateSelection', () {
+      group('directions', () {
+        test('clockwise', () {
+          final document = Document.blank(width: 2, height: 2);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          editorController.selectAll();
+          editorController.rotateSelection(clockwise: true);
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.selectionArea,
+            editorController.history.entries.map((entry) => entry.name),
+          ];
+          const expected = [
+            [
+              [transparent, black],
+              [transparent, transparent],
+            ],
+            PixelRectangle(left: 0, top: 0, width: 2, height: 2),
+            ['Rotate right'],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('counterclockwise', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          editorController.selectAll();
+          editorController.rotateSelection(clockwise: false);
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.history.entries.map((entry) => entry.name),
+          ];
+          const expected = [
+            [
+              [transparent, transparent],
+            ],
+            ['Rotate left'],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('ignored', () {
+        test('no selection', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.rotateSelection(clockwise: true);
+          final actual = editorController.history.entries;
+          const expected = [];
+          expect(actual, equals(expected));
+        });
+        test('during stroke', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          editorController.selectAll();
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.rotateSelection(clockwise: true);
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.history.entries,
+          ];
+          const expected = [
+            [
+              [black, transparent],
+            ],
+            [],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method mirrorSelection', () {
+      group('directions', () {
+        test('horizontally', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          editorController.selectAll();
+          editorController.mirrorSelection(horizontally: true);
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.history.entries.map((entry) => entry.name),
+          ];
+          const expected = [
+            [
+              [transparent, black],
+            ],
+            ['Mirror horizontally'],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('vertically', () {
+          final document = Document.blank(width: 1, height: 2);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          editorController.selectAll();
+          editorController.mirrorSelection(horizontally: false);
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.history.entries.map((entry) => entry.name),
+          ];
+          const expected = [
+            [
+              [transparent],
+              [black],
+            ],
+            ['Mirror vertically'],
           ];
           expect(actual, equals(expected));
         });

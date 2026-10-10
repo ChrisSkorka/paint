@@ -53,16 +53,16 @@ void main() {
               ),
             ),
           );
-          final pixelLayersPainter =
-              tester
-                      .widget<CustomPaint>(
-                        find.descendant(
-                          of: find.byType(PixelCanvas),
-                          matching: find.byType(CustomPaint),
-                        ),
-                      )
-                      .foregroundPainter
-                  as PixelLayersPainter;
+          final pixelLayersPainter = tester
+              .widgetList<CustomPaint>(
+                find.descendant(
+                  of: find.byType(PixelCanvas),
+                  matching: find.byType(CustomPaint),
+                ),
+              )
+              .map((customPaint) => customPaint.foregroundPainter)
+              .whereType<PixelLayersPainter>()
+              .single;
           final actual = [pixelLayersPainter.layers, pixelLayersPainter.zoom];
           final expected = [
             [layer],

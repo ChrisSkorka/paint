@@ -115,3 +115,30 @@ Finder widthRange() => find.ancestor(
   of: find.text('Width:'),
   matching: find.byType(NumericValueRange),
 );
+
+bool selectToolSelected(WidgetTester tester) => tester
+    .widget<PaintIconButton>(
+      find.ancestor(
+        of: find.byTooltip('Select'),
+        matching: find.byType(PaintIconButton),
+      ),
+    )
+    .selected;
+
+List<bool> selectionActionsEnabled(WidgetTester tester) => [
+  for (final tooltip in [
+    'Rotate left',
+    'Rotate right',
+    'Mirror horizontally',
+    'Mirror vertically',
+  ])
+    tester
+            .widget<PaintIconButton>(
+              find.ancestor(
+                of: find.byTooltip(tooltip),
+                matching: find.byType(PaintIconButton),
+              ),
+            )
+            .onPressed !=
+        null,
+];

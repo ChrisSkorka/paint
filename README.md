@@ -166,8 +166,7 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 - [x] bucket fill (4-connected, exact color match)
 - [x] shapes: line, rectangle, circle, outline width from tool config, outline centered on selection edge, preview while dragging
-- [ ] select: rectangle selection, move contents, rotate 90°, mirror horizontally & vertically, delete key performs eraser on selection
-- [ ] colors: add no-color option, no-color button below dialog button
+- [x] select: rectangle selection, move contents, rotate 90°, mirror horizontally & vertically, delete key performs eraser on selection
 
 #### 2.3 layers
 
@@ -213,12 +212,15 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] scrollable views always show scroll bars (& scroll bars are thick)
 - [ ] scroll image to the right & bottom
 - [ ] interchangeable panes: move panes between top & right panels
+- [ ] tabs: multiple documents
+- [ ] wide double buttons for pairs: undo/redo, rotate, mirror
 
 ### phase 6.3: improve tools
 
-- [ ] pen ribbon: split size & tip into own ribbon, pen, eraser, and shapes use same settings
+- [ ] pen ribbon: split size & tip into own ribbon, pen, eraser, and shapes use same settings, transparency mode for transparent color & selections
 - [ ] shape tool: constraint to square/level when ctrl is pressed
 - [ ] shape tool: fill with secondary color
+- [ ] colors: add no-color option, no-color button below dialog button
 - [ ] color picker: better UI
 - [ ] transparent colors: blend mode
 

@@ -6,6 +6,7 @@ import 'package:paint/editor/canvas/document.dart';
 import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
+import 'package:paint/editor/canvas/pixel_rectangle.dart';
 import 'package:paint/widgets/components/edge_shadow.dart';
 import 'package:paint/widgets/components/numeric_value_range.dart';
 import 'package:paint/widgets/components/paint_bar.dart';
@@ -124,6 +125,25 @@ void main() {
             [null],
             [null],
             [null],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('selection actions', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(document: Document.blank(width: 2, height: 2)),
+              ),
+            ),
+          );
+          final actual = [
+            selectionActionsEnabled(tester),
+            tester.widget<PixelCanvas>(find.byType(PixelCanvas)).selection,
+          ];
+          const expected = [
+            [false, false, false, false],
+            null,
           ];
           expect(actual, equals(expected));
         });
@@ -870,6 +890,298 @@ void main() {
           await tester.pumpAndSettle();
           final actual = wellColors(tester);
           const expected = [Color(0xFF000000), Color(0xFFFFFFFF)];
+          expect(actual, equals(expected));
+        });
+      });
+      group('selection', () {
+        testWidgets('select tool', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select'));
+          await tester.pump();
+          final actual = [selectToolSelected(tester), selectedTools(tester)];
+          const expected = [
+            true,
+            [false, false, false, false],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('select all', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 3, height: 2);
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          final actual = [
+            selectToolSelected(tester),
+            tester.widget<PixelCanvas>(find.byType(PixelCanvas)).selection,
+            selectionActionsEnabled(tester),
+          ];
+          const expected = [
+            true,
+            PixelRectangle(left: 0, top: 0, width: 3, height: 2),
+            [true, true, true, true],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('drag and move', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 3, height: 1);
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select'));
+          await tester.pump();
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          final selecting = await tester.startGesture(
+            topLeft + const Offset(1, 1),
+          );
+          await selecting.moveTo(topLeft + const Offset(2, 2));
+          await selecting.up();
+          await tester.pump();
+          final moving = await tester.startGesture(
+            topLeft + const Offset(1, 1),
+          );
+          await moving.moveTo(topLeft + const Offset(9, 1));
+          await moving.up();
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, transparent, black],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('move cursor', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          await hoverOver(tester, find.byType(PixelCanvas));
+          final actual = tester
+              .widget<PixelCanvas>(find.byType(PixelCanvas))
+              .cursor;
+          const expected = SystemMouseCursors.move;
+          expect(actual, equals(expected));
+        });
+        testWidgets('delete key', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(
+            width: 2,
+            height: 1,
+            background: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('backspace key', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(
+            width: 2,
+            height: 1,
+            background: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('other key', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(
+            width: 2,
+            height: 1,
+            background: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [black, black],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('zoom field backspace', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(
+            width: 2,
+            height: 1,
+            background: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          await tester.tap(
+            find.descendant(
+              of: find.ancestor(
+                of: find.text('Zoom:'),
+                matching: find.byType(NumericValueRange),
+              ),
+              matching: find.byType(TextField),
+            ),
+          );
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [black, black],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('rotate left', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Rotate left'));
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, transparent],
+            [black, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('rotate right', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Rotate right'));
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, black],
+            [transparent, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('mirror horizontally', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 1);
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Mirror horizontally'));
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, black],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('mirror vertically', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 1, height: 2);
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(body: EditorView(document: document)),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Mirror vertically'));
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent],
+            [black],
+          ];
           expect(actual, equals(expected));
         });
       });

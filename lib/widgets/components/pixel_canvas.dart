@@ -1,10 +1,14 @@
+import 'dart:math';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../editor/canvas/layer.dart';
 import '../../editor/canvas/pixel_point.dart';
+import '../../editor/canvas/pixel_rectangle.dart';
 import '../../editor/pointer_button.dart';
 import 'chess_grid.dart';
+import 'paint_style.dart';
 
 class PixelCanvas extends StatelessWidget {
   const PixelCanvas({
@@ -17,6 +21,8 @@ class PixelCanvas extends StatelessWidget {
     required this.onPointerMove,
     required this.onPointerUp,
     required this.onPointerExit,
+    this.selection,
+    this.cursor = SystemMouseCursors.precise,
   });
 
   final int width;
@@ -31,6 +37,8 @@ class PixelCanvas extends StatelessWidget {
   final void Function({required PixelPoint point}) onPointerMove;
   final void Function({required PixelPoint point}) onPointerUp;
   final VoidCallback onPointerExit;
+  final PixelRectangle? selection;
+  final MouseCursor cursor;
 
   PixelPoint _toPixel(Offset position) => PixelPoint(
     x: (position.dx / zoom).floor(),
@@ -44,7 +52,7 @@ class PixelCanvas extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      cursor: SystemMouseCursors.precise,
+      cursor: cursor,
       onExit: (_) => onPointerExit(),
       child: Listener(
         onPointerDown: (event) => onPointerDown(
@@ -59,10 +67,18 @@ class PixelCanvas extends StatelessWidget {
             onPointerUp(point: _toPixel(event.localPosition)),
         onPointerCancel: (event) =>
             onPointerUp(point: _toPixel(event.localPosition)),
-        child: CustomPaint(
-          painter: const ChessGridPainter(),
-          foregroundPainter: PixelLayersPainter(layers: layers, zoom: zoom),
-          size: Size(width * zoom.toDouble(), height * zoom.toDouble()),
+        child: ClipRect(
+          child: CustomPaint(
+            foregroundPainter: SelectionOutlinePainter(
+              area: selection,
+              zoom: zoom,
+            ),
+            child: CustomPaint(
+              painter: const ChessGridPainter(),
+              foregroundPainter: PixelLayersPainter(layers: layers, zoom: zoom),
+              size: Size(width * zoom.toDouble(), height * zoom.toDouble()),
+            ),
+          ),
         ),
       ),
     );
@@ -115,4 +131,75 @@ class PixelLayersPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(PixelLayersPainter oldDelegate) => true;
+}
+
+class SelectionOutlinePainter extends CustomPainter {
+  const SelectionOutlinePainter({required this.area, required this.zoom});
+
+  final PixelRectangle? area;
+  final int zoom;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final area = this.area;
+    if (area == null) return;
+    final outline = Rect.fromLTWH(
+      area.left * zoom.toDouble(),
+      area.top * zoom.toDouble(),
+      area.width * zoom.toDouble(),
+      area.height * zoom.toDouble(),
+    ).deflate(0.5);
+    canvas.drawRect(
+      outline,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..color = PaintStyle.selectionLight,
+    );
+    final corners = [
+      outline.topLeft,
+      outline.topRight,
+      outline.bottomRight,
+      outline.bottomLeft,
+      outline.topLeft,
+    ];
+    final dashes = Path();
+    for (var index = 0; index < 4; index++) {
+      _addDashes(path: dashes, start: corners[index], end: corners[index + 1]);
+    }
+    canvas.drawPath(
+      dashes,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..color = PaintStyle.selectionDark,
+    );
+  }
+
+  void _addDashes({
+    required Path path,
+    required Offset start,
+    required Offset end,
+  }) {
+    final length = (end - start).distance;
+    final direction = (end - start) / length;
+    for (
+      var distance = 0.0;
+      distance < length;
+      distance += PaintStyle.selectionDashLength * 2
+    ) {
+      final dashEnd = min(distance + PaintStyle.selectionDashLength, length);
+      path
+        ..moveTo(
+          start.dx + direction.dx * distance,
+          start.dy + direction.dy * distance,
+        )
+        ..lineTo(
+          start.dx + direction.dx * dashEnd,
+          start.dy + direction.dy * dashEnd,
+        );
+    }
+  }
+
+  @override
+  bool shouldRepaint(SelectionOutlinePainter oldDelegate) =>
+      oldDelegate.area != area || oldDelegate.zoom != zoom;
 }

@@ -131,6 +131,9 @@ class _EditorViewState extends State<EditorView> {
     );
   }
 
+  VoidCallback? _whenSelected(VoidCallback action) =>
+      controller.hasSelection ? action : null;
+
   String _cursorText() {
     final cursor = controller.cursor;
     return cursor == null ? '-' : '${cursor.x}, ${cursor.y}';
@@ -162,6 +165,26 @@ class _EditorViewState extends State<EditorView> {
     );
   }
 
+  static final _deleteKeys = {
+    LogicalKeyboardKey.delete,
+    LogicalKeyboardKey.backspace,
+  };
+
+  KeyEventResult _handleKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent ||
+        !_deleteKeys.contains(event.logicalKey) ||
+        _editingText()) {
+      return KeyEventResult.ignored;
+    }
+    controller.deleteSelection();
+    return KeyEventResult.handled;
+  }
+
+  bool _editingText() =>
+      FocusManager.instance.primaryFocus?.context
+          ?.findAncestorWidgetOfExactType<EditableText>() !=
+      null;
+
   @override
   Widget build(BuildContext context) {
     return CallbackShortcuts(
@@ -173,6 +196,7 @@ class _EditorViewState extends State<EditorView> {
       },
       child: Focus(
         autofocus: true,
+        onKeyEvent: _handleKey,
         child: ListenableBuilder(
           listenable: controller,
           builder: (context, _) => _buildEditor(),
@@ -203,6 +227,10 @@ class _EditorViewState extends State<EditorView> {
                 onPointerMove: controller.pointerMove,
                 onPointerUp: controller.pointerUp,
                 onPointerExit: controller.pointerExit,
+                selection: controller.selectionArea,
+                cursor: controller.pointerOverSelection
+                    ? SystemMouseCursors.move
+                    : SystemMouseCursors.precise,
               ),
             ),
           ),
@@ -304,6 +332,17 @@ class _EditorViewState extends State<EditorView> {
                             ),
                           ],
                         ),
+                        RibbonColumn(
+                          children: [
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.borderTopLeft,
+                              tooltip: 'Select',
+                              selected: controller.toolKind == ToolKind.select,
+                              onPressed: () =>
+                                  controller.selectTool(ToolKind.select),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                     RibbonSection(
@@ -330,6 +369,63 @@ class _EditorViewState extends State<EditorView> {
                             _shapeButton(
                               icon: FontAwesomeIcons.arrowRight,
                               toolKind: ToolKind.arrow,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    RibbonSection(
+                      title: 'Selection',
+                      columns: [
+                        RibbonColumn(
+                          children: [
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.expand,
+                              tooltip: 'Select all',
+                              onPressed: controller.selectAll,
+                            ),
+                          ],
+                        ),
+                        RibbonColumn(
+                          children: [
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.arrowRotateLeft,
+                              tooltip: 'Rotate left',
+                              onPressed: _whenSelected(
+                                () => controller.rotateSelection(
+                                  clockwise: false,
+                                ),
+                              ),
+                            ),
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.arrowRotateRight,
+                              tooltip: 'Rotate right',
+                              onPressed: _whenSelected(
+                                () =>
+                                    controller.rotateSelection(clockwise: true),
+                              ),
+                            ),
+                          ],
+                        ),
+                        RibbonColumn(
+                          children: [
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.arrowsLeftRight,
+                              tooltip: 'Mirror horizontally',
+                              onPressed: _whenSelected(
+                                () => controller.mirrorSelection(
+                                  horizontally: true,
+                                ),
+                              ),
+                            ),
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.arrowsUpDown,
+                              tooltip: 'Mirror vertically',
+                              onPressed: _whenSelected(
+                                () => controller.mirrorSelection(
+                                  horizontally: false,
+                                ),
+                              ),
                             ),
                           ],
                         ),

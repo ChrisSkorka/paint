@@ -21,6 +21,8 @@ abstract final class PaintStyle {
   static const shapeColor = Color(0xFF2E8B57);
   static const colorPickerColor = Color(0xFF1E90FF);
   static const saveColor = Color(0xFF00BFFF);
+  static const selectionLight = Color(0xFFFFFFFF);
+  static const selectionDark = Color(0xFF000000);
   static const changeOutlineColor = Color(0xFF1E90FF);
 
   static const radius = BorderRadius.all(Radius.circular(5));
@@ -31,6 +33,7 @@ abstract final class PaintStyle {
   static const hoverDuration = Duration(milliseconds: 100);
   static const sidePanelWidth = 200.0;
   static const thumbnailSize = 24.0;
+  static const selectionDashLength = 4.0;
 
   static const titleStyle = TextStyle(
     color: titleColor,

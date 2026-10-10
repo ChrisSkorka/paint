@@ -9,6 +9,7 @@ import 'history/history.dart';
 import 'history/history_entry.dart';
 import 'history/layer_snapshot.dart';
 import 'pointer_button.dart';
+import 'selection/selection.dart';
 import 'tools/brush_tip.dart';
 import 'tools/bucket_fill.dart';
 import 'tools/eraser.dart';
@@ -58,6 +59,10 @@ class EditorController extends ChangeNotifier {
   var _strokeButton = PointerButton.primary;
   var _pointerArea = _noArea;
   Layer? _strokeBefore;
+  var _strokeName = '';
+  var _selectionOrigin = const PixelPoint(x: 0, y: 0);
+  PixelRectangle? _selectingArea;
+  Selection? _selection;
   var _strokeArea = _noArea;
   var _recentColors = const <PixelColor>[];
 
@@ -75,6 +80,16 @@ class EditorController extends ChangeNotifier {
   bool get editingPrimary => _editingPrimary;
   PixelPoint? get cursor => _cursor;
   List<PixelColor> get recentColors => _recentColors;
+  PixelRectangle? get selectionArea => _selectingArea ?? _selection?.area;
+  bool get hasSelection => _selection != null;
+  bool get pointerOverSelection {
+    final cursor = _cursor;
+    final selection = _selection;
+    return cursor != null &&
+        selection != null &&
+        selection.area.contains(cursor);
+  }
+
   PixelColor get editedColor =>
       _editingPrimary ? _primaryColor : _secondaryColor;
 
@@ -88,13 +103,14 @@ class EditorController extends ChangeNotifier {
     ToolKind.rectangle => _shapeTool(Shape.rectangle),
     ToolKind.circle => _shapeTool(Shape.ellipse),
     ToolKind.arrow => _shapeTool(Shape.arrow),
-    ToolKind.colorPicker => null,
+    ToolKind.colorPicker || ToolKind.select => null,
   };
 
   ShapeTool _shapeTool(Shape shape) =>
       ShapeTool(shape: shape, width: _shapeWidth, origin: _strokeOrigin);
 
   void selectTool(ToolKind toolKind) {
+    _selection = null;
     _toolKind = toolKind;
     if (toolKind != ToolKind.colorPicker) _drawingToolKind = toolKind;
     notifyListeners();
@@ -145,6 +161,7 @@ class EditorController extends ChangeNotifier {
 
   void jumpToHistory(int position) {
     if (_strokePoint != null) return;
+    _selection = null;
     history.jumpTo(position);
     notifyListeners();
   }
@@ -156,10 +173,10 @@ class EditorController extends ChangeNotifier {
     };
     _strokeButton = button;
     _strokeOrigin = point;
-    if (_toolKind != ToolKind.eraser && _toolKind != ToolKind.colorPicker) {
-      _rememberColor(_strokeColor);
-    }
+    _strokeName = _toolKind.label;
+    if (_toolKind.usesColor) _rememberColor(_strokeColor);
     _sampleColor(point: point);
+    if (_toolKind == ToolKind.select) _startSelecting(point);
     final tool = _tool;
     if (tool != null) {
       _strokeBefore = Layer.copyOf(document.activeLayer);
@@ -180,6 +197,9 @@ class EditorController extends ChangeNotifier {
       return;
     }
     _sampleColor(point: point);
+    if (_toolKind == ToolKind.select) {
+      _dragSelection(previous: strokePoint, point: point);
+    }
     final altered = _tool?.stroke(
       layer: document.activeLayer,
       previous: strokePoint,
@@ -201,6 +221,7 @@ class EditorController extends ChangeNotifier {
     if (altered != null) _strokeArea = _strokeArea.union(altered);
     _strokeOrigin = null;
     _strokePoint = null;
+    _finishSelecting();
     _redrawPointer(point: point, color: _strokeColor);
     _recordStroke();
     if (_toolKind == ToolKind.colorPicker) _toolKind = _drawingToolKind;
@@ -213,18 +234,125 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void selectAll() {
+    if (_strokePoint != null) return;
+    _toolKind = ToolKind.select;
+    _drawingToolKind = ToolKind.select;
+    _selection = Selection.lift(
+      layer: document.activeLayer,
+      area: document.activeLayer.bounds,
+    );
+    notifyListeners();
+  }
+
+  void deleteSelection() {
+    final selection = _selection;
+    if (selection == null || _strokePoint != null) return;
+    final before = Layer.copyOf(document.activeLayer);
+    document.activeLayer.fillRectangle(
+      rectangle: selection.area,
+      color: PixelColor.transparent,
+    );
+    _selection = null;
+    _record(name: 'Delete selection', before: before, area: selection.area);
+    notifyListeners();
+  }
+
+  void rotateSelection({required bool clockwise}) {
+    _transformSelection(
+      name: clockwise ? 'Rotate right' : 'Rotate left',
+      transform: (selection) =>
+          selection.rotated(layer: document.activeLayer, clockwise: clockwise),
+    );
+  }
+
+  void mirrorSelection({required bool horizontally}) {
+    _transformSelection(
+      name: horizontally ? 'Mirror horizontally' : 'Mirror vertically',
+      transform: (selection) => selection.mirrored(
+        layer: document.activeLayer,
+        horizontally: horizontally,
+      ),
+    );
+  }
+
+  void _transformSelection({
+    required String name,
+    required Selection Function(Selection selection) transform,
+  }) {
+    final selection = _selection;
+    if (selection == null || _strokePoint != null) return;
+    final before = Layer.copyOf(document.activeLayer);
+    final transformed = transform(selection);
+    _selection = transformed;
+    _record(
+      name: name,
+      before: before,
+      area: selection.area.union(transformed.area),
+    );
+    notifyListeners();
+  }
+
+  void _startSelecting(PixelPoint point) {
+    final selection = _selection;
+    if (selection != null && selection.area.contains(point)) {
+      _strokeName = 'Move selection';
+      _strokeBefore = Layer.copyOf(document.activeLayer);
+      _strokeArea = selection.area;
+      return;
+    }
+    _selection = null;
+    _selectionOrigin = point;
+  }
+
+  void _dragSelection({
+    required PixelPoint previous,
+    required PixelPoint point,
+  }) {
+    final selection = _selection;
+    if (selection == null) {
+      _selectingArea = PixelRectangle.spanning(
+        from: _selectionOrigin,
+        to: point,
+      ).intersection(document.activeLayer.bounds);
+      return;
+    }
+    final moved = selection.moved(
+      layer: document.activeLayer,
+      offsetX: point.x - previous.x,
+      offsetY: point.y - previous.y,
+    );
+    _strokeArea = _strokeArea.union(moved.area);
+    _selection = moved;
+  }
+
+  void _finishSelecting() {
+    final selectingArea = _selectingArea;
+    _selectingArea = null;
+    if (selectingArea == null || selectingArea.isEmpty) return;
+    _selection = Selection.lift(
+      layer: document.activeLayer,
+      area: selectingArea,
+    );
+  }
+
   void _recordStroke() {
     final strokeBefore = _strokeBefore;
     if (strokeBefore == null) return;
     _strokeBefore = null;
+    _record(name: _strokeName, before: strokeBefore, area: _strokeArea);
+  }
+
+  void _record({
+    required String name,
+    required Layer before,
+    required PixelRectangle area,
+  }) {
     final entry = HistoryEntry(
-      name: _toolKind.label,
+      name: name,
       layerIndex: document.activeLayerIndex,
-      before: LayerSnapshot.capture(layer: strokeBefore, area: _strokeArea),
-      after: LayerSnapshot.capture(
-        layer: document.activeLayer,
-        area: _strokeArea,
-      ),
+      before: LayerSnapshot.capture(layer: before, area: area),
+      after: LayerSnapshot.capture(layer: document.activeLayer, area: area),
       thumbnail: Layer.thumbnail(
         layer: document.activeLayer,
         maximumSize: History.thumbnailSize,

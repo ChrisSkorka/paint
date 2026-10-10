@@ -5,8 +5,17 @@ import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
+import '../../../support/layer_probes.dart';
 
 void main() {
+  const transparent = 0x00000000;
+  const red = 0xFFFF0000;
+  const green = 0xFF00FF00;
+  const blue = 0xFF0000FF;
+  const cyan = 0xFF00FFFF;
+  const magenta = 0xFFFF00FF;
+  const yellow = 0xFFFFFF00;
+
   group('class Layer', () {
     group('factory filled', () {
       group('colors', () {
@@ -175,6 +184,96 @@ void main() {
             height: 1,
             rgba: Uint8List.fromList([8, 9, 10, 11, 24, 25, 26, 27]),
           );
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('factory cropped', () {
+      group('areas', () {
+        test('inside', () {
+          final layer = layerFromRows([
+            [red, green, blue],
+            [cyan, magenta, yellow],
+          ]);
+          final actual = pixelRows(
+            Layer.cropped(
+              layer: layer,
+              area: const PixelRectangle(left: 1, top: 0, width: 2, height: 2),
+            ),
+          );
+          const expected = [
+            [green, blue],
+            [magenta, yellow],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('factory rotated', () {
+      group('directions', () {
+        test('clockwise', () {
+          final layer = layerFromRows([
+            [red, green, blue],
+            [cyan, magenta, yellow],
+          ]);
+          final actual = pixelRows(
+            Layer.rotated(layer: layer, clockwise: true),
+          );
+          const expected = [
+            [cyan, red],
+            [magenta, green],
+            [yellow, blue],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('counterclockwise', () {
+          final layer = layerFromRows([
+            [red, green, blue],
+            [cyan, magenta, yellow],
+          ]);
+          final actual = pixelRows(
+            Layer.rotated(layer: layer, clockwise: false),
+          );
+          const expected = [
+            [blue, yellow],
+            [green, magenta],
+            [red, cyan],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('factory mirrored', () {
+      group('directions', () {
+        test('horizontally', () {
+          final layer = layerFromRows([
+            [red, green, blue],
+            [cyan, magenta, yellow],
+          ]);
+          final actual = pixelRows(
+            Layer.mirrored(layer: layer, horizontally: true),
+          );
+          const expected = [
+            [blue, green, red],
+            [yellow, magenta, cyan],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('vertically', () {
+          final layer = layerFromRows([
+            [red, green, blue],
+            [cyan, magenta, yellow],
+          ]);
+          final actual = pixelRows(
+            Layer.mirrored(layer: layer, horizontally: false),
+          );
+          const expected = [
+            [cyan, magenta, yellow],
+            [red, green, blue],
+          ];
           expect(actual, equals(expected));
         });
       });
@@ -619,6 +718,48 @@ void main() {
             height: 1,
             rgba: Uint8List.fromList([0, 0, 0, 0, 0, 0, 0, 0]),
           );
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method paste', () {
+      group('positions', () {
+        test('inside', () {
+          final layer = layerFromRows([
+            [transparent, transparent, transparent],
+            [transparent, transparent, transparent],
+          ]);
+          layer.paste(
+            source: layerFromRows([
+              [red, green],
+            ]),
+            at: const PixelPoint(x: 1, y: 1),
+          );
+          final actual = pixelRows(layer);
+          const expected = [
+            [transparent, transparent, transparent],
+            [transparent, red, green],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('clipped', () {
+          final layer = layerFromRows([
+            [transparent, transparent],
+            [transparent, transparent],
+          ]);
+          layer.paste(
+            source: layerFromRows([
+              [red, green],
+              [blue, cyan],
+            ]),
+            at: const PixelPoint(x: -1, y: 1),
+          );
+          final actual = pixelRows(layer);
+          const expected = [
+            [transparent, transparent],
+            [green, transparent],
+          ];
           expect(actual, equals(expected));
         });
       });
