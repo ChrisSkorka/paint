@@ -32,6 +32,7 @@ import '../../../support/hover.dart';
 import '../../../support/keyboard.dart';
 import '../../../support/layer_probes.dart';
 import '../../../support/view_probes.dart';
+import '../../../support/wheel.dart';
 import '../../../support/stub_document_store.dart';
 import '../../../support/stub_file_access.dart';
 import '../../../support/stub_image_clipboard.dart';
@@ -471,6 +472,195 @@ void main() {
             edgeShadow.bottom == bottomBar.top,
           ];
           const expected = [0.0, true, true, true];
+          expect(actual, equals(expected));
+        });
+      });
+      group('canvas position', () {
+        testWidgets('scrollbars', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final actual = [
+            for (final scrollbar in tester.widgetList<Scrollbar>(
+              find.descendant(
+                of: canvasArea(),
+                matching: find.byType(Scrollbar),
+              ),
+            ))
+              [
+                scrollbar.thumbVisibility,
+                scrollbar.trackVisibility,
+                scrollbar.thickness,
+              ],
+          ];
+          const expected = [
+            [true, true, 12.0],
+            [true, true, 12.0],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('scrollbar margin', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final actual = tester
+              .widget<ScrollbarTheme>(
+                find.descendant(
+                  of: canvasArea(),
+                  matching: find.byType(ScrollbarTheme),
+                ),
+              )
+              .data
+              .crossAxisMargin;
+          const expected = 2.0;
+          expect(actual, equals(expected));
+        });
+        testWidgets('small initial', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final actual = canvasOffset(tester);
+          const expected = Offset(15, 15);
+          expect(actual, equals(expected));
+        });
+        testWidgets('small scrolled down', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await scrollWheel(
+            tester,
+            at: tester.getCenter(canvasArea()),
+            delta: const Offset(0, -100),
+          );
+          final actual = canvasOffset(tester);
+          const expected = Offset(15, 115);
+          expect(actual, equals(expected));
+        });
+        testWidgets('small scrolled right', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await scrollWheel(
+            tester,
+            at: tester.getCenter(canvasArea()),
+            delta: const Offset(-100, 0),
+          );
+          final actual = canvasOffset(tester);
+          const expected = Offset(115, 15);
+          expect(actual, equals(expected));
+        });
+        testWidgets('small scrolled past end', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await scrollWheel(
+            tester,
+            at: tester.getCenter(canvasArea()),
+            delta: const Offset(0, -5000),
+          );
+          final actual = canvasOffset(tester);
+          const expected = Offset(15, 584);
+          expect(actual, equals(expected));
+        });
+        testWidgets('large initial', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 400, height: 300),
+                ),
+              ),
+            ),
+          );
+          final actual = canvasOffset(tester);
+          const expected = Offset(15, 15);
+          expect(actual, equals(expected));
+        });
+        testWidgets('large scrolled', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 400, height: 300),
+                ),
+              ),
+            ),
+          );
+          await scrollWheel(
+            tester,
+            at: tester.getCenter(canvasArea()),
+            delta: const Offset(0, 100),
+          );
+          final actual = canvasOffset(tester);
+          const expected = Offset(15, -85);
           expect(actual, equals(expected));
         });
       });

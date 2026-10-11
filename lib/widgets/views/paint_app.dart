@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../editor/files/document_library.dart';
 import '../../editor/files/file_access.dart';
 import '../../editor/files/image_clipboard.dart';
+import '../components/paint_scroll_behavior.dart';
 import '../components/paint_style.dart';
 import 'home_view.dart';
 
@@ -24,6 +25,7 @@ class PaintApp extends StatelessWidget {
       title: 'Paint',
       debugShowCheckedModeBanner: false,
       theme: PaintStyle.theme(),
+      scrollBehavior: const PaintScrollBehavior(),
       home: HomeView(clipboard: clipboard, files: files, library: library),
     );
   }

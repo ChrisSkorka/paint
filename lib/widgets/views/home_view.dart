@@ -101,30 +101,36 @@ class _HomeViewState extends State<HomeView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          DocumentTabBar(
-            tabs: [
-              for (final tab in tabs) (title: tab.title, unsaved: tab.unsaved),
-            ],
-            selectedIndex: selectedIndex,
-            onSelect: _selectTab,
-            onClose: _closeTab,
-            onAdd: _addTab,
-          ),
-          Expanded(
-            child: IndexedStack(
-              index: selectedIndex,
-              children: [
-                for (final (index, tab) in tabs.indexed)
-                  KeyedSubtree(
-                    key: tab.key,
-                    child: _buildTab(tab: tab, active: index == selectedIndex),
-                  ),
+      body: PrimaryScrollController.none(
+        child: Column(
+          children: [
+            DocumentTabBar(
+              tabs: [
+                for (final tab in tabs)
+                  (title: tab.title, unsaved: tab.unsaved),
               ],
+              selectedIndex: selectedIndex,
+              onSelect: _selectTab,
+              onClose: _closeTab,
+              onAdd: _addTab,
             ),
-          ),
-        ],
+            Expanded(
+              child: IndexedStack(
+                index: selectedIndex,
+                children: [
+                  for (final (index, tab) in tabs.indexed)
+                    KeyedSubtree(
+                      key: tab.key,
+                      child: _buildTab(
+                        tab: tab,
+                        active: index == selectedIndex,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

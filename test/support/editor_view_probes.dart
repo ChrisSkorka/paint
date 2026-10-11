@@ -4,7 +4,9 @@ import 'package:paint/widgets/components/paint_bar.dart';
 import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/onion_skin.dart';
 import 'package:paint/editor/canvas/layer_timeframe.dart';
+import 'package:paint/widgets/components/edge_shadow.dart';
 import 'package:paint/widgets/components/frame_list.dart';
+import 'package:paint/widgets/components/pixel_canvas.dart';
 import 'package:paint/widgets/components/history_list.dart';
 import 'package:paint/widgets/components/layer_list.dart';
 import 'package:paint/widgets/components/numeric_value_range.dart';
@@ -259,3 +261,12 @@ List<double> statusSectionWidths(WidgetTester tester) => [
           .evaluate())
     element.size!.width,
 ];
+
+Finder canvasArea() => find.byWidgetPredicate(
+  (widget) =>
+      widget is CustomPaint && widget.foregroundPainter is EdgeShadowPainter,
+);
+
+Offset canvasOffset(WidgetTester tester) =>
+    tester.getTopLeft(find.byType(PixelCanvas)) -
+    tester.getTopLeft(canvasArea());

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../editor/editor_shortcut.dart';
+import 'horizontal_scroll_view.dart';
 import 'paint_icon_button.dart';
 import 'paint_style.dart';
 
@@ -34,8 +35,7 @@ class DocumentTabBar extends StatelessWidget {
         border: Border(bottom: BorderSide(color: PaintStyle.separatorColor)),
       ),
       alignment: Alignment.centerLeft,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
+      child: HorizontalScrollView(
         padding: const EdgeInsets.only(left: 4, top: 4),
         child: Row(
           spacing: 2,

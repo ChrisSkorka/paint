@@ -23,15 +23,18 @@ import '../../editor/pointer_button.dart';
 import '../../editor/tools/brush_tip.dart';
 import '../../editor/tools/color_palettes.dart';
 import '../../editor/tools/tool_kind.dart';
+import '../components/canvas_margin.dart';
 import '../components/color_dialog.dart';
 import '../components/edge_shadow.dart';
 import '../components/frame_list.dart';
 import '../components/history_list.dart';
+import '../components/horizontal_scroll_view.dart';
 import '../components/layer_list.dart';
 import '../components/pixel_canvas.dart';
 import '../components/numeric_value_range.dart';
 import '../components/paint_bar.dart';
 import '../components/paint_icon_button.dart';
+import '../components/paint_scroll_behavior.dart';
 import '../components/paint_split_button.dart';
 import '../components/paint_style.dart';
 import '../components/ribbon_section.dart';
@@ -60,6 +63,8 @@ class EditorView extends StatefulWidget {
   final bool active;
   final ValueChanged<bool>? onUnsavedChanged;
 
+  static const canvasEdge = 15.0;
+
   @override
   State<EditorView> createState() => _EditorViewState();
 }
@@ -71,6 +76,8 @@ class _EditorViewState extends State<EditorView> {
   var exportFormat = ExportFormat.png;
   Timer? playback;
   final focusNode = FocusNode(debugLabel: 'Editor');
+  final verticalScroll = ScrollController();
+  final horizontalScroll = ScrollController();
   var unsaved = false;
 
   @override
@@ -97,6 +104,8 @@ class _EditorViewState extends State<EditorView> {
   void dispose() {
     FocusManager.instance.removeListener(_reclaimFocus);
     focusNode.dispose();
+    verticalScroll.dispose();
+    horizontalScroll.dispose();
     playback?.cancel();
     controller.dispose();
     super.dispose();
@@ -441,29 +450,85 @@ class _EditorViewState extends State<EditorView> {
       color: PaintStyle.canvasAreaBackground,
       child: CustomPaint(
         foregroundPainter: const EdgeShadowPainter(),
-        child: SingleChildScrollView(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.all(12),
-            child: Container(
-              decoration: const BoxDecoration(
-                boxShadow: PaintStyle.faintShadow,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final vertical = canvasMargin(
+              available: constraints.maxHeight,
+              extent: widget.document.height * controller.zoom.toDouble(),
+              edge: EditorView.canvasEdge,
+              scrollbar: PaintScrollBehavior.scrollbarTrack,
+            );
+            final horizontal = canvasMargin(
+              available: constraints.maxWidth,
+              extent: widget.document.width * controller.zoom.toDouble(),
+              edge: EditorView.canvasEdge,
+              scrollbar: PaintScrollBehavior.scrollbarTrack,
+            );
+            return _buildCanvasScrollbars(
+              child: SingleChildScrollView(
+                controller: verticalScroll,
+                reverse: vertical.reverse,
+                child: SingleChildScrollView(
+                  controller: horizontalScroll,
+                  scrollDirection: Axis.horizontal,
+                  reverse: horizontal.reverse,
+                  padding: EdgeInsets.fromLTRB(
+                    horizontal.leading,
+                    vertical.leading,
+                    horizontal.trailing,
+                    vertical.trailing,
+                  ),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      boxShadow: PaintStyle.faintShadow,
+                    ),
+                    child: PixelCanvas(
+                      width: widget.document.width,
+                      height: widget.document.height,
+                      zoom: controller.zoom,
+                      layers: controller.canvasLayers,
+                      onPointerDown: _pointerDown,
+                      onPointerMove: controller.pointerMove,
+                      onPointerUp: controller.pointerUp,
+                      onPointerExit: controller.pointerExit,
+                      selection: controller.selectionArea,
+                      cursor: controller.pointerOverSelection
+                          ? SystemMouseCursors.move
+                          : SystemMouseCursors.precise,
+                    ),
+                  ),
+                ),
               ),
-              child: PixelCanvas(
-                width: widget.document.width,
-                height: widget.document.height,
-                zoom: controller.zoom,
-                layers: controller.canvasLayers,
-                onPointerDown: _pointerDown,
-                onPointerMove: controller.pointerMove,
-                onPointerUp: controller.pointerUp,
-                onPointerExit: controller.pointerExit,
-                selection: controller.selectionArea,
-                cursor: controller.pointerOverSelection
-                    ? SystemMouseCursors.move
-                    : SystemMouseCursors.precise,
-              ),
-            ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCanvasScrollbars({required Widget child}) {
+    return ScrollbarTheme(
+      data: ScrollbarTheme.of(
+        context,
+      ).copyWith(crossAxisMargin: PaintScrollBehavior.scrollbarMargin),
+      child: Scrollbar(
+        controller: verticalScroll,
+        thumbVisibility: true,
+        trackVisibility: true,
+        interactive: true,
+        thickness: PaintScrollBehavior.scrollbarThickness,
+        child: Scrollbar(
+          controller: horizontalScroll,
+          thumbVisibility: true,
+          trackVisibility: true,
+          interactive: true,
+          thickness: PaintScrollBehavior.scrollbarThickness,
+          notificationPredicate: (notification) => notification.depth == 1,
+          child: ScrollConfiguration(
+            behavior: ScrollConfiguration.of(
+              context,
+            ).copyWith(scrollbars: false),
+            child: child,
           ),
         ),
       ),
@@ -603,8 +668,7 @@ class _EditorViewState extends State<EditorView> {
         bottom: BorderSide(color: PaintStyle.separatorColor),
       ),
       child: LayoutBuilder(
-        builder: (context, constraints) => SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
+        builder: (context, constraints) => HorizontalScrollView(
           child: ConstrainedBox(
             constraints: BoxConstraints(minWidth: constraints.maxWidth),
             child: Center(
@@ -994,8 +1058,7 @@ class _EditorViewState extends State<EditorView> {
                 ),
               ),
               Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
+                child: HorizontalScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: ToolPresetList(
                     presets: controller.toolPresets,
