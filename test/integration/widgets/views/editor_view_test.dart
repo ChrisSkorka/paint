@@ -4831,6 +4831,132 @@ void main() {
         });
       });
 
+      group('unsaved changes', () {
+        testWidgets('no change', (tester) async {
+          useDesktopView(tester);
+          final reported = <bool>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                  onUnsavedChanged: reported.add,
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyE);
+          final actual = reported;
+          const expected = <bool>[];
+          expect(actual, equals(expected));
+        });
+        testWidgets('after stroke', (tester) async {
+          useDesktopView(tester);
+          final reported = <bool>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                  onUnsavedChanged: reported.add,
+                ),
+              ),
+            ),
+          );
+          await tester.tapAt(
+            tester.getTopLeft(find.byType(PixelCanvas)) + const Offset(1, 1),
+          );
+          await tester.pump();
+          final actual = reported;
+          const expected = [true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('second stroke', (tester) async {
+          useDesktopView(tester);
+          final reported = <bool>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                  onUnsavedChanged: reported.add,
+                ),
+              ),
+            ),
+          );
+          await tester.tapAt(
+            tester.getTopLeft(find.byType(PixelCanvas)) + const Offset(1, 1),
+          );
+          await tester.pump();
+          await tester.tapAt(
+            tester.getTopLeft(find.byType(PixelCanvas)) + const Offset(1, 1),
+          );
+          await tester.pump();
+          final actual = reported;
+          const expected = [true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('after undo', (tester) async {
+          useDesktopView(tester);
+          final reported = <bool>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                  onUnsavedChanged: reported.add,
+                ),
+              ),
+            ),
+          );
+          await tester.tapAt(
+            tester.getTopLeft(find.byType(PixelCanvas)) + const Offset(1, 1),
+          );
+          await tester.pump();
+          await pressControlShortcut(tester, key: LogicalKeyboardKey.keyZ);
+          final actual = reported;
+          const expected = [true, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('after save', (tester) async {
+          useDesktopView(tester);
+          final reported = <bool>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                  onUnsavedChanged: reported.add,
+                ),
+              ),
+            ),
+          );
+          await tester.tapAt(
+            tester.getTopLeft(find.byType(PixelCanvas)) + const Offset(1, 1),
+          );
+          await tester.pump();
+          await pressControlShortcut(tester, key: LogicalKeyboardKey.keyS);
+          await tester.pumpAndSettle();
+          final actual = reported;
+          const expected = [true, false];
+          expect(actual, equals(expected));
+        });
+      });
       group('keyboard focus', () {
         testWidgets('initial focus', (tester) async {
           useDesktopView(tester);

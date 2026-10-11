@@ -6960,6 +6960,48 @@ void main() {
       });
     });
 
+    group('getter hasUnsavedChanges', () {
+      group('history', () {
+        test('initial', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          final actual = editorController.hasUnsavedChanges;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('changed', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.addLayer();
+          final actual = editorController.hasUnsavedChanges;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        test('undone', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.addLayer();
+          editorController.undo();
+          final actual = editorController.hasUnsavedChanges;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('saved', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.addLayer();
+          editorController.markSaved(editorController.history.point);
+          final actual = editorController.hasUnsavedChanges;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method markSaved', () {
       group('history', () {
         test('current point', () {

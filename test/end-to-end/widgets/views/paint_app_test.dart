@@ -11,6 +11,7 @@ import 'package:paint/widgets/views/paint_app.dart';
 import '../../../support/color_dialog_probes.dart';
 import '../../../support/desktop_view.dart';
 import '../../../support/document_probes.dart';
+import '../../../support/document_tab_probes.dart';
 import '../../../support/editor_view_probes.dart';
 import '../../../support/keyboard.dart';
 import '../../../support/view_probes.dart';
@@ -61,7 +62,7 @@ void main() {
             find.text('64 × 64').evaluate().length,
             canvasSize(tester),
           ];
-          const expected = [1, 1, Size(256, 256)];
+          const expected = [0, 1, Size(256, 256)];
           expect(actual, equals(expected));
         });
       });
@@ -119,7 +120,7 @@ void main() {
           await tester.pump();
           await tester.tap(find.byTooltip('Copy (Ctrl+C)'));
           await tester.pump();
-          await tester.tap(find.text('New document'));
+          await tester.tap(find.byTooltip('New tab (Ctrl+N)'));
           await tester.pumpAndSettle();
           await tester.tap(find.text('From clipboard'));
           await tester.pumpAndSettle();
@@ -152,7 +153,7 @@ void main() {
           await tester.pump();
           await pressControlShortcut(tester, key: LogicalKeyboardKey.keyS);
           await tester.pump();
-          await tester.tap(find.text('New document'));
+          await tester.tap(find.byTooltip('New tab (Ctrl+N)'));
           await tester.pumpAndSettle();
           await tester.tap(
             find.descendant(
@@ -170,6 +171,56 @@ void main() {
             ).first.image.getPixel(const PixelPoint(x: 0, y: 0)),
           ];
           const expected = [1, 1, 1, PixelColor.black];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('tabs', () {
+        testWidgets('two documents', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            PaintApp(
+              key: UniqueKey(),
+              files: StubFileAccess(),
+              library: stubDocumentLibrary(),
+              clipboard: StubImageClipboard(),
+            ),
+          );
+          await tester.enterText(find.byKey(const Key('name')), 'Cat');
+          await tester.enterText(find.byKey(const Key('width')), '2');
+          await tester.enterText(find.byKey(const Key('height')), '2');
+          await tester.tap(find.text('Create new'));
+          await tester.pumpAndSettle();
+          await tester.tapAt(
+            tester.getTopLeft(find.byType(PixelCanvas)) + const Offset(1, 1),
+          );
+          await tester.pump();
+          await tester.tap(find.byTooltip('New tab (Ctrl+N)'));
+          await tester.pumpAndSettle();
+          await tester.enterText(find.byKey(const Key('name')), 'Dog');
+          await tester.enterText(find.byKey(const Key('width')), '2');
+          await tester.enterText(find.byKey(const Key('height')), '2');
+          await tester.tap(find.text('Create new'));
+          await tester.pumpAndSettle();
+          final dog = canvasLayers(
+            tester,
+          ).first.image.getPixel(const PixelPoint(x: 0, y: 0));
+          await selectDocumentTab(tester, title: 'Cat');
+          final cat = canvasLayers(
+            tester,
+          ).first.image.getPixel(const PixelPoint(x: 0, y: 0));
+          await closeDocumentTab(tester, index: 0);
+          await tester.tap(find.text('Close without saving'));
+          await tester.pumpAndSettle();
+          final actual = [dog, cat, documentTabState(tester)];
+          const expected = [
+            PixelColor.transparent,
+            PixelColor.black,
+            [
+              [(title: 'Dog', unsaved: false)],
+              0,
+            ],
+          ];
           expect(actual, equals(expected));
         });
       });
@@ -202,7 +253,7 @@ void main() {
           await tester.pump();
           await pressControlShortcut(tester, key: LogicalKeyboardKey.keyS);
           await tester.pump();
-          await tester.tap(find.text('New document'));
+          await tester.tap(find.byTooltip('New tab (Ctrl+N)'));
           await tester.pumpAndSettle();
           await tester.tap(
             find.descendant(

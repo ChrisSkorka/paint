@@ -48,6 +48,7 @@ class EditorView extends StatefulWidget {
     required this.files,
     required this.library,
     this.active = true,
+    this.onUnsavedChanged,
   });
 
   final Document document;
@@ -55,6 +56,7 @@ class EditorView extends StatefulWidget {
   final FileAccess files;
   final DocumentLibrary library;
   final bool active;
+  final ValueChanged<bool>? onUnsavedChanged;
 
   @override
   State<EditorView> createState() => _EditorViewState();
@@ -67,11 +69,13 @@ class _EditorViewState extends State<EditorView> {
   var exportFormat = ExportFormat.png;
   Timer? playback;
   final focusNode = FocusNode(debugLabel: 'Editor');
+  var unsaved = false;
 
   @override
   void initState() {
     super.initState();
     FocusManager.instance.addListener(_reclaimFocus);
+    controller.addListener(_reportUnsaved);
     WidgetsBinding.instance.addPostFrameCallback((_) => _focusWhenActive());
   }
 
@@ -94,6 +98,12 @@ class _EditorViewState extends State<EditorView> {
     playback?.cancel();
     controller.dispose();
     super.dispose();
+  }
+
+  void _reportUnsaved() {
+    if (controller.hasUnsavedChanges == unsaved) return;
+    unsaved = controller.hasUnsavedChanges;
+    widget.onUnsavedChanged?.call(unsaved);
   }
 
   void _focusWhenActive() {
@@ -396,7 +406,9 @@ class _EditorViewState extends State<EditorView> {
       return KeyEventResult.handled;
     }
     final shortcut = EditorShortcut.matching(event);
-    if (shortcut == null) return KeyEventResult.ignored;
+    if (shortcut == null || shortcut.group == ShortcutGroup.tabs) {
+      return KeyEventResult.ignored;
+    }
     if (shortcut == EditorShortcut.toolPreset) {
       controller.applyToolPreset(index: shortcut.activatorIndex(event));
     } else {

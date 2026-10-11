@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 enum ShortcutGroup {
+  tabs(label: 'Tabs'),
   file(label: 'File'),
   selection(label: 'Selection'),
   tools(label: 'Tools'),
@@ -17,6 +18,17 @@ enum ShortcutGroup {
 }
 
 enum EditorShortcut {
+  newTab(
+    label: 'New tab',
+    group: ShortcutGroup.tabs,
+    activators: [
+      SingleActivator(
+        LogicalKeyboardKey.keyN,
+        control: true,
+        includeRepeats: false,
+      ),
+    ],
+  ),
   save(
     label: 'Save',
     group: ShortcutGroup.file,

@@ -11,6 +11,8 @@ abstract final class PaintStyle {
   static const inputBorder = Color(0x4D000000);
   static const inputFocusBorder = Color(0x80000000);
   static const dialogBorder = Color(0x1A000000);
+  static const tabStripBackground = Color(0xFFE6E6E6);
+  static const tabHoverBackground = Color(0x0D000000);
   static const chessLight = Color(0xFFFFFFFF);
   static const chessDark = Color(0xFFDDDDDD);
 

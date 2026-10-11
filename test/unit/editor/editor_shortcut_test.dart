@@ -32,6 +32,7 @@ void main() {
             for (final shortcut in EditorShortcut.values) shortcut.keys,
           ];
           const expected = [
+            'Ctrl+N',
             'Ctrl+S',
             'Ctrl+Shift+E',
             'Ctrl+Z',

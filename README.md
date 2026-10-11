@@ -274,13 +274,15 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 6.3: multi document editing
 
-- [ ] tabs: multiple documents, feel like browser tabs
-- [ ] tab: starts as new document, then converts to editor
-- [ ] tab list has a + option at end that creates new tabs
-- [ ] tab title is document name
-- [ ] has a dot when doc has unsaved changes
-- [ ] tabs have close button
-- [ ] closing unsaved doc triggers confirmation dialog
+- [x] tabs: multiple documents, feel like browser tabs
+- [x] tab: starts as new document, then converts to editor
+- [x] tab list has a + option at end that creates new tabs
+- [x] tab title is document name
+- [x] has a dot when doc has unsaved changes
+- [x] tabs have close button
+- [x] closing unsaved doc triggers confirmation dialog
+- [x] shortcuts: ctrl+N
+- [x] middle mouse click on tab closes tab (or prompts when unsaved)
 
 ### phase 6.4: sizes & scrolling
 

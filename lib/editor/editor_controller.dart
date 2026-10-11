@@ -127,6 +127,8 @@ class EditorController extends ChangeNotifier {
     _ => SaveStatus.unsavedChanges,
   };
 
+  bool get hasUnsavedChanges => !history.isAtSavedPoint;
+
   void markSaved(HistoryPoint point) {
     history.markSaved(point);
     notifyListeners();
