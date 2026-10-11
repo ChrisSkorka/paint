@@ -5,9 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document.dart';
 import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
+import 'package:paint/editor/editor_shortcut.dart';
 import 'package:paint/editor/files/image_codec.dart';
 import 'package:paint/editor/files/ora_codec.dart';
 import 'package:paint/widgets/components/paint_wide_button.dart';
+import 'package:paint/widgets/components/shortcut_list.dart';
 import 'package:paint/widgets/views/new_document_view.dart';
 
 import '../../../support/stored_documents.dart';
@@ -93,9 +95,102 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+
+      group('card height', () {
+        testWidgets('limited to view', (tester) async {
+          tester.view.physicalSize = const Size(1600, 300);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.reset);
+          void stubOnCreate(Document document) {}
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: NewDocumentView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  onCreate: stubOnCreate,
+                ),
+              ),
+            ),
+          );
+          final actual = tester
+              .getSize(
+                find
+                    .ancestor(
+                      of: find.text('Keyboard shortcuts'),
+                      matching: find.byType(Container),
+                    )
+                    .first,
+              )
+              .height;
+          const expected = 268.0;
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('shortcuts', () {
+        testWidgets('all shortcuts', (tester) async {
+          void stubOnCreate(Document document) {}
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: NewDocumentView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  onCreate: stubOnCreate,
+                ),
+              ),
+            ),
+          );
+          final actual = [
+            find.text('Keyboard shortcuts').evaluate().length,
+            tester.widget<ShortcutList>(find.byType(ShortcutList)).shortcuts,
+          ];
+          const expected = [1, EditorShortcut.values];
+          expect(actual, equals(expected));
+        });
+      });
     });
 
     group('interactions', () {
+      group('card scrolling', () {
+        testWidgets('drag shortcuts', (tester) async {
+          tester.view.physicalSize = const Size(1600, 300);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.reset);
+          void stubOnCreate(Document document) {}
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: NewDocumentView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  onCreate: stubOnCreate,
+                ),
+              ),
+            ),
+          );
+          await tester.drag(find.text('Ctrl+S'), const Offset(0, -50));
+          await tester.pump();
+          final actual = tester
+              .state<ScrollableState>(
+                find
+                    .ancestor(
+                      of: find.byType(ShortcutList),
+                      matching: find.byType(Scrollable),
+                    )
+                    .first,
+              )
+              .position
+              .pixels;
+          const expected = 50.0;
+          expect(actual, equals(expected));
+        });
+      });
+
       group('create', () {
         testWidgets('default size', (tester) async {
           final created = <Document>[];

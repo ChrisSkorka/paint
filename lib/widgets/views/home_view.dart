@@ -89,6 +89,7 @@ class _HomeViewState extends State<HomeView>
                         clipboard: widget.clipboard,
                         files: widget.files,
                         library: widget.library,
+                        active: tabController.index == 1,
                       ),
               ],
             ),

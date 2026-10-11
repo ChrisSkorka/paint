@@ -115,9 +115,9 @@ void main() {
           await tester.enterText(find.byKey(const Key('height')), '2');
           await tester.tap(find.text('Create new'));
           await tester.pumpAndSettle();
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Copy'));
+          await tester.tap(find.byTooltip('Copy (Ctrl+C)'));
           await tester.pump();
           await tester.tap(find.text('New document'));
           await tester.pumpAndSettle();
@@ -198,7 +198,7 @@ void main() {
           await tester.tap(find.text('From file'));
           await tester.pumpAndSettle();
           final opened = [timelineState(tester), frameHolds(tester)];
-          await tester.tap(find.byTooltip('Add frame'));
+          await tester.tap(find.byTooltip('Add frame (Alt+N)'));
           await tester.pump();
           await pressControlShortcut(tester, key: LogicalKeyboardKey.keyS);
           await tester.pump();

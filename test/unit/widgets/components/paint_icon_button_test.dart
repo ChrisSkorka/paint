@@ -77,4 +77,21 @@ void main() {
       });
     });
   });
+
+  group('standalone', () {
+    group('function shortcutTooltip', () {
+      group('shortcut', () {
+        test('none', () {
+          final actual = shortcutTooltip(tooltip: 'Pen', shortcut: null);
+          const expected = 'Pen';
+          expect(actual, equals(expected));
+        });
+        test('key', () {
+          final actual = shortcutTooltip(tooltip: 'Pen', shortcut: 'P');
+          const expected = 'Pen (P)';
+          expect(actual, equals(expected));
+        });
+      });
+    });
+  });
 }

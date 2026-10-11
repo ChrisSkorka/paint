@@ -145,6 +145,43 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('tooltip', () {
+        testWidgets('without shortcut', (tester) async {
+          void stubOnPressed() {}
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: PaintIconButton(
+                  icon: FontAwesomeIcons.pencil,
+                  tooltip: 'Pen',
+                  onPressed: stubOnPressed,
+                ),
+              ),
+            ),
+          );
+          final actual = tester.widget<Tooltip>(find.byType(Tooltip)).message;
+          const expected = 'Pen';
+          expect(actual, equals(expected));
+        });
+        testWidgets('with shortcut', (tester) async {
+          void stubOnPressed() {}
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: PaintIconButton(
+                  icon: FontAwesomeIcons.pencil,
+                  tooltip: 'Pen',
+                  shortcut: 'P',
+                  onPressed: stubOnPressed,
+                ),
+              ),
+            ),
+          );
+          final actual = tester.widget<Tooltip>(find.byType(Tooltip)).message;
+          const expected = 'Pen (P)';
+          expect(actual, equals(expected));
+        });
+      });
     });
 
     group('interactions', () {

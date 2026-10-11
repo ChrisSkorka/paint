@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/layer.dart';
+import 'package:paint/editor/canvas/onion_skin.dart';
 import 'package:paint/editor/canvas/layer_timeframe.dart';
 import 'package:paint/widgets/components/frame_list.dart';
 import 'package:paint/widgets/components/history_list.dart';
@@ -15,7 +16,7 @@ List<bool> selectedTools(WidgetTester tester) => [
   tester
       .widget<PaintSplitButton>(
         find.ancestor(
-          of: find.byTooltip('Pen'),
+          of: find.byTooltip('Pen (P)'),
           matching: find.byType(PaintSplitButton),
         ),
       )
@@ -23,7 +24,7 @@ List<bool> selectedTools(WidgetTester tester) => [
   tester
       .widget<PaintSplitButton>(
         find.ancestor(
-          of: find.byTooltip('Eraser'),
+          of: find.byTooltip('Eraser (E)'),
           matching: find.byType(PaintSplitButton),
         ),
       )
@@ -31,7 +32,7 @@ List<bool> selectedTools(WidgetTester tester) => [
   tester
       .widget<PaintIconButton>(
         find.ancestor(
-          of: find.byTooltip('Fill'),
+          of: find.byTooltip('Fill (G)'),
           matching: find.byType(PaintIconButton),
         ),
       )
@@ -39,7 +40,7 @@ List<bool> selectedTools(WidgetTester tester) => [
   tester
       .widget<PaintIconButton>(
         find.ancestor(
-          of: find.byTooltip('Color picker'),
+          of: find.byTooltip('Color picker (I)'),
           matching: find.byType(PaintIconButton),
         ),
       )
@@ -92,7 +93,7 @@ List<List<Object?>> historyThumbnails(WidgetTester tester) => [
 ];
 
 List<bool> undoRedoEnabled(WidgetTester tester) => [
-  for (final tooltip in const ['Undo', 'Redo'])
+  for (final tooltip in const ['Undo (Ctrl+Z)', 'Redo (Ctrl+Y / Ctrl+Shift+Z)'])
     tester
             .widget<PaintIconButton>(
               find.ancestor(
@@ -105,7 +106,12 @@ List<bool> undoRedoEnabled(WidgetTester tester) => [
 ];
 
 List<bool> selectedShapes(WidgetTester tester) => [
-  for (final tooltip in ['Line', 'Rectangle', 'Circle', 'Arrow'])
+  for (final tooltip in [
+    'Line (L)',
+    'Rectangle (R)',
+    'Circle (O)',
+    'Arrow (A)',
+  ])
     tester
         .widget<PaintSplitButton>(
           find.ancestor(
@@ -124,7 +130,7 @@ Finder widthRange() => find.ancestor(
 bool selectToolSelected(WidgetTester tester) => tester
     .widget<PaintIconButton>(
       find.ancestor(
-        of: find.byTooltip('Select'),
+        of: find.byTooltip('Select (M)'),
         matching: find.byType(PaintIconButton),
       ),
     )
@@ -163,10 +169,10 @@ Layer layerThumbnail(WidgetTester tester) =>
 
 List<bool> layerActionsEnabled(WidgetTester tester) => [
   for (final tooltip in [
-    'Add layer',
-    'Remove layer',
-    'Move layer up',
-    'Move layer down',
+    'Add layer (Shift+N)',
+    'Remove layer (Shift+Del)',
+    'Move layer up (Alt+PgUp)',
+    'Move layer down (Alt+PgDn)',
   ])
     tester
             .widget<PaintIconButton>(
@@ -180,7 +186,7 @@ List<bool> layerActionsEnabled(WidgetTester tester) => [
 ];
 
 List<bool> clipboardActionsEnabled(WidgetTester tester) => [
-  for (final tooltip in ['Paste', 'Cut', 'Copy'])
+  for (final tooltip in ['Paste (Ctrl+V)', 'Cut (Ctrl+X)', 'Copy (Ctrl+C)'])
     tester
             .widget<PaintIconButton>(
               find.ancestor(
@@ -215,11 +221,11 @@ List<int> frameHolds(WidgetTester tester) => [
 
 List<bool> frameControlsEnabled(WidgetTester tester) => [
   for (final tooltip in [
-    'Add frame',
-    'Copy frame',
-    'Remove frame',
-    'Move frame up',
-    'Move frame down',
+    'Add frame (Alt+N)',
+    'Copy frame (Alt+D)',
+    'Remove frame (Alt+Del)',
+    'Move frame up (Alt+,)',
+    'Move frame down (Alt+.)',
   ])
     tester
             .widget<PaintIconButton>(
@@ -231,3 +237,12 @@ List<bool> frameControlsEnabled(WidgetTester tester) => [
             .onPressed !=
         null,
 ];
+
+List<bool> allSelectedTools(WidgetTester tester) => [
+  ...selectedTools(tester),
+  selectToolSelected(tester),
+  ...selectedShapes(tester),
+];
+
+OnionSkin timelineOnionSkin(WidgetTester tester) =>
+    tester.widget<Timeline>(find.byType(Timeline)).onionSkin;

@@ -241,16 +241,25 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - allow 0 to disable/hide frame
   - zero-hold frames are excluded from playback, GIF export, onion skinning, and #/# counter (but rendered when exporting images on that frame)
 
-### phase 6: editor
+### phase 6: editor refinements
 
-### phase 6.1: shortcuts & favorites
+### phase 6.1: keyboard shortcuts
+
+- [x] shortcuts for tools
+- [x] shortcuts for animations
+- [x] shortcuts for layers
+- [x] shortcut list on new doc page
+
+### phase 6.2: tool stack & favorites
 
 - [ ] favorite tool configs in bottom bar
-- [ ] keyboard shortcuts for pinned tool configs
-- [ ] keyboard shortcuts for tools
-- [ ] keyboard shortcuts for animations
+- [ ] config include tool and it's config (e.g. tip & size)
+- [ ] num keyboard shortcuts for favorite tool configs
+- [ ] shortcut to switch relative (forward/backward)
+- [ ] up to 9
+- [ ] save to where? doc & global?
 
-### phase 6.2: multi document editing
+### phase 6.3: multi document editing
 
 - [ ] tabs: multiple documents, feel like browser tabs
 - [ ] tab: starts as new document, then converts to editor
@@ -260,18 +269,7 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] tabs have close button
 - [ ] closing unsaved doc triggers confirmation dialog
 
-### phase 7: polish
-
-### phase 7.1: performance
-
-- [ ] check memory consumption & performance of history stack
-  - a 4096*4096 canvas is unusable
-- [ ] history stack memory management
-  - [ ] stack limit
-  - [ ] or progressive history item merging
-  - [ ] image compression (package:archive, XOR against previous layer)
-
-### phase 7.2: editor
+### phase 6.4: sizes & scrolling
 
 - [ ] scrollable views always show scroll bars (& scroll bars are thick)
 - [ ] scroll image to the right & bottom
@@ -279,12 +277,31 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] right pane is resizable
 - [ ] bottom items have constant width
 
-### phase 7.3: improve tools
+### phase 7: tool refinement
+
+### phase 7.1: pen ribbon
+
+- [ ] pen ribbon: split size & tip into own ribbon
+- [ ] ribbon between shapes & colors
+- [ ] pen, eraser, and shapes use same settings
+- [ ] transparency mode for transparent color & selections?
+
+### phase 7.2: shape tools
 
 - [ ] better defaults
-- [ ] pen ribbon: split size & tip into own ribbon, pen, eraser, and shapes use same settings, transparency mode for transparent color & selections
 - [ ] shape tool: constraint to square/level when ctrl is pressed
 - [ ] shape tool: fill with secondary color
+
+### phase 7.3: text tool
+
+- [ ] text tool: above selection tool
+- [ ] options: size (not using pen size)
+- [ ] using pen color
+- [ ] font: whatever the app uses, no config needed
+- [ ] shortcut: T
+
+### phase 7.3: colors
+
 - [ ] colors: add no-color option, no-color button below dialog button
 - [ ] color picker: better UI
 - [ ] transparent colors: blend mode
@@ -295,12 +312,23 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] history slider
 - [ ] feature to convert history diff into layer
 
-### phase 7.5: image properties
+### phase 8: polish
+
+### phase 8.1: performance
+
+- [ ] check memory consumption & performance of history stack
+  - a 4096*4096 canvas is unusable
+- [ ] history stack memory management
+  - [ ] stack limit
+  - [ ] or progressive history item merging
+  - [ ] image compression (package:archive, XOR against previous layer)
+
+### phase 8.5: image properties
 
 - [ ] allow change image size
 - [ ] allow renaming documents stored in-app
 
-### phase 7.7: misc
+### phase 8.7: misc
 
 - [ ] move layer & history image previews to left
 - [ ] text inputs have unit text on right side
@@ -308,6 +336,7 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] save real file when opening real files on native system
 - [ ] allow renaming layers
 - [ ] allow zoom less than 1x
+- [ ] default zoom fit's doc
 - [ ] new docs tab: in-app docs have duplicate button
 
 ### phase x: todo

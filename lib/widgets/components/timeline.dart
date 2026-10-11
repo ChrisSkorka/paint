@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../editor/canvas/document.dart';
 import '../../editor/canvas/onion_skin.dart';
+import '../../editor/editor_shortcut.dart';
 import 'number_stepper.dart';
 import 'paint_icon_button.dart';
 import 'paint_split_button.dart';
@@ -56,16 +57,19 @@ class Timeline extends StatelessWidget {
             PaintIconButton(
               icon: FontAwesomeIcons.backwardStep,
               tooltip: 'Previous frame',
+              shortcut: EditorShortcut.previousFrame.keys,
               onPressed: canStep ? () => onStep(forward: false) : null,
             ),
             PaintIconButton(
               icon: playing ? FontAwesomeIcons.pause : FontAwesomeIcons.play,
               tooltip: playing ? 'Pause' : 'Play',
+              shortcut: EditorShortcut.playPause.keys,
               onPressed: onPlayPause,
             ),
             PaintIconButton(
               icon: FontAwesomeIcons.forwardStep,
               tooltip: 'Next frame',
+              shortcut: EditorShortcut.nextFrame.keys,
               onPressed: canStep ? () => onStep(forward: true) : null,
             ),
             const SizedBox(width: 8),
@@ -81,6 +85,7 @@ class Timeline extends StatelessWidget {
             PaintSplitButton(
               icon: FontAwesomeIcons.layerGroup,
               tooltip: 'Onion skinning',
+              shortcut: EditorShortcut.onionSkinning.keys,
               dropdownTooltip: 'Onion skinning options',
               selected: onionSkin.enabled,
               onPressed: () => onOnionSkinChanged(

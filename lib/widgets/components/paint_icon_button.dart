@@ -8,6 +8,7 @@ class PaintIconButton extends StatefulWidget {
     super.key,
     required this.icon,
     required this.tooltip,
+    this.shortcut,
     required this.onPressed,
     this.color = PaintStyle.iconColor,
     this.selected = false,
@@ -15,6 +16,7 @@ class PaintIconButton extends StatefulWidget {
 
   final FaIconData icon;
   final String tooltip;
+  final String? shortcut;
   final VoidCallback? onPressed;
   final Color color;
   final bool selected;
@@ -30,7 +32,10 @@ class _PaintIconButtonState extends State<PaintIconButton> {
   Widget build(BuildContext context) {
     final enabled = widget.onPressed != null;
     return Tooltip(
-      message: widget.tooltip,
+      message: shortcutTooltip(
+        tooltip: widget.tooltip,
+        shortcut: widget.shortcut,
+      ),
       waitDuration: const Duration(milliseconds: 500),
       child: MouseRegion(
         cursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
@@ -50,6 +55,9 @@ class _PaintIconButtonState extends State<PaintIconButton> {
     );
   }
 }
+
+String shortcutTooltip({required String tooltip, required String? shortcut}) =>
+    shortcut == null ? tooltip : '$tooltip ($shortcut)';
 
 class HighlightBox extends StatelessWidget {
   const HighlightBox({

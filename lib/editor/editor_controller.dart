@@ -57,7 +57,7 @@ class EditorController extends ChangeNotifier {
   var _penTip = BrushTip.square;
   var _eraserSize = 1;
   var _shapeWidth = 1;
-  var _zoom = 4;
+  var _zoom = defaultZoom;
   var _primaryColor = PixelColor.black;
   var _secondaryColor = PixelColor.white;
   var _editingPrimary = true;
@@ -78,9 +78,15 @@ class EditorController extends ChangeNotifier {
   DocumentStructure? _structureBeforePreview;
   var _playing = false;
   var _onionSkin = const OnionSkin();
+  var _colorPickerHeld = false;
 
   static const _noArea = PixelRectangle(left: 0, top: 0, width: 0, height: 0);
   static const recentColorLimit = 5;
+  static const minimumToolSize = 1;
+  static const maximumToolSize = 64;
+  static const defaultZoom = 4;
+  static const minimumZoom = 1;
+  static const maximumZoom = 100;
 
   ToolKind get toolKind => _toolKind;
   int get penSize => _penSize;
@@ -199,6 +205,7 @@ class EditorController extends ChangeNotifier {
       ShapeTool(shape: shape, width: _shapeWidth, origin: _strokeOrigin);
 
   void selectTool(ToolKind toolKind) {
+    if (_strokePoint != null) return;
     _selection = null;
     _toolKind = toolKind;
     if (toolKind != ToolKind.colorPicker) _drawingToolKind = toolKind;
@@ -222,6 +229,32 @@ class EditorController extends ChangeNotifier {
 
   void setShapeWidth(int width) {
     _shapeWidth = width;
+    notifyListeners();
+  }
+
+  void stepToolSize({required bool larger}) {
+    int step(int size) =>
+        (size + (larger ? 1 : -1)).clamp(minimumToolSize, maximumToolSize);
+    switch (_toolKind) {
+      case ToolKind.pen:
+        setPenSize(step(_penSize));
+      case ToolKind.eraser:
+        setEraserSize(step(_eraserSize));
+      case ToolKind.line ||
+          ToolKind.rectangle ||
+          ToolKind.circle ||
+          ToolKind.arrow:
+        setShapeWidth(step(_shapeWidth));
+      case ToolKind.bucketFill || ToolKind.colorPicker || ToolKind.select:
+        break;
+    }
+  }
+
+  void holdColorPicker({required bool held}) {
+    if (held == _colorPickerHeld) return;
+    _colorPickerHeld = held;
+    if (_strokePoint != null) return;
+    _toolKind = held ? ToolKind.colorPicker : _drawingToolKind;
     notifyListeners();
   }
 
@@ -307,6 +340,10 @@ class EditorController extends ChangeNotifier {
             ),
     );
   }
+
+  void selectFirstFrame() => selectFrame(document.shownFrames.first);
+
+  void selectLastFrame() => selectFrame(document.shownFrames.last);
 
   void addFrame() {
     _insertFrame(
@@ -438,6 +475,11 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void stepLayer({required bool up}) {
+    if (!(up ? canMoveLayerUp : canMoveLayerDown)) return;
+    selectLayer(document.activeLayerIndex + (up ? 1 : -1));
+  }
+
   void addLayer() {
     _changeStructure(
       name: 'Add layer',
@@ -538,8 +580,19 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void stepZoom({required bool larger}) {
+    setZoom((larger ? _zoom * 2 : _zoom ~/ 2).clamp(minimumZoom, maximumZoom));
+  }
+
   void editPrimary({required bool primary}) {
     _editingPrimary = primary;
+    notifyListeners();
+  }
+
+  void swapColors() {
+    final primary = _primaryColor;
+    _primaryColor = _secondaryColor;
+    _secondaryColor = primary;
     notifyListeners();
   }
 
@@ -622,7 +675,9 @@ class EditorController extends ChangeNotifier {
     _finishSelecting();
     _redrawPointer(point: point, color: _strokeColor);
     _recordStroke();
-    if (_toolKind == ToolKind.colorPicker) _toolKind = _drawingToolKind;
+    if (_toolKind == ToolKind.colorPicker && !_colorPickerHeld) {
+      _toolKind = _drawingToolKind;
+    }
     notifyListeners();
   }
 
@@ -640,6 +695,12 @@ class EditorController extends ChangeNotifier {
       layer: document.activeLayer,
       area: document.activeLayer.bounds,
     );
+    notifyListeners();
+  }
+
+  void deselect() {
+    if (_strokePoint != null) return;
+    _selection = null;
     notifyListeners();
   }
 

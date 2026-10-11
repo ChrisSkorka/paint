@@ -1,8 +1,11 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../editor/canvas/document.dart';
+import '../../editor/editor_shortcut.dart';
 import '../../editor/files/document_codec.dart';
 import '../../editor/files/document_format_exception.dart';
 import '../../editor/files/document_library.dart';
@@ -11,6 +14,7 @@ import '../../editor/files/image_clipboard.dart';
 import '../../editor/files/stored_document.dart';
 import '../components/paint_style.dart';
 import '../components/paint_wide_button.dart';
+import '../components/shortcut_list.dart';
 import '../components/stored_document_list.dart';
 
 class NewDocumentView extends StatefulWidget {
@@ -32,6 +36,8 @@ class NewDocumentView extends StatefulWidget {
 }
 
 class _NewDocumentViewState extends State<NewDocumentView> {
+  static const pagePadding = 16.0;
+
   final nameController = TextEditingController(text: Document.untitledName);
   final widthController = TextEditingController(text: '64');
   final heightController = TextEditingController(text: '64');
@@ -139,36 +145,47 @@ class _NewDocumentViewState extends State<NewDocumentView> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 16,
-          runSpacing: 16,
-          children: [
-            _Card(width: 280, child: _buildCreate(context)),
-            _Card(
-              width: 320,
-              child: ListenableBuilder(
-                listenable: widget.library,
-                builder: (context, _) => Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: 12,
-                  children: [
-                    const _Heading(text: 'Saved documents'),
-                    StoredDocumentList(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardHeight = max(0.0, constraints.maxHeight - 2 * pagePadding);
+        return Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(pagePadding),
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                _Card(
+                  title: 'Open',
+                  width: 280,
+                  maxHeight: cardHeight,
+                  child: _buildCreate(context),
+                ),
+                _Card(
+                  title: 'Saved documents',
+                  width: 320,
+                  maxHeight: cardHeight,
+                  child: ListenableBuilder(
+                    listenable: widget.library,
+                    builder: (context, _) => StoredDocumentList(
                       documents: widget.library.documents,
                       onOpen: _openStored,
                       onDelete: _deleteStored,
                     ),
-                  ],
+                  ),
                 ),
-              ),
+                _Card(
+                  title: 'Keyboard shortcuts',
+                  width: ShortcutList.groupWidth + 2 * _Card.padding,
+                  maxHeight: cardHeight,
+                  child: ShortcutList(shortcuts: EditorShortcut.values),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -184,7 +201,6 @@ class _NewDocumentViewState extends State<NewDocumentView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: 12,
           children: [
-            const _Heading(text: 'Open'),
             TextField(
               key: const Key('name'),
               controller: nameController,
@@ -234,16 +250,26 @@ class _NewDocumentViewState extends State<NewDocumentView> {
 }
 
 class _Card extends StatelessWidget {
-  const _Card({required this.width, required this.child});
+  const _Card({
+    required this.title,
+    required this.width,
+    required this.maxHeight,
+    required this.child,
+  });
 
+  static const padding = 16.0;
+
+  final String title;
   final double width;
+  final double maxHeight;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: width,
-      padding: const EdgeInsets.all(16),
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      padding: const EdgeInsets.all(padding),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: PaintStyle.radius,
@@ -252,7 +278,15 @@ class _Card extends StatelessWidget {
         ),
         boxShadow: PaintStyle.faintShadow,
       ),
-      child: child,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 12,
+        children: [
+          _Heading(text: title),
+          Flexible(child: SingleChildScrollView(child: child)),
+        ],
+      ),
     );
   }
 }

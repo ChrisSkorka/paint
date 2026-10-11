@@ -122,6 +122,32 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('shortcut', () {
+        testWidgets('with shortcut', (tester) async {
+          void stubOnPressed() {}
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: PaintSplitButton(
+                  icon: FontAwesomeIcons.pencil,
+                  tooltip: 'Pen',
+                  shortcut: 'P',
+                  onPressed: stubOnPressed,
+                  dropdown: const Text('dropdown'),
+                ),
+              ),
+            ),
+          );
+          final actual = [
+            for (final tooltip in tester.widgetList<Tooltip>(
+              find.byType(Tooltip),
+            ))
+              tooltip.message,
+          ];
+          const expected = ['Pen (P)', 'Pen options'];
+          expect(actual, equals(expected));
+        });
+      });
     });
 
     group('interactions', () {

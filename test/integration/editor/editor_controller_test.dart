@@ -682,6 +682,21 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('state', () {
+        test('during stroke', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.selectTool(ToolKind.eraser);
+          final actual = editorController.toolKind;
+          const expected = ToolKind.pen;
+          expect(actual, equals(expected));
+        });
+      });
     });
 
     group('method setPenSize', () {
@@ -743,6 +758,284 @@ void main() {
           editorController.setShapeWidth(3);
           final actual = [editorController.shapeWidth, notifications];
           const expected = [3, 1];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method stepToolSize', () {
+      group('tools', () {
+        test('pen', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.pen);
+          editorController.stepToolSize(larger: true);
+          final actual = [
+            editorController.penSize,
+            editorController.eraserSize,
+            editorController.shapeWidth,
+          ];
+          const expected = [2, 1, 1];
+          expect(actual, equals(expected));
+        });
+        test('eraser', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.eraser);
+          editorController.stepToolSize(larger: true);
+          final actual = [
+            editorController.penSize,
+            editorController.eraserSize,
+            editorController.shapeWidth,
+          ];
+          const expected = [1, 2, 1];
+          expect(actual, equals(expected));
+        });
+        test('line', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.line);
+          editorController.stepToolSize(larger: true);
+          final actual = [
+            editorController.penSize,
+            editorController.eraserSize,
+            editorController.shapeWidth,
+          ];
+          const expected = [1, 1, 2];
+          expect(actual, equals(expected));
+        });
+        test('rectangle', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.rectangle);
+          editorController.stepToolSize(larger: true);
+          final actual = [
+            editorController.penSize,
+            editorController.eraserSize,
+            editorController.shapeWidth,
+          ];
+          const expected = [1, 1, 2];
+          expect(actual, equals(expected));
+        });
+        test('circle', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.circle);
+          editorController.stepToolSize(larger: true);
+          final actual = [
+            editorController.penSize,
+            editorController.eraserSize,
+            editorController.shapeWidth,
+          ];
+          const expected = [1, 1, 2];
+          expect(actual, equals(expected));
+        });
+        test('arrow', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.arrow);
+          editorController.stepToolSize(larger: true);
+          final actual = [
+            editorController.penSize,
+            editorController.eraserSize,
+            editorController.shapeWidth,
+          ];
+          const expected = [1, 1, 2];
+          expect(actual, equals(expected));
+        });
+        test('fill', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.bucketFill);
+          editorController.stepToolSize(larger: true);
+          final actual = [
+            editorController.penSize,
+            editorController.eraserSize,
+            editorController.shapeWidth,
+          ];
+          const expected = [1, 1, 1];
+          expect(actual, equals(expected));
+        });
+        test('color picker', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.colorPicker);
+          editorController.stepToolSize(larger: true);
+          final actual = [
+            editorController.penSize,
+            editorController.eraserSize,
+            editorController.shapeWidth,
+          ];
+          const expected = [1, 1, 1];
+          expect(actual, equals(expected));
+        });
+        test('select', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.select);
+          editorController.stepToolSize(larger: true);
+          final actual = [
+            editorController.penSize,
+            editorController.eraserSize,
+            editorController.shapeWidth,
+          ];
+          const expected = [1, 1, 1];
+          expect(actual, equals(expected));
+        });
+      });
+      group('direction', () {
+        test('smaller', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..setPenSize(3);
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.stepToolSize(larger: false);
+          final actual = [editorController.penSize, notifications];
+          const expected = [2, 1];
+          expect(actual, equals(expected));
+        });
+        test('larger', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..setPenSize(3);
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.stepToolSize(larger: true);
+          final actual = [editorController.penSize, notifications];
+          const expected = [4, 1];
+          expect(actual, equals(expected));
+        });
+      });
+      group('limits', () {
+        test('minimum', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          editorController.stepToolSize(larger: false);
+          final actual = editorController.penSize;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        test('maximum', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..setPenSize(64);
+          editorController.stepToolSize(larger: true);
+          final actual = editorController.penSize;
+          const expected = 64;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method holdColorPicker', () {
+      group('held', () {
+        test('press', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.eraser);
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.holdColorPicker(held: true);
+          final actual = [editorController.toolKind, notifications];
+          const expected = [ToolKind.colorPicker, 1];
+          expect(actual, equals(expected));
+        });
+        test('press twice', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..holdColorPicker(held: true);
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.holdColorPicker(held: true);
+          final actual = [editorController.toolKind, notifications];
+          const expected = [ToolKind.colorPicker, 0];
+          expect(actual, equals(expected));
+        });
+        test('pick while held', () {
+          final document = Document.blank(
+            width: 3,
+            height: 3,
+            background: PixelColor.white,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          )..holdColorPicker(held: true);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          final actual = [
+            editorController.toolKind,
+            editorController.primaryColor,
+          ];
+          const expected = [ToolKind.colorPicker, PixelColor.white];
+          expect(actual, equals(expected));
+        });
+        test('keeps selection', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 2),
+          )..selectAll();
+          editorController.holdColorPicker(held: true);
+          final actual = editorController.selectionArea;
+          const expected = PixelRectangle(left: 0, top: 0, width: 3, height: 2);
+          expect(actual, equals(expected));
+        });
+      });
+      group('released', () {
+        test('release', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.eraser);
+          editorController.holdColorPicker(held: true);
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.holdColorPicker(held: false);
+          final actual = [editorController.toolKind, notifications];
+          const expected = [ToolKind.eraser, 1];
+          expect(actual, equals(expected));
+        });
+        test('release without press', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.colorPicker);
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.holdColorPicker(held: false);
+          final actual = [editorController.toolKind, notifications];
+          const expected = [ToolKind.colorPicker, 0];
+          expect(actual, equals(expected));
+        });
+      });
+      group('during stroke', () {
+        test('press', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.holdColorPicker(held: true);
+          final actual = editorController.toolKind;
+          const expected = ToolKind.pen;
+          expect(actual, equals(expected));
+        });
+        test('release', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..holdColorPicker(held: true);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.holdColorPicker(held: false);
+          final during = editorController.toolKind;
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          final actual = [during, editorController.toolKind];
+          const expected = [ToolKind.colorPicker, ToolKind.pen];
           expect(actual, equals(expected));
         });
       });
@@ -1355,6 +1648,65 @@ void main() {
             button: PointerButton.primary,
           );
           editorController.selectLayer(1);
+          final actual = document.activeLayerIndex;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method stepLayer', () {
+      group('up', () {
+        test('layer above', () {
+          final document = layeredDocument(
+            names: ['Background', 'Middle', 'Top'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.stepLayer(up: true);
+          final actual = document.activeLayerIndex;
+          const expected = 2;
+          expect(actual, equals(expected));
+        });
+        test('top layer', () {
+          final document = layeredDocument(
+            names: ['Background', 'Middle', 'Top'],
+            activeLayerIndex: 2,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.stepLayer(up: true);
+          final actual = document.activeLayerIndex;
+          const expected = 2;
+          expect(actual, equals(expected));
+        });
+      });
+      group('down', () {
+        test('layer below', () {
+          final document = layeredDocument(
+            names: ['Background', 'Middle', 'Top'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.stepLayer(up: false);
+          final actual = document.activeLayerIndex;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+        test('bottom layer', () {
+          final document = layeredDocument(
+            names: ['Background', 'Middle', 'Top'],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.stepLayer(up: false);
           final actual = document.activeLayerIndex;
           const expected = 0;
           expect(actual, equals(expected));
@@ -2609,6 +2961,55 @@ void main() {
       });
     });
 
+    group('method selectFirstFrame', () {
+      group('frames', () {
+        test('first frame', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 2,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectFirstFrame();
+          final actual = document.activeFrameIndex;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method selectLastFrame', () {
+      group('frames', () {
+        test('last frame', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectLastFrame();
+          final actual = document.activeFrameIndex;
+          const expected = 2;
+          expect(actual, equals(expected));
+        });
+        test('hidden last frame', () {
+          final document = animatedDocument(
+            spriteColors: [red, green, blue],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          )..setFrameHolds(index: 2, holds: 0);
+          editorController.selectLastFrame();
+          final actual = document.activeFrameIndex;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method addFrame', () {
       group('position', () {
         test('after only frame', () {
@@ -3358,6 +3759,49 @@ void main() {
       });
     });
 
+    group('method stepZoom', () {
+      group('direction', () {
+        test('larger', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..setZoom(4);
+          editorController.stepZoom(larger: true);
+          final actual = editorController.zoom;
+          const expected = 8;
+          expect(actual, equals(expected));
+        });
+        test('smaller', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..setZoom(4);
+          editorController.stepZoom(larger: false);
+          final actual = editorController.zoom;
+          const expected = 2;
+          expect(actual, equals(expected));
+        });
+      });
+      group('limits', () {
+        test('maximum', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..setZoom(64);
+          editorController.stepZoom(larger: true);
+          final actual = editorController.zoom;
+          const expected = 100;
+          expect(actual, equals(expected));
+        });
+        test('minimum', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..setZoom(1);
+          editorController.stepZoom(larger: false);
+          final actual = editorController.zoom;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method editPrimary', () {
       group('slots', () {
         test('secondary', () {
@@ -3415,6 +3859,26 @@ void main() {
             notifications,
           ];
           const expected = [PixelColor.black, PixelColor(argb: red), 1];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method swapColors', () {
+      group('colors', () {
+        test('default colors', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.swapColors();
+          final actual = [
+            editorController.primaryColor,
+            editorController.secondaryColor,
+            notifications,
+          ];
+          const expected = [PixelColor.white, PixelColor.black, 1];
           expect(actual, equals(expected));
         });
       });
@@ -5356,6 +5820,39 @@ void main() {
           editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
           final actual = editorController.toolKind;
           const expected = ToolKind.select;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method deselect', () {
+      group('state', () {
+        test('with selection', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 2),
+          )..selectAll();
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.deselect();
+          final actual = [
+            editorController.toolKind,
+            editorController.selectionArea,
+            notifications,
+          ];
+          const expected = [ToolKind.select, null, 1];
+          expect(actual, equals(expected));
+        });
+        test('during stroke', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 2),
+          )..selectAll();
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.deselect();
+          final actual = editorController.selectionArea;
+          const expected = PixelRectangle(left: 0, top: 0, width: 3, height: 2);
           expect(actual, equals(expected));
         });
       });

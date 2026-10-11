@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -10,6 +9,7 @@ import '../../editor/canvas/document.dart';
 import '../../editor/canvas/pixel_color.dart';
 import '../../editor/canvas/pixel_point.dart';
 import '../../editor/editor_controller.dart';
+import '../../editor/editor_shortcut.dart';
 import '../../editor/files/document_library.dart';
 import '../../editor/files/export_format.dart';
 import '../../editor/files/file_access.dart';
@@ -45,12 +45,14 @@ class EditorView extends StatefulWidget {
     required this.clipboard,
     required this.files,
     required this.library,
+    this.active = true,
   });
 
   final Document document;
   final ImageClipboard clipboard;
   final FileAccess files;
   final DocumentLibrary library;
+  final bool active;
 
   @override
   State<EditorView> createState() => _EditorViewState();
@@ -62,12 +64,45 @@ class _EditorViewState extends State<EditorView> {
   );
   var exportFormat = ExportFormat.png;
   Timer? playback;
+  final focusNode = FocusNode(debugLabel: 'Editor');
+
+  @override
+  void initState() {
+    super.initState();
+    FocusManager.instance.addListener(_reclaimFocus);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _focusWhenActive());
+  }
+
+  @override
+  void didUpdateWidget(EditorView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.active) _focusWhenActive();
+  }
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    _focusWhenActive();
+  }
 
   @override
   void dispose() {
+    FocusManager.instance.removeListener(_reclaimFocus);
+    focusNode.dispose();
     playback?.cancel();
     controller.dispose();
     super.dispose();
+  }
+
+  void _focusWhenActive() {
+    if (mounted && widget.active) focusNode.requestFocus();
+  }
+
+  void _reclaimFocus() {
+    final primaryFocus = FocusManager.instance.primaryFocus;
+    if (primaryFocus != null && focusNode.ancestors.contains(primaryFocus)) {
+      _focusWhenActive();
+    }
   }
 
   void _togglePlayback() {
@@ -136,8 +171,8 @@ class _EditorViewState extends State<EditorView> {
     return NumericValueRange(
       label: label,
       value: value,
-      minimum: 1,
-      maximum: 64,
+      minimum: EditorController.minimumToolSize,
+      maximum: EditorController.maximumToolSize,
       onChanged: onChanged,
     );
   }
@@ -175,10 +210,15 @@ class _EditorViewState extends State<EditorView> {
     );
   }
 
-  Widget _shapeButton({required FaIconData icon, required ToolKind toolKind}) {
+  Widget _shapeButton({
+    required FaIconData icon,
+    required ToolKind toolKind,
+    required EditorShortcut shortcut,
+  }) {
     return PaintSplitButton(
       icon: icon,
       tooltip: toolKind.label,
+      shortcut: shortcut.keys,
       color: PaintStyle.shapeColor,
       selected: controller.toolKind == toolKind,
       onPressed: () => controller.selectTool(toolKind),
@@ -293,42 +333,80 @@ class _EditorViewState extends State<EditorView> {
     }
   }
 
-  late final _keyActions = <SingleActivator, VoidCallback>{
-    const SingleActivator(
-      LogicalKeyboardKey.keyS,
-      control: true,
-      includeRepeats: false,
-    ): _save,
-    const SingleActivator(LogicalKeyboardKey.delete, includeRepeats: false):
-        controller.deleteSelection,
-    const SingleActivator(LogicalKeyboardKey.backspace, includeRepeats: false):
-        controller.deleteSelection,
-    const SingleActivator(
-      LogicalKeyboardKey.keyC,
-      control: true,
-      includeRepeats: false,
-    ): _copySelection,
-    const SingleActivator(
-      LogicalKeyboardKey.keyX,
-      control: true,
-      includeRepeats: false,
-    ): _cutSelection,
-    const SingleActivator(
-      LogicalKeyboardKey.keyV,
-      control: true,
-      includeRepeats: false,
-    ): _paste,
+  void _toggleOnionSkin() => controller.setOnionSkin(
+    controller.onionSkin.copyWith(enabled: !controller.onionSkin.enabled),
+  );
+
+  void _stepHolds({required bool more}) {
+    final frame = widget.document.activeFrameIndex;
+    controller.setFrameHolds(
+      index: frame,
+      holds: widget.document.frameHolds[frame] + (more ? 1 : -1),
+    );
+  }
+
+  late final _shortcutActions = <EditorShortcut, VoidCallback>{
+    EditorShortcut.save: _save,
+    EditorShortcut.export: () => _export(exportFormat),
+    EditorShortcut.undo: controller.undo,
+    EditorShortcut.redo: controller.redo,
+    EditorShortcut.copy: _copySelection,
+    EditorShortcut.cut: _cutSelection,
+    EditorShortcut.paste: _paste,
+    EditorShortcut.selectAll: controller.selectAll,
+    EditorShortcut.deleteSelection: controller.deleteSelection,
+    EditorShortcut.deselect: controller.deselect,
+    EditorShortcut.pen: () => controller.selectTool(ToolKind.pen),
+    EditorShortcut.eraser: () => controller.selectTool(ToolKind.eraser),
+    EditorShortcut.fill: () => controller.selectTool(ToolKind.bucketFill),
+    EditorShortcut.colorPicker: () =>
+        controller.selectTool(ToolKind.colorPicker),
+    EditorShortcut.select: () => controller.selectTool(ToolKind.select),
+    EditorShortcut.line: () => controller.selectTool(ToolKind.line),
+    EditorShortcut.rectangle: () => controller.selectTool(ToolKind.rectangle),
+    EditorShortcut.circle: () => controller.selectTool(ToolKind.circle),
+    EditorShortcut.arrow: () => controller.selectTool(ToolKind.arrow),
+    EditorShortcut.smallerSize: () => controller.stepToolSize(larger: false),
+    EditorShortcut.largerSize: () => controller.stepToolSize(larger: true),
+    EditorShortcut.swapColors: controller.swapColors,
+    EditorShortcut.zoomIn: () => controller.stepZoom(larger: true),
+    EditorShortcut.zoomOut: () => controller.stepZoom(larger: false),
+    EditorShortcut.resetZoom: () =>
+        controller.setZoom(EditorController.defaultZoom),
+    EditorShortcut.previousFrame: () => controller.stepFrame(forward: false),
+    EditorShortcut.nextFrame: () => controller.stepFrame(forward: true),
+    EditorShortcut.firstFrame: controller.selectFirstFrame,
+    EditorShortcut.lastFrame: controller.selectLastFrame,
+    EditorShortcut.playPause: _togglePlayback,
+    EditorShortcut.onionSkinning: _toggleOnionSkin,
+    EditorShortcut.addFrame: controller.addFrame,
+    EditorShortcut.copyFrame: controller.copyFrame,
+    EditorShortcut.removeFrame: controller.removeFrame,
+    EditorShortcut.moveFrameUp: () => controller.moveFrame(up: true),
+    EditorShortcut.moveFrameDown: () => controller.moveFrame(up: false),
+    EditorShortcut.fewerHolds: () => _stepHolds(more: false),
+    EditorShortcut.moreHolds: () => _stepHolds(more: true),
+    EditorShortcut.addLayer: controller.addLayer,
+    EditorShortcut.copyLayer: controller.copyLayer,
+    EditorShortcut.removeLayer: controller.removeLayer,
+    EditorShortcut.layerAbove: () => controller.stepLayer(up: true),
+    EditorShortcut.layerBelow: () => controller.stepLayer(up: false),
+    EditorShortcut.moveLayerUp: () => controller.moveLayer(up: true),
+    EditorShortcut.moveLayerDown: () => controller.moveLayer(up: false),
   };
 
   KeyEventResult _handleKey(FocusNode node, KeyEvent event) {
-    if (_editingText()) return KeyEventResult.ignored;
-    final action = _keyActions.entries
-        .firstWhereOrNull(
-          (entry) => entry.key.accepts(event, HardwareKeyboard.instance),
-        )
-        ?.value;
-    if (action == null) return KeyEventResult.ignored;
-    action();
+    if (!widget.active || _editingText()) return KeyEventResult.ignored;
+    if (event.logicalKey == LogicalKeyboardKey.altLeft ||
+        event.logicalKey == LogicalKeyboardKey.altRight) {
+      if (event is! KeyRepeatEvent) {
+        controller.holdColorPicker(held: event is KeyDownEvent);
+      }
+      return KeyEventResult.handled;
+    }
+    final shortcut = EditorShortcut.matching(event);
+    if (shortcut == null) return KeyEventResult.ignored;
+    _shortcutActions[shortcut]!();
     return KeyEventResult.handled;
   }
 
@@ -339,20 +417,12 @@ class _EditorViewState extends State<EditorView> {
 
   @override
   Widget build(BuildContext context) {
-    return CallbackShortcuts(
-      bindings: {
-        const SingleActivator(LogicalKeyboardKey.keyZ, control: true):
-            controller.undo,
-        const SingleActivator(LogicalKeyboardKey.keyY, control: true):
-            controller.redo,
-      },
-      child: Focus(
-        autofocus: true,
-        onKeyEvent: _handleKey,
-        child: ListenableBuilder(
-          listenable: controller,
-          builder: (context, _) => _buildEditor(),
-        ),
+    return Focus(
+      focusNode: focusNode,
+      onKeyEvent: _handleKey,
+      child: ListenableBuilder(
+        listenable: controller,
+        builder: (context, _) => _buildEditor(),
       ),
     );
   }
@@ -411,16 +481,19 @@ class _EditorViewState extends State<EditorView> {
             PaintIconButton(
               icon: FontAwesomeIcons.plus,
               tooltip: 'Add layer',
+              shortcut: EditorShortcut.addLayer.keys,
               onPressed: controller.addLayer,
             ),
             PaintIconButton(
               icon: FontAwesomeIcons.copy,
               tooltip: 'Copy layer',
+              shortcut: EditorShortcut.copyLayer.keys,
               onPressed: controller.copyLayer,
             ),
             PaintIconButton(
               icon: FontAwesomeIcons.trashCan,
               tooltip: 'Remove layer',
+              shortcut: EditorShortcut.removeLayer.keys,
               onPressed: controller.canRemoveLayer
                   ? controller.removeLayer
                   : null,
@@ -428,6 +501,7 @@ class _EditorViewState extends State<EditorView> {
             PaintIconButton(
               icon: FontAwesomeIcons.arrowUp,
               tooltip: 'Move layer up',
+              shortcut: EditorShortcut.moveLayerUp.keys,
               onPressed: controller.canMoveLayerUp
                   ? () => controller.moveLayer(up: true)
                   : null,
@@ -435,6 +509,7 @@ class _EditorViewState extends State<EditorView> {
             PaintIconButton(
               icon: FontAwesomeIcons.arrowDown,
               tooltip: 'Move layer down',
+              shortcut: EditorShortcut.moveLayerDown.keys,
               onPressed: controller.canMoveLayerDown
                   ? () => controller.moveLayer(up: false)
                   : null,
@@ -473,16 +548,19 @@ class _EditorViewState extends State<EditorView> {
             PaintIconButton(
               icon: FontAwesomeIcons.plus,
               tooltip: 'Add frame',
+              shortcut: EditorShortcut.addFrame.keys,
               onPressed: controller.addFrame,
             ),
             PaintIconButton(
               icon: FontAwesomeIcons.copy,
               tooltip: 'Copy frame',
+              shortcut: EditorShortcut.copyFrame.keys,
               onPressed: controller.copyFrame,
             ),
             PaintIconButton(
               icon: FontAwesomeIcons.trashCan,
               tooltip: 'Remove frame',
+              shortcut: EditorShortcut.removeFrame.keys,
               onPressed: controller.canRemoveFrame
                   ? controller.removeFrame
                   : null,
@@ -490,6 +568,7 @@ class _EditorViewState extends State<EditorView> {
             PaintIconButton(
               icon: FontAwesomeIcons.arrowUp,
               tooltip: 'Move frame up',
+              shortcut: EditorShortcut.moveFrameUp.keys,
               onPressed: controller.canMoveFrameUp
                   ? () => controller.moveFrame(up: true)
                   : null,
@@ -497,6 +576,7 @@ class _EditorViewState extends State<EditorView> {
             PaintIconButton(
               icon: FontAwesomeIcons.arrowDown,
               tooltip: 'Move frame down',
+              shortcut: EditorShortcut.moveFrameDown.keys,
               onPressed: controller.canMoveFrameDown
                   ? () => controller.moveFrame(up: false)
                   : null,
@@ -535,12 +615,14 @@ class _EditorViewState extends State<EditorView> {
                             PaintIconButton(
                               icon: FontAwesomeIcons.floppyDisk,
                               tooltip: 'Save',
+                              shortcut: EditorShortcut.save.keys,
                               color: PaintStyle.saveColor,
                               onPressed: _save,
                             ),
                             PaintIconButton(
                               icon: FontAwesomeIcons.rotateLeft,
                               tooltip: 'Undo',
+                              shortcut: EditorShortcut.undo.keys,
                               onPressed: controller.history.canUndo
                                   ? controller.undo
                                   : null,
@@ -552,6 +634,7 @@ class _EditorViewState extends State<EditorView> {
                             PaintSplitButton(
                               icon: FontAwesomeIcons.download,
                               tooltip: 'Export as ${exportFormat.label}',
+                              shortcut: EditorShortcut.export.keys,
                               dropdownTooltip: 'Export formats',
                               onPressed: () => _export(exportFormat),
                               dropdown: Column(
@@ -568,6 +651,7 @@ class _EditorViewState extends State<EditorView> {
                             PaintIconButton(
                               icon: FontAwesomeIcons.rotateRight,
                               tooltip: 'Redo',
+                              shortcut: EditorShortcut.redo.keys,
                               onPressed: controller.history.canRedo
                                   ? controller.redo
                                   : null,
@@ -584,11 +668,13 @@ class _EditorViewState extends State<EditorView> {
                             PaintIconButton(
                               icon: FontAwesomeIcons.copy,
                               tooltip: 'Copy',
+                              shortcut: EditorShortcut.copy.keys,
                               onPressed: _whenSelected(_copySelection),
                             ),
                             PaintIconButton(
                               icon: FontAwesomeIcons.scissors,
                               tooltip: 'Cut',
+                              shortcut: EditorShortcut.cut.keys,
                               onPressed: _whenSelected(_cutSelection),
                             ),
                           ],
@@ -598,11 +684,13 @@ class _EditorViewState extends State<EditorView> {
                             PaintIconButton(
                               icon: FontAwesomeIcons.paste,
                               tooltip: 'Paste',
+                              shortcut: EditorShortcut.paste.keys,
                               onPressed: _paste,
                             ),
                             PaintIconButton(
                               icon: FontAwesomeIcons.expand,
                               tooltip: 'Select all',
+                              shortcut: EditorShortcut.selectAll.keys,
                               onPressed: controller.selectAll,
                             ),
                           ],
@@ -660,6 +748,7 @@ class _EditorViewState extends State<EditorView> {
                             PaintSplitButton(
                               icon: FontAwesomeIcons.pencil,
                               tooltip: 'Pen',
+                              shortcut: EditorShortcut.pen.keys,
                               color: PaintStyle.penColor,
                               selected: controller.toolKind == ToolKind.pen,
                               onPressed: () =>
@@ -669,6 +758,7 @@ class _EditorViewState extends State<EditorView> {
                             PaintSplitButton(
                               icon: FontAwesomeIcons.eraser,
                               tooltip: 'Eraser',
+                              shortcut: EditorShortcut.eraser.keys,
                               color: PaintStyle.eraserColor,
                               selected: controller.toolKind == ToolKind.eraser,
                               onPressed: () =>
@@ -685,6 +775,7 @@ class _EditorViewState extends State<EditorView> {
                             PaintIconButton(
                               icon: FontAwesomeIcons.fill,
                               tooltip: 'Fill',
+                              shortcut: EditorShortcut.fill.keys,
                               color: PaintStyle.fillColor,
                               selected:
                                   controller.toolKind == ToolKind.bucketFill,
@@ -694,6 +785,7 @@ class _EditorViewState extends State<EditorView> {
                             PaintIconButton(
                               icon: FontAwesomeIcons.eyeDropper,
                               tooltip: 'Color picker',
+                              shortcut: EditorShortcut.colorPicker.keys,
                               color: PaintStyle.colorPickerColor,
                               selected:
                                   controller.toolKind == ToolKind.colorPicker,
@@ -707,6 +799,7 @@ class _EditorViewState extends State<EditorView> {
                             PaintIconButton(
                               icon: FontAwesomeIcons.borderTopLeft,
                               tooltip: 'Select',
+                              shortcut: EditorShortcut.select.keys,
                               selected: controller.toolKind == ToolKind.select,
                               onPressed: () =>
                                   controller.selectTool(ToolKind.select),
@@ -723,10 +816,12 @@ class _EditorViewState extends State<EditorView> {
                             _shapeButton(
                               icon: FontAwesomeIcons.slash,
                               toolKind: ToolKind.line,
+                              shortcut: EditorShortcut.line,
                             ),
                             _shapeButton(
                               icon: FontAwesomeIcons.square,
                               toolKind: ToolKind.rectangle,
+                              shortcut: EditorShortcut.rectangle,
                             ),
                           ],
                         ),
@@ -735,10 +830,12 @@ class _EditorViewState extends State<EditorView> {
                             _shapeButton(
                               icon: FontAwesomeIcons.circle,
                               toolKind: ToolKind.circle,
+                              shortcut: EditorShortcut.circle,
                             ),
                             _shapeButton(
                               icon: FontAwesomeIcons.arrowRight,
                               toolKind: ToolKind.arrow,
+                              shortcut: EditorShortcut.arrow,
                             ),
                           ],
                         ),
@@ -925,8 +1022,8 @@ class _EditorViewState extends State<EditorView> {
                 child: NumericValueRange(
                   label: 'Zoom:',
                   value: controller.zoom,
-                  minimum: 1,
-                  maximum: 100,
+                  minimum: EditorController.minimumZoom,
+                  maximum: EditorController.maximumZoom,
                   rangeMinimum: 0,
                   rangeMaximum: 4,
                   valueToRange: (value) => log(value) / ln2,

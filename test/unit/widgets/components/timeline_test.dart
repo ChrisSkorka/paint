@@ -24,7 +24,7 @@ void main() {
       tester
               .widget<PaintIconButton>(
                 find.ancestor(
-                  of: find.byTooltip('Previous frame'),
+                  of: find.byTooltip('Previous frame (,)'),
                   matching: find.byType(PaintIconButton),
                 ),
               )
@@ -33,7 +33,7 @@ void main() {
       tester
               .widget<PaintIconButton>(
                 find.ancestor(
-                  of: find.byTooltip('Next frame'),
+                  of: find.byTooltip('Next frame (.)'),
                   matching: find.byType(PaintIconButton),
                 ),
               )
@@ -137,7 +137,7 @@ void main() {
           );
           final playButton = tester.widget<PaintIconButton>(
             find.ancestor(
-              of: find.byTooltip('Play'),
+              of: find.byTooltip('Play (Enter)'),
               matching: find.byType(PaintIconButton),
             ),
           );
@@ -166,7 +166,7 @@ void main() {
           );
           final pauseButton = tester.widget<PaintIconButton>(
             find.ancestor(
-              of: find.byTooltip('Pause'),
+              of: find.byTooltip('Pause (Enter)'),
               matching: find.byType(PaintIconButton),
             ),
           );
@@ -336,7 +336,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Play'));
+          await tester.tap(find.byTooltip('Play (Enter)'));
           final actual = presses;
           const expected = 1;
           expect(actual, equals(expected));
@@ -363,7 +363,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Previous frame'));
+          await tester.tap(find.byTooltip('Previous frame (,)'));
           final actual = steps;
           const expected = [false];
           expect(actual, equals(expected));
@@ -388,7 +388,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Next frame'));
+          await tester.tap(find.byTooltip('Next frame (.)'));
           final actual = steps;
           const expected = [true];
           expect(actual, equals(expected));
@@ -467,7 +467,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Onion skinning'));
+          await tester.tap(find.byTooltip('Onion skinning (F3)'));
           final actual = changes;
           const expected = [OnionSkin(enabled: true)];
           expect(actual, equals(expected));

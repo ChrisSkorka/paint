@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document.dart';
 import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/layer_timeframe.dart';
+import 'package:paint/editor/canvas/onion_skin.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
@@ -652,7 +653,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Eraser'));
+          await tester.tap(find.byTooltip('Eraser (E)'));
           await tester.pump();
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           await tester.tapAt(topLeft + const Offset(1, 1));
@@ -679,7 +680,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Fill'));
+          await tester.tap(find.byTooltip('Fill (G)'));
           await tester.pump();
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           await tester.tapAt(topLeft + const Offset(1, 1));
@@ -706,7 +707,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Rectangle'));
+          await tester.tap(find.byTooltip('Rectangle (R)'));
           await tester.pump();
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           final gesture = await tester.startGesture(
@@ -827,7 +828,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Eraser'));
+          await tester.tap(find.byTooltip('Eraser (E)'));
           await tester.pump();
           final actual = selectedTools(tester);
           const expected = [false, true, false, false];
@@ -847,7 +848,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Fill'));
+          await tester.tap(find.byTooltip('Fill (G)'));
           await tester.pump();
           final actual = selectedTools(tester);
           const expected = [false, false, true, false];
@@ -867,7 +868,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Color picker'));
+          await tester.tap(find.byTooltip('Color picker (I)'));
           await tester.pump();
           final actual = selectedTools(tester);
           const expected = [false, false, false, true];
@@ -887,7 +888,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Line'));
+          await tester.tap(find.byTooltip('Line (L)'));
           await tester.pump();
           final actual = [selectedTools(tester), selectedShapes(tester)];
           const expected = [
@@ -910,7 +911,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Rectangle'));
+          await tester.tap(find.byTooltip('Rectangle (R)'));
           await tester.pump();
           final actual = [selectedTools(tester), selectedShapes(tester)];
           const expected = [
@@ -933,7 +934,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Circle'));
+          await tester.tap(find.byTooltip('Circle (O)'));
           await tester.pump();
           final actual = [selectedTools(tester), selectedShapes(tester)];
           const expected = [
@@ -956,7 +957,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Arrow'));
+          await tester.tap(find.byTooltip('Arrow (A)'));
           await tester.pump();
           final actual = [selectedTools(tester), selectedShapes(tester)];
           const expected = [
@@ -979,9 +980,9 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Eraser'));
+          await tester.tap(find.byTooltip('Eraser (E)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Pen'));
+          await tester.tap(find.byTooltip('Pen (P)'));
           await tester.pump();
           final actual = selectedTools(tester);
           const expected = [true, false, false, false];
@@ -1219,7 +1220,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Color picker'));
+          await tester.tap(find.byTooltip('Color picker (I)'));
           await tester.pump();
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           await tester.tapAt(topLeft + const Offset(1, 1));
@@ -1246,7 +1247,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Color picker'));
+          await tester.tap(find.byTooltip('Color picker (I)'));
           await tester.pump();
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           await tester.tapAt(
@@ -1275,9 +1276,9 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Eraser'));
+          await tester.tap(find.byTooltip('Eraser (E)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Color picker'));
+          await tester.tap(find.byTooltip('Color picker (I)'));
           await tester.pump();
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           await tester.tapAt(topLeft + const Offset(1, 1));
@@ -1383,7 +1384,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select'));
+          await tester.tap(find.byTooltip('Select (M)'));
           await tester.pump();
           final actual = [selectToolSelected(tester), selectedTools(tester)];
           const expected = [
@@ -1411,7 +1412,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
           final actual = [
             selectToolSelected(tester),
@@ -1444,7 +1445,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select'));
+          await tester.tap(find.byTooltip('Select (M)'));
           await tester.pump();
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           final selecting = await tester.startGesture(
@@ -1484,7 +1485,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
           await hoverOver(tester, find.byType(PixelCanvas));
           final actual = tester
@@ -1512,7 +1513,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
           await tester.sendKeyEvent(LogicalKeyboardKey.delete);
           await tester.pump();
@@ -1541,7 +1542,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
           await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
           await tester.pump();
@@ -1570,9 +1571,9 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
-          await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyQ);
           await tester.pump();
           final actual = pixelRows(document.activeLayer);
           const expected = [
@@ -1599,7 +1600,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
           await tester.tap(
             find.descendant(
@@ -1638,7 +1639,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
           await tester.tap(find.byTooltip('Rotate left'));
           await tester.pump();
@@ -1668,7 +1669,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
           await tester.tap(find.byTooltip('Rotate right'));
           await tester.pump();
@@ -1698,7 +1699,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
           await tester.tap(find.byTooltip('Mirror horizontally'));
           await tester.pump();
@@ -1727,7 +1728,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
           await tester.tap(find.byTooltip('Mirror vertically'));
           await tester.pump();
@@ -1755,7 +1756,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Save'));
+          await tester.tap(find.byTooltip('Save (Ctrl+S)'));
           await tester.pump();
           final actual = [
             stubStore.entries.length,
@@ -1803,9 +1804,9 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Save'));
+          await tester.tap(find.byTooltip('Save (Ctrl+S)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Save'));
+          await tester.tap(find.byTooltip('Save (Ctrl+S)'));
           await tester.pump();
           final actual = stubStore.entries.length;
           const expected = 1;
@@ -1825,9 +1826,9 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Save'));
+          await tester.tap(find.byTooltip('Save (Ctrl+S)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Add layer'));
+          await tester.tap(find.byTooltip('Add layer (Shift+N)'));
           await tester.pump();
           final actual = find.text('Unsaved changes').evaluate().length;
           const expected = 1;
@@ -1847,11 +1848,11 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Add layer'));
+          await tester.tap(find.byTooltip('Add layer (Shift+N)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Save'));
+          await tester.tap(find.byTooltip('Save (Ctrl+S)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Undo'));
+          await tester.tap(find.byTooltip('Undo (Ctrl+Z)'));
           await tester.pump();
           final actual = find.text('Unsaved changes').evaluate().length;
           const expected = 1;
@@ -1872,9 +1873,9 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Save'));
+          await tester.tap(find.byTooltip('Save (Ctrl+S)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Add layer'));
+          await tester.tap(find.byTooltip('Add layer (Shift+N)'));
           await tester.pump();
           stubStore.pendingSaves.single.complete();
           await tester.pump();
@@ -1897,7 +1898,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Save'));
+          await tester.tap(find.byTooltip('Save (Ctrl+S)'));
           await tester.pump();
           final actual = [
             find.text('Could not save').evaluate().length,
@@ -1921,7 +1922,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Save'));
+          await tester.tap(find.byTooltip('Save (Ctrl+S)'));
           await tester.pumpWidget(const SizedBox());
           stubStore.pendingSaves.single.complete();
           await tester.pump();
@@ -1947,7 +1948,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Save'));
+          await tester.tap(find.byTooltip('Save (Ctrl+S)'));
           await tester.pumpWidget(const SizedBox());
           stubStore.pendingSaves.single.complete();
           await tester.pump();
@@ -1973,7 +1974,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Export as PNG'));
+          await tester.tap(find.byTooltip('Export as PNG (Ctrl+Shift+E)'));
           await tester.pump();
           final actual = [
             for (final file in stubFiles.saved) [file.fileName, file.format],
@@ -2002,7 +2003,7 @@ void main() {
           await tester.pumpAndSettle();
           await tester.tap(find.text('Export as ORA'));
           await tester.pumpAndSettle();
-          await tester.tap(find.byTooltip('Export as ORA'));
+          await tester.tap(find.byTooltip('Export as ORA (Ctrl+Shift+E)'));
           await tester.pump();
           final actual = [
             for (final file in stubFiles.saved) [file.fileName, file.format],
@@ -2054,7 +2055,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Export as PNG'));
+          await tester.tap(find.byTooltip('Export as PNG (Ctrl+Shift+E)'));
           await tester.pump();
           final actual = find.text('Could not export').evaluate().length;
           const expected = 1;
@@ -2077,7 +2078,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Add frame'));
+          await tester.tap(find.byTooltip('Add frame (Alt+N)'));
           await tester.pump();
           final actual = [timelineState(tester), historyState(tester)];
           const expected = [
@@ -2112,7 +2113,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Copy frame'));
+          await tester.tap(find.byTooltip('Copy frame (Alt+D)'));
           await tester.pump();
           final actual = [
             timelineState(tester),
@@ -2152,7 +2153,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Remove frame'));
+          await tester.tap(find.byTooltip('Remove frame (Alt+Del)'));
           await tester.pump();
           final actual = [timelineState(tester), historyState(tester)];
           const expected = [
@@ -2187,9 +2188,9 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Move frame down'));
+          await tester.tap(find.byTooltip('Move frame down (Alt+.)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Move frame up'));
+          await tester.tap(find.byTooltip('Move frame up (Alt+,)'));
           await tester.pump();
           final actual = [frameHolds(tester), historyState(tester)];
           const expected = [
@@ -2282,10 +2283,10 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Next frame'));
+          await tester.tap(find.byTooltip('Next frame (.)'));
           await tester.pump();
           final next = timelineState(tester).first;
-          await tester.tap(find.byTooltip('Previous frame'));
+          await tester.tap(find.byTooltip('Previous frame (,)'));
           await tester.pump();
           final actual = [next, timelineState(tester).first];
           const expected = [1, 0];
@@ -2422,8 +2423,8 @@ void main() {
             ),
           );
           final before = canvasLayers(tester).length;
-          await tester.ensureVisible(find.byTooltip('Onion skinning'));
-          await tester.tap(find.byTooltip('Onion skinning'));
+          await tester.ensureVisible(find.byTooltip('Onion skinning (F3)'));
+          await tester.tap(find.byTooltip('Onion skinning (F3)'));
           await tester.pump();
           final actual = [before, canvasLayers(tester).length];
           const expected = [3, 4];
@@ -2478,14 +2479,14 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Play'));
+          await tester.tap(find.byTooltip('Play (Enter)'));
           await tester.pump();
           final started = timelineState(tester);
           await tester.pump(const Duration(milliseconds: 100));
           final advanced = timelineState(tester);
           await tester.pump(const Duration(milliseconds: 200));
           final wrapped = timelineState(tester);
-          await tester.tap(find.byTooltip('Pause'));
+          await tester.tap(find.byTooltip('Pause (Enter)'));
           await tester.pump();
           final actual = [started, advanced, wrapped];
           const expected = [
@@ -2530,9 +2531,9 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Play'));
+          await tester.tap(find.byTooltip('Play (Enter)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Pause'));
+          await tester.tap(find.byTooltip('Pause (Enter)'));
           await tester.pump(const Duration(milliseconds: 500));
           final actual = [timelineState(tester), historyState(tester)];
           const expected = [
@@ -2567,13 +2568,13 @@ void main() {
               ),
             ),
           );
-          await tester.ensureVisible(find.byTooltip('Onion skinning'));
-          await tester.tap(find.byTooltip('Onion skinning'));
+          await tester.ensureVisible(find.byTooltip('Onion skinning (F3)'));
+          await tester.tap(find.byTooltip('Onion skinning (F3)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Play'));
+          await tester.tap(find.byTooltip('Play (Enter)'));
           await tester.pump();
           final playing = canvasLayers(tester).length;
-          await tester.tap(find.byTooltip('Pause'));
+          await tester.tap(find.byTooltip('Pause (Enter)'));
           await tester.pump();
           final actual = [playing, canvasLayers(tester).length];
           const expected = [3, 4];
@@ -2596,7 +2597,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Play'));
+          await tester.tap(find.byTooltip('Play (Enter)'));
           await tester.pump();
           await tester.tap(find.byType(PixelCanvas));
           await tester.pump(const Duration(milliseconds: 500));
@@ -2627,7 +2628,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Play'));
+          await tester.tap(find.byTooltip('Play (Enter)'));
           await tester.pump();
           await tester.pumpWidget(const SizedBox());
           await tester.pump(const Duration(milliseconds: 500));
@@ -2670,7 +2671,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
           final actual = clipboardActionsEnabled(tester);
           const expected = [true, true, true];
@@ -2696,9 +2697,9 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Copy'));
+          await tester.tap(find.byTooltip('Copy (Ctrl+C)'));
           await tester.pump();
           final actual = [
             [for (final image in stubClipboard.written) pixelRows(image)],
@@ -2741,9 +2742,9 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Cut'));
+          await tester.tap(find.byTooltip('Cut (Ctrl+X)'));
           await tester.pump();
           final actual = [
             [for (final image in stubClipboard.written) pixelRows(image)],
@@ -2785,7 +2786,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Paste'));
+          await tester.tap(find.byTooltip('Paste (Ctrl+V)'));
           await tester.pump();
           final actual = [
             layerState(tester),
@@ -2825,7 +2826,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Paste'));
+          await tester.tap(find.byTooltip('Paste (Ctrl+V)'));
           await tester.pump();
           final actual = historyState(tester);
           const expected = [
@@ -2850,7 +2851,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Paste'));
+          await tester.tap(find.byTooltip('Paste (Ctrl+V)'));
           await tester.pumpWidget(const SizedBox());
           stubClipboard.pendingReads.single.complete(
             layerFromRows([
@@ -2881,7 +2882,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
           await pressControlShortcut(tester, key: LogicalKeyboardKey.keyC);
           final actual = [
@@ -2934,7 +2935,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
           await pressControlShortcut(tester, key: LogicalKeyboardKey.keyX);
           final actual = [
@@ -2998,7 +2999,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
           await pressControlShortcut(tester, key: LogicalKeyboardKey.keyV);
           final actual = [
@@ -3035,12 +3036,12 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
           await pressControlShortcut(tester, key: LogicalKeyboardKey.keyC);
           await tester.sendKeyEvent(LogicalKeyboardKey.delete);
           await tester.pump();
-          await tester.tap(find.byTooltip('Select all'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
           await tester.pump();
           await pressControlShortcut(tester, key: LogicalKeyboardKey.keyV);
           final actual = [
@@ -3239,7 +3240,7 @@ void main() {
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           await tester.tapAt(topLeft + const Offset(1, 1));
           await tester.pump();
-          await tester.tap(find.byTooltip('Undo'));
+          await tester.tap(find.byTooltip('Undo (Ctrl+Z)'));
           await tester.pump();
           final actual = [
             pixelRows(document.activeLayer),
@@ -3277,9 +3278,9 @@ void main() {
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           await tester.tapAt(topLeft + const Offset(1, 1));
           await tester.pump();
-          await tester.tap(find.byTooltip('Undo'));
+          await tester.tap(find.byTooltip('Undo (Ctrl+Z)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Redo'));
+          await tester.tap(find.byTooltip('Redo (Ctrl+Y / Ctrl+Shift+Z)'));
           await tester.pump();
           final actual = [
             pixelRows(document.activeLayer),
@@ -3317,7 +3318,7 @@ void main() {
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           await tester.tapAt(topLeft + const Offset(1, 1));
           await tester.pump();
-          await tester.tap(find.byTooltip('Undo'));
+          await tester.tap(find.byTooltip('Undo (Ctrl+Z)'));
           await tester.pump();
           await tester.tapAt(topLeft + const Offset(5, 5));
           await tester.pump();
@@ -3428,6 +3429,1534 @@ void main() {
         });
       });
 
+      group('file shortcuts', () {
+        testWidgets('ctrl shift e', (tester) async {
+          useDesktopView(tester);
+          final stubFiles = StubFileAccess();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: stubFiles,
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(name: 'Cat', width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.keyE,
+            modifiers: [
+              LogicalKeyboardKey.controlLeft,
+              LogicalKeyboardKey.shiftLeft,
+            ],
+          );
+          final actual = [
+            for (final file in stubFiles.saved) [file.fileName, file.format],
+          ];
+          const expected = [
+            ['Cat.png', ExportFormat.png],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('ctrl shift z', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.keyZ,
+            modifiers: [LogicalKeyboardKey.controlLeft],
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.keyZ,
+            modifiers: [
+              LogicalKeyboardKey.controlLeft,
+              LogicalKeyboardKey.shiftLeft,
+            ],
+          );
+          final actual = historyState(tester);
+          const expected = [
+            ['Start', 'Pen'],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('selection shortcuts', () {
+        testWidgets('ctrl a', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.keyA,
+            modifiers: [LogicalKeyboardKey.controlLeft],
+          );
+          final actual = [
+            selectToolSelected(tester),
+            selectionActionsEnabled(tester),
+          ];
+          const expected = [
+            true,
+            [true, true, true, true],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('escape', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.keyA,
+            modifiers: [LogicalKeyboardKey.controlLeft],
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.escape);
+          final actual = [
+            selectToolSelected(tester),
+            selectionActionsEnabled(tester),
+          ];
+          const expected = [
+            true,
+            [false, false, false, false],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('tool shortcuts', () {
+        testWidgets('p', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyE);
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyP);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('e', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyE);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('g', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyG);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('i', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyI);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('m', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyM);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('l', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyL);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('r', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyR);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('o', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyO);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('a', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyA);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('brackets', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.bracketRight);
+          await pressShortcut(tester, key: LogicalKeyboardKey.bracketRight);
+          await pressShortcut(tester, key: LogicalKeyboardKey.bracketLeft);
+          await tester.tap(find.byTooltip('Pen options'));
+          await tester.pumpAndSettle();
+          final actual = tester.widget<NumericValueRange>(sizeRange()).value;
+          const expected = 2;
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('color shortcuts', () {
+        testWidgets('x', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyX);
+          final actual = wellColors(tester);
+          const expected = [Color(0xFFFFFFFF), Color(0xFF000000)];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('view shortcuts', () {
+        testWidgets('ctrl equal', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.equal,
+            modifiers: [LogicalKeyboardKey.controlLeft],
+          );
+          final actual = canvasSize(tester);
+          const expected = Size(16, 16);
+          expect(actual, equals(expected));
+        });
+        testWidgets('ctrl minus', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.minus,
+            modifiers: [LogicalKeyboardKey.controlLeft],
+          );
+          final actual = canvasSize(tester);
+          const expected = Size(4, 4);
+          expect(actual, equals(expected));
+        });
+        testWidgets('ctrl 0', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.equal,
+            modifiers: [LogicalKeyboardKey.controlLeft],
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.digit0,
+            modifiers: [LogicalKeyboardKey.controlLeft],
+          );
+          final actual = canvasSize(tester);
+          const expected = Size(8, 8);
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('animation shortcuts', () {
+        testWidgets('comma', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.comma);
+          final actual = timelineState(tester);
+          const expected = [
+            0,
+            [0, 1, 2],
+            10,
+            false,
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('period', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.period);
+          final actual = timelineState(tester);
+          const expected = [
+            2,
+            [0, 1, 2],
+            10,
+            false,
+            2,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('home', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.home);
+          final actual = timelineState(tester);
+          const expected = [
+            0,
+            [0, 1, 2],
+            10,
+            false,
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('end', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.end);
+          final actual = timelineState(tester);
+          const expected = [
+            2,
+            [0, 1, 2],
+            10,
+            false,
+            2,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('enter', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.enter);
+          final playing = timelineState(tester);
+          await pressShortcut(tester, key: LogicalKeyboardKey.enter);
+          final actual = [playing, timelineState(tester)];
+          const expected = [
+            [
+              1,
+              [0, 1, 2],
+              10,
+              true,
+              1,
+            ],
+            [
+              1,
+              [0, 1, 2],
+              10,
+              false,
+              1,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('f3', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.f3);
+          final actual = timelineOnionSkin(tester);
+          const expected = OnionSkin(enabled: true);
+          expect(actual, equals(expected));
+        });
+        testWidgets('alt n', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.keyN,
+            modifiers: [LogicalKeyboardKey.altLeft],
+          );
+          final actual = [frameHolds(tester), timelineState(tester).first];
+          const expected = [
+            [1, 2, 1, 3],
+            2,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('alt d', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.keyD,
+            modifiers: [LogicalKeyboardKey.altLeft],
+          );
+          final actual = [frameHolds(tester), timelineState(tester).first];
+          const expected = [
+            [1, 2, 2, 3],
+            2,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('alt delete', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.delete,
+            modifiers: [LogicalKeyboardKey.altLeft],
+          );
+          final actual = [frameHolds(tester), timelineState(tester).first];
+          const expected = [
+            [1, 3],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('alt comma', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.comma,
+            modifiers: [LogicalKeyboardKey.altLeft],
+          );
+          final actual = [frameHolds(tester), timelineState(tester).first];
+          const expected = [
+            [2, 1, 3],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('alt period', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.period,
+            modifiers: [LogicalKeyboardKey.altLeft],
+          );
+          final actual = [frameHolds(tester), timelineState(tester).first];
+          const expected = [
+            [1, 3, 2],
+            2,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('alt minus', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.minus,
+            modifiers: [LogicalKeyboardKey.altLeft],
+          );
+          final actual = [frameHolds(tester), timelineState(tester).first];
+          const expected = [
+            [1, 1, 3],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('alt equal', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.equal,
+            modifiers: [LogicalKeyboardKey.altLeft],
+          );
+          final actual = [frameHolds(tester), timelineState(tester).first];
+          const expected = [
+            [1, 3, 3],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('layer shortcuts', () {
+        testWidgets('shift n', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: layeredDocument(
+                    names: ['Background', 'Middle', 'Top'],
+                    activeLayerIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.keyN,
+            modifiers: [LogicalKeyboardKey.shiftLeft],
+          );
+          final actual = [layerState(tester).first, layerState(tester).last];
+          const expected = [
+            ['Background', 'Middle', 'Layer 4', 'Top'],
+            2,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('shift d', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: layeredDocument(
+                    names: ['Background', 'Middle', 'Top'],
+                    activeLayerIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.keyD,
+            modifiers: [LogicalKeyboardKey.shiftLeft],
+          );
+          final actual = [layerState(tester).first, layerState(tester).last];
+          const expected = [
+            ['Background', 'Middle', 'Middle copy', 'Top'],
+            2,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('shift delete', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: layeredDocument(
+                    names: ['Background', 'Middle', 'Top'],
+                    activeLayerIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.delete,
+            modifiers: [LogicalKeyboardKey.shiftLeft],
+          );
+          final actual = [layerState(tester).first, layerState(tester).last];
+          const expected = [
+            ['Background', 'Top'],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('page up', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: layeredDocument(
+                    names: ['Background', 'Middle', 'Top'],
+                    activeLayerIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.pageUp);
+          final actual = [layerState(tester).first, layerState(tester).last];
+          const expected = [
+            ['Background', 'Middle', 'Top'],
+            2,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('page down', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: layeredDocument(
+                    names: ['Background', 'Middle', 'Top'],
+                    activeLayerIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.pageDown);
+          final actual = [layerState(tester).first, layerState(tester).last];
+          const expected = [
+            ['Background', 'Middle', 'Top'],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('alt page up', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: layeredDocument(
+                    names: ['Background', 'Middle', 'Top'],
+                    activeLayerIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.pageUp,
+            modifiers: [LogicalKeyboardKey.altLeft],
+          );
+          final actual = [layerState(tester).first, layerState(tester).last];
+          const expected = [
+            ['Background', 'Top', 'Middle'],
+            2,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('alt page down', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: layeredDocument(
+                    names: ['Background', 'Middle', 'Top'],
+                    activeLayerIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.pageDown,
+            modifiers: [LogicalKeyboardKey.altLeft],
+          );
+          final actual = [layerState(tester).first, layerState(tester).last];
+          const expected = [
+            ['Middle', 'Background', 'Top'],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('held color picker', () {
+        testWidgets('alt down', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+          await tester.pump();
+          final held = allSelectedTools(tester);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+          final actual = held;
+          const expected = [
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('alt up', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+          await tester.pump();
+          final actual = allSelectedTools(tester);
+          const expected = [
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('alt repeat', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+          await tester.sendKeyRepeatEvent(LogicalKeyboardKey.altLeft);
+          await tester.pump();
+          final held = allSelectedTools(tester);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+          final actual = held;
+          const expected = [
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('right alt', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.altRight);
+          await tester.pump();
+          final held = allSelectedTools(tester);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.altRight);
+          final actual = held;
+          const expected = [
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('shortcuts while editing text', () {
+        testWidgets('tool key in text field', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(
+            find.descendant(
+              of: find.ancestor(
+                of: find.text('Zoom:'),
+                matching: find.byType(NumericValueRange),
+              ),
+              matching: find.byType(TextField),
+            ),
+          );
+          await tester.pump();
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyE);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('keyboard focus', () {
+        testWidgets('initial focus', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    TextField(autofocus: true),
+                    Expanded(
+                      child: EditorView(
+                        files: StubFileAccess(),
+                        library: stubDocumentLibrary(),
+                        clipboard: StubImageClipboard(),
+                        document: document,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyE);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('field inside unfocused', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(
+            find.descendant(
+              of: find.ancestor(
+                of: find.text('Zoom:'),
+                matching: find.byType(NumericValueRange),
+              ),
+              matching: find.byType(TextField),
+            ),
+          );
+          await tester.pump();
+          FocusManager.instance.primaryFocus!.unfocus();
+          await tester.pump();
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyE);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('field outside focused', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    TextField(key: const Key('outside')),
+                    Expanded(
+                      child: EditorView(
+                        files: StubFileAccess(),
+                        library: stubDocumentLibrary(),
+                        clipboard: StubImageClipboard(),
+                        document: document,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byKey(const Key('outside')));
+          await tester.pump();
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyE);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('inactive', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                  active: false,
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyE);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('activated', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    TextField(key: const Key('outside')),
+                    Expanded(
+                      child: EditorView(
+                        files: StubFileAccess(),
+                        library: stubDocumentLibrary(),
+                        clipboard: StubImageClipboard(),
+                        document: document,
+                        active: false,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byKey(const Key('outside')));
+          await tester.pump();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    TextField(key: const Key('outside')),
+                    Expanded(
+                      child: EditorView(
+                        files: StubFileAccess(),
+                        library: stubDocumentLibrary(),
+                        clipboard: StubImageClipboard(),
+                        document: document,
+                        active: true,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyE);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('reassemble', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    TextField(key: const Key('outside')),
+                    Expanded(
+                      child: EditorView(
+                        files: StubFileAccess(),
+                        library: stubDocumentLibrary(),
+                        clipboard: StubImageClipboard(),
+                        document: document,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byKey(const Key('outside')));
+          await tester.pump();
+          final reassembled = tester.binding.reassembleApplication();
+          await tester.pump();
+          await reassembled;
+          await tester.pump();
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyE);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
       group('history list', () {
         testWidgets('jump to start', (tester) async {
           useDesktopView(tester);
@@ -3528,7 +5057,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Copy layer'));
+          await tester.tap(find.byTooltip('Copy layer (Shift+D)'));
           await tester.pump();
           final actual = [layerState(tester), historyState(tester)];
           const expected = [
@@ -3559,7 +5088,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Add layer'));
+          await tester.tap(find.byTooltip('Add layer (Shift+N)'));
           await tester.pump();
           final actual = [
             layerState(tester),
@@ -3595,9 +5124,9 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Add layer'));
+          await tester.tap(find.byTooltip('Add layer (Shift+N)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Remove layer'));
+          await tester.tap(find.byTooltip('Remove layer (Shift+Del)'));
           await tester.pump();
           final actual = [
             layerState(tester),
@@ -3633,9 +5162,9 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Add layer'));
+          await tester.tap(find.byTooltip('Add layer (Shift+N)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Move layer down'));
+          await tester.tap(find.byTooltip('Move layer down (Alt+PgDn)'));
           await tester.pump();
           final actual = [
             layerState(tester),
@@ -3671,11 +5200,11 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Add layer'));
+          await tester.tap(find.byTooltip('Add layer (Shift+N)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Move layer down'));
+          await tester.tap(find.byTooltip('Move layer down (Alt+PgDn)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Move layer up'));
+          await tester.tap(find.byTooltip('Move layer up (Alt+PgUp)'));
           await tester.pump();
           final actual = [
             layerState(tester),
@@ -3711,7 +5240,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Add layer'));
+          await tester.tap(find.byTooltip('Add layer (Shift+N)'));
           await tester.pump();
           await tester.tap(find.text('Background'));
           await tester.pump();
@@ -3749,9 +5278,9 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Add layer'));
+          await tester.tap(find.byTooltip('Add layer (Shift+N)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Undo'));
+          await tester.tap(find.byTooltip('Undo (Ctrl+Z)'));
           await tester.pump();
           final actual = [
             layerState(tester),
@@ -3787,7 +5316,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Add layer'));
+          await tester.tap(find.byTooltip('Add layer (Shift+N)'));
           await tester.pump();
           final actual = historyThumbnails(tester).last;
           final expected = [
@@ -3811,7 +5340,7 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Add layer'));
+          await tester.tap(find.byTooltip('Add layer (Shift+N)'));
           await tester.pump();
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           await tester.tapAt(topLeft + const Offset(5, 1));
@@ -4059,7 +5588,7 @@ void main() {
             const Offset(-40, 0),
           );
           await tester.pump();
-          await tester.tap(find.byTooltip('Undo'));
+          await tester.tap(find.byTooltip('Undo (Ctrl+Z)'));
           await tester.pump();
           final actual = [layerState(tester), historyState(tester)];
           const expected = [

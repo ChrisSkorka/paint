@@ -30,3 +30,7 @@ List<CanvasLayer> canvasLayers(WidgetTester tester) =>
                 .foregroundPainter
             as PixelLayersPainter)
         .layers;
+
+List<String> texts(WidgetTester tester) => [
+  for (final text in tester.widgetList<Text>(find.byType(Text))) text.data!,
+];

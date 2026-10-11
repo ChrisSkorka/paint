@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document.dart';
 import 'package:paint/editor/canvas/layer.dart';
@@ -8,6 +9,8 @@ import 'package:paint/widgets/views/editor_view.dart';
 import 'package:paint/widgets/views/home_view.dart';
 
 import '../../../support/desktop_view.dart';
+import '../../../support/editor_view_probes.dart';
+import '../../../support/keyboard.dart';
 import '../../../support/view_probes.dart';
 import '../../../support/stub_document_store.dart';
 import '../../../support/stub_file_access.dart';
@@ -74,6 +77,40 @@ void main() {
           await tester.pumpAndSettle();
           final actual = tabIndex(tester);
           const expected = 0;
+          expect(actual, equals(expected));
+        });
+        testWidgets('shortcut after returning', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: HomeView(
+                files: StubFileAccess(),
+                library: stubDocumentLibrary(),
+                clipboard: StubImageClipboard(),
+              ),
+            ),
+          );
+          await tester.tap(find.text('Create new'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('New document'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byKey(const Key('name')));
+          await tester.pump();
+          await tester.tap(find.text('Editor'));
+          await tester.pumpAndSettle();
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyE);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
           expect(actual, equals(expected));
         });
       });
