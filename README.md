@@ -284,13 +284,19 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [x] shortcuts: ctrl+N
 - [x] middle mouse click on tab closes tab (or prompts when unsaved)
 
-### phase 6.4: sizes & scrolling
+### phase 6.4: layout
 
-- [ ] scrollable views always show scroll bars (& scroll bars are thick)
-- [ ] scroll image to the right & bottom
-- [ ] right panels are resizable & collapsible
-- [ ] right pane is resizable
-- [ ] bottom items have constant width
+- [x] right pane goes to top of canvas, not top of tab
+- [x] right panels are collapsible
+- [x] right pane is resizable
+- [x] bottom bar items have constant width (currently cursor position and save status shift elements)
+- [x] top ribbons are collapsible, when collapsed title is sideways
+
+### phase 6.5: sizes & scrolling
+
+- [ ] vertically scrollable views always show scroll bars (& scroll bars are touchscreen friendly thickness) (but only content overflows)
+- [ ] allow scrolling document/canvas to the right & bottom when smaller than available space (currently if smaller, it's constraint to top left corner)
+- [ ] horizontally scrollable views (top ribbons & tabs as far as I know) scroll on scroll wheen without needed shift pressed
 
 ### phase 7: tool refinement
 
@@ -345,7 +351,7 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 8.7: misc
 
-- [ ] move layer & history image previews to left
+- [ ] move image previews to left of layer, frames & history items
 - [ ] text inputs have unit text on right side
 - [ ] right click on web triggers system context menu
 - [ ] save real file when opening real files on native system

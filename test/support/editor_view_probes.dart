@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paint/widgets/components/paint_bar.dart';
 import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/onion_skin.dart';
 import 'package:paint/editor/canvas/layer_timeframe.dart';
@@ -247,3 +248,14 @@ List<bool> allSelectedTools(WidgetTester tester) => [
 
 OnionSkin timelineOnionSkin(WidgetTester tester) =>
     tester.widget<Timeline>(find.byType(Timeline)).onionSkin;
+
+List<double> statusSectionWidths(WidgetTester tester) => [
+  for (final element
+      in find
+          .descendant(
+            of: find.byType(PaintBar).last,
+            matching: find.byType(PaintBarSection),
+          )
+          .evaluate())
+    element.size!.width,
+];

@@ -14,6 +14,7 @@ import '../../editor/files/document_library.dart';
 import '../../editor/files/export_format.dart';
 import '../../editor/files/file_access.dart';
 import '../../editor/files/image_clipboard.dart';
+import '../../editor/files/save_status.dart';
 import '../../editor/canvas/layer.dart';
 import '../../editor/history/history.dart';
 import '../../editor/history/history_entry.dart';
@@ -34,7 +35,8 @@ import '../components/paint_icon_button.dart';
 import '../components/paint_split_button.dart';
 import '../components/paint_style.dart';
 import '../components/ribbon_section.dart';
-import '../components/side_panel.dart';
+import '../components/side_pane.dart';
+import '../components/stable_text.dart';
 import '../components/swatch_grid.dart';
 import '../components/timeline.dart';
 import '../components/tool_icons.dart';
@@ -597,7 +599,9 @@ class _EditorViewState extends State<EditorView> {
   Widget _buildTopBar() {
     return PaintBar(
       shadow: false,
-      border: const Border(right: BorderSide(color: PaintStyle.separatorColor)),
+      border: const Border(
+        bottom: BorderSide(color: PaintStyle.separatorColor),
+      ),
       child: LayoutBuilder(
         builder: (context, constraints) => SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -917,50 +921,39 @@ class _EditorViewState extends State<EditorView> {
     );
   }
 
+  Widget _buildStatusSection({
+    required FaIconData icon,
+    required Widget child,
+  }) {
+    return PaintBarSection(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 6,
+        children: [FaIcon(icon, size: 14), child],
+      ),
+    );
+  }
+
   Widget _buildEditor() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _buildTopBar(),
         Expanded(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildTopBar(),
-                    Expanded(child: _buildCanvasArea()),
-                  ],
-                ),
-              ),
-              Column(
-                children: [
-                  Expanded(
-                    child: SidePanel(
-                      title: 'Layers',
-                      border: const Border(
-                        bottom: BorderSide(color: PaintStyle.separatorColor),
-                      ),
-                      child: _buildLayersPane(),
-                    ),
-                  ),
-                  Expanded(
-                    child: SidePanel(
-                      title: 'Frames',
-                      border: const Border(
-                        bottom: BorderSide(color: PaintStyle.separatorColor),
-                      ),
-                      child: _buildFramesPane(),
-                    ),
-                  ),
-                  Expanded(
-                    child: SidePanel(
-                      title: 'History',
-                      child: HistoryList(
-                        items: _historyItems(),
-                        position: controller.history.position,
-                        onSelect: controller.jumpToHistory,
-                      ),
+              Expanded(child: _buildCanvasArea()),
+              SidePane(
+                panels: [
+                  (title: 'Layers', child: _buildLayersPane()),
+                  (title: 'Frames', child: _buildFramesPane()),
+                  (
+                    title: 'History',
+                    child: HistoryList(
+                      items: _historyItems(),
+                      position: controller.history.position,
+                      onSelect: controller.jumpToHistory,
                     ),
                   ),
                 ],
@@ -971,44 +964,32 @@ class _EditorViewState extends State<EditorView> {
         PaintBar(
           child: Row(
             children: [
-              PaintBarSection(
-                child: Row(
-                  spacing: 6,
-                  children: [
-                    const FaIcon(FontAwesomeIcons.arrowPointer, size: 14),
-                    Text(_cursorText()),
+              _buildStatusSection(
+                icon: FontAwesomeIcons.arrowPointer,
+                child: StableText(
+                  text: _cursorText(),
+                  alternatives: [
+                    '${widget.document.width - 1}, ${widget.document.height - 1}',
                   ],
                 ),
               ),
-              PaintBarSection(
-                child: Row(
-                  spacing: 6,
-                  children: [
-                    const FaIcon(
-                      FontAwesomeIcons.upRightAndDownLeftFromCenter,
-                      size: 14,
-                    ),
-                    Text(
-                      '${widget.document.width} × ${widget.document.height}',
-                    ),
-                  ],
+              _buildStatusSection(
+                icon: FontAwesomeIcons.upRightAndDownLeftFromCenter,
+                child: Text(
+                  '${widget.document.width} × ${widget.document.height}',
                 ),
               ),
-              PaintBarSection(
-                child: Row(
-                  spacing: 6,
-                  children: [
-                    const FaIcon(FontAwesomeIcons.file, size: 14),
-                    Text(widget.document.name),
-                  ],
-                ),
+              _buildStatusSection(
+                icon: FontAwesomeIcons.file,
+                child: Text(widget.document.name),
               ),
-              PaintBarSection(
-                child: Row(
-                  spacing: 6,
-                  children: [
-                    const FaIcon(FontAwesomeIcons.floppyDisk, size: 14),
-                    Text(controller.saveStatus.label),
+              _buildStatusSection(
+                icon: FontAwesomeIcons.floppyDisk,
+                child: StableText(
+                  text: controller.saveStatus.label,
+                  alternatives: [
+                    for (final saveStatus in SaveStatus.values)
+                      saveStatus.label,
                   ],
                 ),
               ),

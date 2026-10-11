@@ -52,6 +52,65 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('height', () {
+        testWidgets('expanded', (tester) async {
+          await tester.pumpWidget(
+            const MaterialApp(
+              home: Center(
+                child: RibbonSection(title: 'Tools', columns: [Text('first')]),
+              ),
+            ),
+          );
+          final actual = tester.getSize(find.byType(RibbonSection)).height;
+          const expected = 108.0;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('interactions', () {
+      group('collapse', () {
+        testWidgets('tap title', (tester) async {
+          await tester.pumpWidget(
+            const MaterialApp(
+              home: Center(
+                child: RibbonSection(title: 'Tools', columns: [Text('first')]),
+              ),
+            ),
+          );
+          await tester.tap(find.text('Tools'));
+          await tester.pump();
+          final actual = [
+            find.text('first').evaluate().length,
+            tester.widget<RotatedBox>(find.byType(RotatedBox)).quarterTurns,
+            tester.getSize(find.byType(RibbonSection)).height,
+            tester.getSize(find.byType(RotatedBox)).height >
+                tester.getSize(find.byType(RotatedBox)).width,
+          ];
+          const expected = [0, 3, 108.0, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('expand again', (tester) async {
+          await tester.pumpWidget(
+            const MaterialApp(
+              home: Center(
+                child: RibbonSection(title: 'Tools', columns: [Text('first')]),
+              ),
+            ),
+          );
+          await tester.tap(find.text('Tools'));
+          await tester.pump();
+          await tester.tap(find.text('Tools'));
+          await tester.pump();
+          final actual = [
+            find.text('first').evaluate().length,
+            find.byType(RotatedBox).evaluate().length,
+            tester.getSize(find.byType(RibbonSection)).height,
+          ];
+          const expected = [1, 0, 108.0];
+          expect(actual, equals(expected));
+        });
+      });
     });
   });
 }

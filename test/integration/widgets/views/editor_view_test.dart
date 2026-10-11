@@ -19,6 +19,7 @@ import 'package:paint/widgets/components/numeric_value_range.dart';
 import 'package:paint/widgets/components/paint_bar.dart';
 import 'package:paint/widgets/components/paint_style.dart';
 import 'package:paint/widgets/components/pixel_canvas.dart';
+import 'package:paint/widgets/components/side_pane.dart';
 import 'package:paint/widgets/components/side_panel.dart';
 import 'package:paint/widgets/components/swatch_grid.dart';
 import 'package:paint/widgets/views/editor_view.dart';
@@ -360,7 +361,7 @@ void main() {
       });
 
       group('layout', () {
-        testWidgets('side panel beside top bar', (tester) async {
+        testWidgets('side pane below top bar', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
             MaterialApp(
@@ -379,14 +380,14 @@ void main() {
           final topBar = tester.getRect(find.byType(PaintBar).first);
           final bottomBar = tester.getRect(find.byType(PaintBar).last);
           final actual = [
-            layersPanel.top,
+            layersPanel.top == topBar.bottom,
             layersPanel.right,
-            historyPanel.bottom == bottomBar.top,
+            (historyPanel.bottom - bottomBar.top).abs() < 0.001,
             topBar.top,
-            topBar.right == layersPanel.left,
+            topBar.width,
             bottomBar.width,
           ];
-          const expected = [0.0, 1280.0, true, 0.0, true, 1280.0];
+          const expected = [true, 1280.0, true, 0.0, 1280.0, 1280.0];
           expect(actual, equals(expected));
         });
         testWidgets('top bar divider', (tester) async {
@@ -407,8 +408,36 @@ void main() {
           final actual = [topBar.shadow, topBar.border];
           const expected = [
             false,
-            Border(right: BorderSide(color: PaintStyle.separatorColor)),
+            Border(bottom: BorderSide(color: PaintStyle.separatorColor)),
           ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('status widths', (tester) async {
+          useDesktopView(tester);
+          final library = stubDocumentLibrary();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: library,
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 128, height: 64),
+                ),
+              ),
+            ),
+          );
+          final initial = statusSectionWidths(tester);
+          await tester.tapAt(
+            tester.getTopLeft(find.byType(PixelCanvas)) + const Offset(1, 1),
+          );
+          await tester.pump();
+          final afterStroke = statusSectionWidths(tester);
+          await pressControlShortcut(tester, key: LogicalKeyboardKey.keyS);
+          await tester.pumpAndSettle();
+          final afterSave = statusSectionWidths(tester);
+          final actual = [afterStroke, afterSave];
+          final expected = [initial, initial];
           expect(actual, equals(expected));
         });
         testWidgets('canvas edge shadow', (tester) async {
@@ -433,12 +462,12 @@ void main() {
             ),
           );
           final topBar = tester.getRect(find.byType(PaintBar).first);
-          final sidePanel = tester.getRect(find.byType(SidePanel).first);
+          final sidePane = tester.getRect(find.byType(SidePane));
           final bottomBar = tester.getRect(find.byType(PaintBar).last);
           final actual = [
             edgeShadow.left,
             edgeShadow.top == topBar.bottom,
-            edgeShadow.right == sidePanel.left,
+            edgeShadow.right == sidePane.left,
             edgeShadow.bottom == bottomBar.top,
           ];
           const expected = [0.0, true, true, true];
