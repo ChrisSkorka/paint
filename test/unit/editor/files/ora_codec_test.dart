@@ -8,6 +8,10 @@ import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/files/document_format_exception.dart';
 import 'package:paint/editor/files/image_codec.dart';
 import 'package:paint/editor/files/ora_codec.dart';
+import 'package:paint/editor/tools/brush_tip.dart';
+import 'package:paint/editor/tools/tool_kind.dart';
+import 'package:paint/editor/tools/tool_preset.dart';
+import 'package:paint/editor/tools/tool_presets.dart';
 
 import '../../../support/layer_probes.dart';
 import '../../../support/ora_archives.dart';
@@ -77,6 +81,54 @@ void main() {
 
   List<int> png(List<List<int>> rows) =>
       ImageCodec.encodePng(layer: layerFromRows(rows));
+
+  Document presetDocument() => Document(
+    name: 'Cat',
+    width: 1,
+    height: 1,
+    layers: [
+      DocumentLayer(
+        name: 'Background',
+        images: [
+          layerFromRows([
+            [red],
+          ]),
+        ],
+      ),
+    ],
+    activeLayerIndex: 0,
+    toolPresets: const ToolPresets(
+      locked: [
+        ToolPreset(
+          kind: ToolKind.pen,
+          color: PixelColor(argb: red),
+          size: 4,
+          tip: BrushTip.circle,
+        ),
+      ],
+      recent: [
+        ToolPreset(kind: ToolKind.eraser, size: 2),
+        ToolPreset(
+          kind: ToolKind.bucketFill,
+          color: PixelColor(argb: blue),
+        ),
+      ],
+    ),
+  );
+
+  ToolPresets decodedPresets(String tools) => OraCodec.decode(
+    name: 'Cat',
+    bytes: oraArchive(
+      stack:
+          '<image xmlns:paint="urn:info.skorka.chris.paint" w="1" h="1">'
+          '$tools<stack><layer src="a.png"/></stack></image>',
+      files: {
+        'a.png': png([
+          [blue],
+        ]),
+      },
+    ),
+  ).toolPresets;
 
   group('class OraCodec', () {
     group('method encode', () {
@@ -243,6 +295,34 @@ void main() {
           final expected = [
             [0xFF800080, red],
           ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method encode', () {
+      group('tools', () {
+        test('stack', () {
+          final actual = archiveText(
+            OraCodec.encode(document: presetDocument()),
+            name: 'stack.xml',
+          );
+          const expected =
+              '<?xml version="1.0" encoding="UTF-8"?>\n'
+              '<image xmlns:paint="urn:info.skorka.chris.paint" version="0.0.5" '
+              'w="1" h="1" paint:fps="10" paint:frame-holds="1">\n'
+              '  <paint:tools>\n'
+              '    <paint:tool kind="pen" color="#ff0000ff" size="4" '
+              'tip="circle" locked="true"/>\n'
+              '    <paint:tool kind="eraser" size="2" locked="false"/>\n'
+              '    <paint:tool kind="bucketFill" color="#0000ffff" '
+              'locked="false"/>\n'
+              '  </paint:tools>\n'
+              '  <stack>\n'
+              '    <layer name="Background" src="data/layer0.png" x="0" y="0" '
+              'visibility="visible" opacity="1.00" selected="true"/>\n'
+              '  </stack>\n'
+              '</image>';
           expect(actual, equals(expected));
         });
       });
@@ -667,6 +747,148 @@ void main() {
               layer.name,
           ];
           final expected = ['B'];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('tools', () {
+        test('round trip', () {
+          final actual = OraCodec.decode(
+            name: 'Cat',
+            bytes: OraCodec.encode(document: presetDocument()),
+          );
+          final expected = presetDocument();
+          expect(actual, equals(expected));
+        });
+        test('missing tools', () {
+          final actual = decodedPresets('');
+          const expected = ToolPresets();
+          expect(actual, equals(expected));
+        });
+        test('locked and recent', () {
+          final actual = decodedPresets(
+            '<paint:tools>'
+            '<paint:tool kind="line" size="1"/>'
+            '<paint:tool kind="eraser" size="2" locked="true"/>'
+            '<paint:tool kind="arrow" size="3" locked="false"/>'
+            '</paint:tools>',
+          );
+          const expected = ToolPresets(
+            locked: [ToolPreset(kind: ToolKind.eraser, size: 2)],
+            recent: [
+              ToolPreset(kind: ToolKind.line, color: PixelColor.black, size: 1),
+              ToolPreset(
+                kind: ToolKind.arrow,
+                color: PixelColor.black,
+                size: 3,
+              ),
+            ],
+          );
+          expect(actual, equals(expected));
+        });
+        test('missing attributes', () {
+          final actual = decodedPresets(
+            '<paint:tools><paint:tool kind="pen"/></paint:tools>',
+          );
+          const expected = ToolPresets(
+            recent: [
+              ToolPreset(
+                kind: ToolKind.pen,
+                color: PixelColor.black,
+                size: 1,
+                tip: BrushTip.square,
+              ),
+            ],
+          );
+          expect(actual, equals(expected));
+        });
+        test('invalid attributes', () {
+          final actual = decodedPresets(
+            '<paint:tools>'
+            '<paint:tool kind="pen" color="red" size="abc" tip="star"/>'
+            '</paint:tools>',
+          );
+          const expected = ToolPresets(
+            recent: [
+              ToolPreset(
+                kind: ToolKind.pen,
+                color: PixelColor.black,
+                size: 1,
+                tip: BrushTip.square,
+              ),
+            ],
+          );
+          expect(actual, equals(expected));
+        });
+        test('size too large', () {
+          final actual = decodedPresets(
+            '<paint:tools><paint:tool kind="eraser" size="500"/></paint:tools>',
+          );
+          const expected = ToolPresets(
+            recent: [ToolPreset(kind: ToolKind.eraser, size: 64)],
+          );
+          expect(actual, equals(expected));
+        });
+        test('irrelevant attributes', () {
+          final actual = decodedPresets(
+            '<paint:tools>'
+            '<paint:tool kind="eraser" color="#ff0000ff" size="2" tip="circle"/>'
+            '</paint:tools>',
+          );
+          const expected = ToolPresets(
+            recent: [ToolPreset(kind: ToolKind.eraser, size: 2)],
+          );
+          expect(actual, equals(expected));
+        });
+        test('skipped kinds', () {
+          final actual = decodedPresets(
+            '<paint:tools>'
+            '<paint:tool/>'
+            '<paint:tool kind="brush"/>'
+            '<paint:tool kind="select"/>'
+            '<paint:tool kind="colorPicker"/>'
+            '<paint:tool kind="eraser" size="2"/>'
+            '</paint:tools>',
+          );
+          const expected = ToolPresets(
+            recent: [ToolPreset(kind: ToolKind.eraser, size: 2)],
+          );
+          expect(actual, equals(expected));
+        });
+        test('duplicates', () {
+          final actual = decodedPresets(
+            '<paint:tools>'
+            '<paint:tool kind="eraser" size="2" locked="true"/>'
+            '<paint:tool kind="eraser" size="2"/>'
+            '<paint:tool kind="eraser" size="3"/>'
+            '<paint:tool kind="eraser" size="3"/>'
+            '</paint:tools>',
+          );
+          const expected = ToolPresets(
+            locked: [ToolPreset(kind: ToolKind.eraser, size: 2)],
+            recent: [ToolPreset(kind: ToolKind.eraser, size: 3)],
+          );
+          expect(actual, equals(expected));
+        });
+        test('too many', () {
+          final actual = decodedPresets(
+            '<paint:tools>'
+            '${[for (var size = 1; size <= 10; size++) '<paint:tool kind="eraser" size="$size"/>'].join()}'
+            '</paint:tools>',
+          );
+          final expected = ToolPresets(
+            recent: [
+              for (var size = 1; size <= 9; size++)
+                ToolPreset(kind: ToolKind.eraser, size: size),
+            ],
+          );
+          expect(actual, equals(expected));
+        });
+        test('other namespace', () {
+          final actual = decodedPresets(
+            '<tools><tool kind="eraser" size="2"/></tools>',
+          );
+          const expected = ToolPresets();
           expect(actual, equals(expected));
         });
       });

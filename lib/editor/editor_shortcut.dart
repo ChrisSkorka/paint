@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -135,7 +136,7 @@ enum EditorShortcut {
     label: 'Color picker while held',
     group: ShortcutGroup.tools,
     activators: [],
-    heldKey: 'Alt',
+    keysLabel: 'Alt',
   ),
   select(
     label: 'Select',
@@ -161,6 +162,22 @@ enum EditorShortcut {
     label: 'Arrow',
     group: ShortcutGroup.tools,
     activators: [SingleActivator(LogicalKeyboardKey.keyA)],
+  ),
+  toolPreset(
+    label: 'Recent / favorite tool',
+    group: ShortcutGroup.tools,
+    activators: [
+      SingleActivator(LogicalKeyboardKey.digit1),
+      SingleActivator(LogicalKeyboardKey.digit2),
+      SingleActivator(LogicalKeyboardKey.digit3),
+      SingleActivator(LogicalKeyboardKey.digit4),
+      SingleActivator(LogicalKeyboardKey.digit5),
+      SingleActivator(LogicalKeyboardKey.digit6),
+      SingleActivator(LogicalKeyboardKey.digit7),
+      SingleActivator(LogicalKeyboardKey.digit8),
+      SingleActivator(LogicalKeyboardKey.digit9),
+    ],
+    keysLabel: '1–9',
   ),
   smallerSize(
     label: 'Smaller size',
@@ -337,13 +354,13 @@ enum EditorShortcut {
     required this.label,
     required this.group,
     required this.activators,
-    this.heldKey,
+    this.keysLabel,
   });
 
   final String label;
   final ShortcutGroup group;
   final List<SingleActivator> activators;
-  final String? heldKey;
+  final String? keysLabel;
 
   static final _keyNames = {
     LogicalKeyboardKey.delete: 'Del',
@@ -352,7 +369,7 @@ enum EditorShortcut {
     LogicalKeyboardKey.pageDown: 'PgDn',
   };
 
-  String get keys => heldKey ?? activators.map(describe).join(' / ');
+  String get keys => keysLabel ?? activators.map(describe).join(' / ');
 
   String tooltip(String text) => '$text ($keys)';
 
@@ -363,14 +380,11 @@ enum EditorShortcut {
     _keyNames[activator.trigger] ?? activator.trigger.keyLabel,
   ].join('+');
 
-  static EditorShortcut? matching(KeyEvent event) {
-    for (final shortcut in values) {
-      for (final activator in shortcut.activators) {
-        if (activator.accepts(event, HardwareKeyboard.instance)) {
-          return shortcut;
-        }
-      }
-    }
-    return null;
-  }
+  int activatorIndex(KeyEvent event) => activators.indexWhere(
+    (activator) => activator.accepts(event, HardwareKeyboard.instance),
+  );
+
+  static EditorShortcut? matching(KeyEvent event) => values.firstWhereOrNull(
+    (shortcut) => shortcut.activatorIndex(event) >= 0,
+  );
 }

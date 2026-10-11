@@ -86,7 +86,7 @@ class Timeline extends StatelessWidget {
               icon: FontAwesomeIcons.layerGroup,
               tooltip: 'Onion skinning',
               shortcut: EditorShortcut.onionSkinning.keys,
-              dropdownTooltip: 'Onion skinning options',
+              secondaryTooltip: 'Onion skinning options',
               selected: onionSkin.enabled,
               onPressed: () => onOnionSkinChanged(
                 onionSkin.copyWith(enabled: !onionSkin.enabled),

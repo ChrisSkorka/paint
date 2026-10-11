@@ -48,6 +48,7 @@ abstract final class PaintStyle {
   );
 
   static const barShadow = [BoxShadow(color: Color(0x1A000000), blurRadius: 5)];
+  static const iconShadow = [Shadow(color: Color(0xFF000000), blurRadius: 1)];
   static const faintShadow = [
     BoxShadow(color: Color(0x80000000), blurRadius: 3, spreadRadius: -2),
   ];

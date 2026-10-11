@@ -6,6 +6,9 @@ import 'package:paint/editor/canvas/document_layer.dart';
 import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/layer_timeframe.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
+import 'package:paint/editor/tools/tool_kind.dart';
+import 'package:paint/editor/tools/tool_preset.dart';
+import 'package:paint/editor/tools/tool_presets.dart';
 
 import '../../../support/layer_probes.dart';
 
@@ -639,6 +642,16 @@ void main() {
           const expected = false;
           expect(actual, equals(expected));
         });
+        test('different tool presets', () {
+          final document = Document.blank(width: 2, height: 1);
+          final other = Document.blank(width: 2, height: 1)
+            ..toolPresets = const ToolPresets(
+              recent: [ToolPreset(kind: ToolKind.eraser, size: 1)],
+            );
+          final actual = document == other;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
         test('different frame holds', () {
           final document = animatedDocument(activeFrameIndex: 0);
           final other = animatedDocument(activeFrameIndex: 0)
@@ -770,6 +783,16 @@ void main() {
         test('different store id', () {
           final document = Document.blank(width: 2, height: 1);
           final other = Document.blank(width: 2, height: 1)..storeId = '1';
+          final actual = document.hashCode == other.hashCode;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('different tool presets', () {
+          final document = Document.blank(width: 2, height: 1);
+          final other = Document.blank(width: 2, height: 1)
+            ..toolPresets = const ToolPresets(
+              recent: [ToolPreset(kind: ToolKind.eraser, size: 1)],
+            );
           final actual = document.hashCode == other.hashCode;
           const expected = false;
           expect(actual, equals(expected));

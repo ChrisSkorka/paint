@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
 
+import '../tools/tool_presets.dart';
 import 'document_layer.dart';
 import 'layer.dart';
 import 'pixel_color.dart';
@@ -17,6 +18,7 @@ class Document {
     this.fps = defaultFps,
     this.activeFrameIndex = 0,
     this.storeId,
+    this.toolPresets = const ToolPresets(),
   });
 
   factory Document.blank({
@@ -73,6 +75,7 @@ class Document {
   int fps;
   int activeFrameIndex;
   String? storeId;
+  ToolPresets toolPresets;
 
   int get frameCount => frameHolds.length;
 
@@ -169,6 +172,7 @@ class Document {
       other.fps == fps &&
       other.activeFrameIndex == activeFrameIndex &&
       other.storeId == storeId &&
+      other.toolPresets == toolPresets &&
       const ListEquality<DocumentLayer>().equals(other.layers, layers);
 
   @override
@@ -181,6 +185,7 @@ class Document {
     fps,
     activeFrameIndex,
     storeId,
+    toolPresets,
     const ListEquality<DocumentLayer>().hash(layers),
   );
 

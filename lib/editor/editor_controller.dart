@@ -27,6 +27,7 @@ import 'tools/shape.dart';
 import 'tools/shape_tool.dart';
 import 'tools/tool.dart';
 import 'tools/tool_kind.dart';
+import 'tools/tool_preset.dart';
 
 class EditorController extends ChangeNotifier {
   EditorController({
@@ -73,7 +74,6 @@ class EditorController extends ChangeNotifier {
   PixelRectangle? _selectingArea;
   Selection? _selection;
   var _strokeArea = _noArea;
-  var _recentColors = const <PixelColor>[];
   late var _layerCount = document.layers.length;
   DocumentStructure? _structureBeforePreview;
   var _playing = false;
@@ -81,9 +81,8 @@ class EditorController extends ChangeNotifier {
   var _colorPickerHeld = false;
 
   static const _noArea = PixelRectangle(left: 0, top: 0, width: 0, height: 0);
-  static const recentColorLimit = 5;
-  static const minimumToolSize = 1;
-  static const maximumToolSize = 64;
+  static const minimumToolSize = ToolPreset.minimumSize;
+  static const maximumToolSize = ToolPreset.maximumSize;
   static const defaultZoom = 4;
   static const minimumZoom = 1;
   static const maximumZoom = 100;
@@ -98,7 +97,8 @@ class EditorController extends ChangeNotifier {
   PixelColor get secondaryColor => _secondaryColor;
   bool get editingPrimary => _editingPrimary;
   PixelPoint? get cursor => _cursor;
-  List<PixelColor> get recentColors => _recentColors;
+  List<ToolPreset> get toolPresets => document.toolPresets.all;
+  ToolPreset? get toolPreset => _presetWith(color: _primaryColor);
   PixelRectangle? get selectionArea => _selectingArea ?? _selection?.area;
   bool get hasSelection => _selection != null;
   Layer? get selectionContent => _selection?.content;
@@ -203,6 +203,46 @@ class EditorController extends ChangeNotifier {
 
   ShapeTool _shapeTool(Shape shape) =>
       ShapeTool(shape: shape, width: _shapeWidth, origin: _strokeOrigin);
+
+  ToolPreset? _presetWith({required PixelColor color}) {
+    if (!_toolKind.presettable) return null;
+    return ToolPreset.configured(
+      kind: _toolKind,
+      color: color,
+      size: switch (_toolKind) {
+        ToolKind.pen => _penSize,
+        ToolKind.eraser => _eraserSize,
+        _ => _shapeWidth,
+      },
+      tip: _penTip,
+    );
+  }
+
+  void applyToolPreset({required int index}) {
+    final presets = toolPresets;
+    if (index >= presets.length || _strokePoint != null) return;
+    final preset = presets[index];
+    if (preset.color case final color?) _primaryColor = color;
+    if (preset.tip case final tip?) _penTip = tip;
+    if (preset.size case final size?) {
+      switch (preset.kind) {
+        case ToolKind.pen:
+          _penSize = size;
+        case ToolKind.eraser:
+          _eraserSize = size;
+        default:
+          _shapeWidth = size;
+      }
+    }
+    selectTool(preset.kind);
+  }
+
+  void setToolPresetLocked({required int index, required bool locked}) {
+    document.toolPresets = locked
+        ? document.toolPresets.lock(index: index)
+        : document.toolPresets.unlock(index: index);
+    notifyListeners();
+  }
 
   void selectTool(ToolKind toolKind) {
     if (_strokePoint != null) return;
@@ -625,7 +665,8 @@ class EditorController extends ChangeNotifier {
     _strokeButton = button;
     _strokeOrigin = point;
     _strokeName = _toolKind.label;
-    if (_toolKind.usesColor) _rememberColor(_strokeColor);
+    final preset = _presetWith(color: _strokeColor);
+    if (preset != null) document.toolPresets = document.toolPresets.use(preset);
     _sampleColor(point: point);
     if (_toolKind == ToolKind.select) _startSelecting(point);
     final tool = _tool;
@@ -851,13 +892,6 @@ class EditorController extends ChangeNotifier {
       ),
     );
     if (entry.before != entry.after) history.record(entry);
-  }
-
-  void _rememberColor(PixelColor color) {
-    _recentColors = [
-      color,
-      ..._recentColors.where((recent) => recent != color),
-    ].take(recentColorLimit).toList();
   }
 
   void _sampleColor({required PixelPoint point}) {

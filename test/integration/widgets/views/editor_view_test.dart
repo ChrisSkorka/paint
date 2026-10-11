@@ -10,6 +10,10 @@ import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
 import 'package:paint/editor/files/export_format.dart';
+import 'package:paint/editor/tools/brush_tip.dart';
+import 'package:paint/editor/tools/tool_kind.dart';
+import 'package:paint/editor/tools/tool_preset.dart';
+import 'package:paint/editor/tools/tool_presets.dart';
 import 'package:paint/widgets/components/edge_shadow.dart';
 import 'package:paint/widgets/components/numeric_value_range.dart';
 import 'package:paint/widgets/components/paint_bar.dart';
@@ -147,7 +151,7 @@ void main() {
           const expected = [true, false];
           expect(actual, equals(expected));
         });
-        testWidgets('recent colors', (tester) async {
+        testWidgets('tool presets', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
             MaterialApp(
@@ -161,14 +165,26 @@ void main() {
               ),
             ),
           );
-          final actual = recentSwatches(tester);
-          const expected = [
-            [null],
-            [null],
-            [null],
-            [null],
-            [null],
-          ];
+          final actual = toolPresetList(tester).presets;
+          const expected = <ToolPreset>[];
+          expect(actual, equals(expected));
+        });
+        testWidgets('swatch grids', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final actual = find.byType(SwatchGrid).evaluate().length;
+          const expected = 2;
           expect(actual, equals(expected));
         });
         testWidgets('selection actions', (tester) async {
@@ -1140,7 +1156,7 @@ void main() {
           expect(actual, equals(expected));
         });
       });
-      group('recent colors', () {
+      group('tool presets', () {
         testWidgets('after stroke', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
@@ -1158,17 +1174,27 @@ void main() {
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           await tester.tapAt(topLeft + const Offset(1, 1));
           await tester.pump();
-          final actual = recentSwatches(tester);
+          final list = toolPresetList(tester);
+          final actual = [list.presets, list.selected];
           const expected = [
-            [Color(0xFF000000)],
-            [null],
-            [null],
-            [null],
-            [null],
+            [
+              ToolPreset(
+                kind: ToolKind.pen,
+                color: PixelColor.black,
+                size: 1,
+                tip: BrushTip.square,
+              ),
+            ],
+            ToolPreset(
+              kind: ToolKind.pen,
+              color: PixelColor.black,
+              size: 1,
+              tip: BrushTip.square,
+            ),
           ];
           expect(actual, equals(expected));
         });
-        testWidgets('select recent', (tester) async {
+        testWidgets('apply', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
             MaterialApp(
@@ -1185,19 +1211,61 @@ void main() {
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           await tester.tapAt(topLeft + const Offset(1, 1));
           await tester.pump();
-          await tester.tap(find.byType(Swatch).at(2));
+          await tester.tap(find.byTooltip('Eraser (E)'));
           await tester.pump();
-          await tester.tap(
-            find
-                .descendant(
-                  of: find.byType(SwatchGrid).last,
-                  matching: find.byType(Swatch),
-                )
-                .first,
+          await tester.tap(find.byTooltip('Pen (1)'));
+          await tester.pump();
+          final actual = allSelectedTools(tester);
+          const expected = [
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('lock', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
           );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
           await tester.pump();
-          final actual = wellColors(tester);
-          const expected = [Color(0xFF000000), Color(0xFFFFFFFF)];
+          await tester.tap(find.byTooltip('Lock'));
+          await tester.pump();
+          final actual = [
+            toolPresetList(tester).lockedCount,
+            document.toolPresets,
+          ];
+          const expected = [
+            1,
+            ToolPresets(
+              locked: [
+                ToolPreset(
+                  kind: ToolKind.pen,
+                  color: PixelColor.black,
+                  size: 1,
+                  tip: BrushTip.square,
+                ),
+              ],
+            ),
+          ];
           expect(actual, equals(expected));
         });
       });
@@ -3563,6 +3631,70 @@ void main() {
       });
 
       group('tool shortcuts', () {
+        testWidgets('1', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2)
+                    ..toolPresets = const ToolPresets(
+                      recent: [ToolPreset(kind: ToolKind.eraser, size: 1)],
+                    ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.digit1);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('missing preset', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2)
+                    ..toolPresets = const ToolPresets(
+                      recent: [ToolPreset(kind: ToolKind.eraser, size: 1)],
+                    ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.digit2);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
         testWidgets('p', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(

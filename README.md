@@ -250,14 +250,27 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [x] shortcuts for layers
 - [x] shortcut list on new doc page
 
-### phase 6.2: tool stack & favorites
+### phase 6.2: tool history & favorites
 
-- [ ] favorite tool configs in bottom bar
-- [ ] config include tool and it's config (e.g. tip & size)
-- [ ] num keyboard shortcuts for favorite tool configs
-- [ ] shortcut to switch relative (forward/backward)
-- [ ] up to 9
-- [ ] save to where? doc & global?
+- [x] bottom bar has list of recently used tool-config combinations & favorites
+- [x] each option is a row with: 
+  - split button: 
+    - icon of tool
+    - column with saved properties (small text & icons)
+    - secondary action: lock/unlock
+- [x] tools to include: pen, eraser, fill, shapes
+- [x] properties to include:
+  - color: shows as tool icon color
+  - size: shows as `# px` in properties column
+  - tip: shows as icon in properties column
+- [x] locking mechanism:
+  - locked items are first, rest is history in order of use
+  - when locking, item is moved to end of locked list before other recent items
+  - when unlocked, item is moved to start of recent list
+  - recent items don't include locked items
+- [x] shortcuts: 1-9 for items respectively
+- [x] remove last 5 color column from color ribbon
+- [x] save favorites & recent to ora doc: `<paint:tools><paint:tool kind="pen" color="#ff0000ff" size="4" tip="round" locked="true"/>...`
 
 ### phase 6.3: multi document editing
 
@@ -344,3 +357,31 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] animation loop toggle
 - [ ] interchangeable panes: move panes between top & right panels
 - [ ] wide double buttons for pairs: undo/redo, rotate, mirror
+
+### phase y: vector graphics
+
+- docs are either pixel or vector type
+- tools
+  - node
+  - pen
+  - corner
+- shapes
+  - line
+  - arrow
+  - square
+  - circle
+- actions
+  - add
+  - subtract
+  - intersect
+  - xor
+  - divide?
+- selection
+  - copy, cut, paste
+  - rotate left & right
+  - mirror horizontally & vertically
+  - select all
+- color: same as pixel editor
+- object properties panel
+- animations: same as pixel editor
+

@@ -11,6 +11,10 @@ import '../canvas/layer.dart';
 import '../canvas/layer_timeframe.dart';
 import '../canvas/pixel_color.dart';
 import '../canvas/pixel_point.dart';
+import '../tools/brush_tip.dart';
+import '../tools/tool_kind.dart';
+import '../tools/tool_preset.dart';
+import '../tools/tool_presets.dart';
 import 'document_format_exception.dart';
 import 'image_codec.dart';
 
@@ -27,6 +31,8 @@ abstract final class OraCodec {
   static const legacyFrameDurationsAttribute = 'frame-durations';
   static const timeframeAttribute = 'timeframe';
   static const perFrameTimeframe = 'per-frame';
+  static const toolsElement = 'tools';
+  static const toolElement = 'tool';
 
   static Uint8List encode({required Document document}) {
     final merged = document.flatten(
@@ -113,22 +119,46 @@ abstract final class OraCodec {
             frameHoldsAttribute,
             document.frameHolds.join(','),
             namespaceUri: paintNamespace,
-          )
-          ..element(
-            'stack',
-            nest: () {
-              for (
-                var index = document.layers.length - 1;
-                index >= 0;
-                index--
-              ) {
-                _buildLayer(builder: builder, document: document, index: index);
-              }
-            },
           );
+        _buildTools(builder: builder, presets: document.toolPresets);
+        builder.element(
+          'stack',
+          nest: () {
+            for (var index = document.layers.length - 1; index >= 0; index--) {
+              _buildLayer(builder: builder, document: document, index: index);
+            }
+          },
+        );
       },
     );
     return builder.buildDocument().toXmlString(pretty: true);
+  }
+
+  static void _buildTools({
+    required XmlBuilder builder,
+    required ToolPresets presets,
+  }) {
+    if (presets.all.isEmpty) return;
+    builder.element(
+      toolsElement,
+      namespaceUri: paintNamespace,
+      nest: () {
+        for (var index = 0; index < presets.all.length; index++) {
+          final preset = presets.all[index];
+          builder.element(
+            toolElement,
+            namespaceUri: paintNamespace,
+            attributes: {
+              'kind': preset.kind.name,
+              'color': ?preset.color?.hex.toLowerCase(),
+              'size': ?preset.size?.toString(),
+              'tip': ?preset.tip?.name,
+              'locked': '${presets.isLocked(index: index)}',
+            },
+          );
+        }
+      },
+    );
   }
 
   static void _buildLayer({
@@ -217,6 +247,49 @@ abstract final class OraCodec {
       activeLayerIndex: _selectedIndex(elements: elements),
       frameHolds: timing.holds,
       fps: timing.fps,
+      toolPresets: _toolPresets(image: image),
+    );
+  }
+
+  static ToolPresets _toolPresets({required XmlElement image}) {
+    final tools = [
+      for (final element in image.findElements(
+        toolsElement,
+        namespaceUri: paintNamespace,
+      ))
+        ...element.findElements(toolElement, namespaceUri: paintNamespace),
+    ];
+    final presets = [
+      for (final tool in tools)
+        if (_toolPreset(tool: tool) case final preset?)
+          (preset: preset, locked: tool.getAttribute('locked') == 'true'),
+    ];
+    return ToolPresets.limited(
+      locked: [
+        for (final entry in presets)
+          if (entry.locked) entry.preset,
+      ],
+      recent: [
+        for (final entry in presets)
+          if (!entry.locked) entry.preset,
+      ],
+    );
+  }
+
+  static ToolPreset? _toolPreset({required XmlElement tool}) {
+    final kind = ToolKind.values.asNameMap()[tool.getAttribute('kind')];
+    if (kind == null || !kind.presettable) return null;
+    return ToolPreset.configured(
+      kind: kind,
+      color:
+          PixelColor.tryParseHex(tool.getAttribute('color') ?? '') ??
+          PixelColor.black,
+      size:
+          int.tryParse(tool.getAttribute('size') ?? '') ??
+          ToolPreset.minimumSize,
+      tip:
+          BrushTip.values.asNameMap()[tool.getAttribute('tip')] ??
+          BrushTip.square,
     );
   }
 

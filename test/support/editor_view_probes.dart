@@ -11,6 +11,7 @@ import 'package:paint/widgets/components/paint_icon_button.dart';
 import 'package:paint/widgets/components/paint_split_button.dart';
 import 'package:paint/widgets/components/swatch_grid.dart';
 import 'package:paint/widgets/components/timeline.dart';
+import 'package:paint/widgets/components/tool_preset_list.dart';
 
 List<bool> selectedTools(WidgetTester tester) => [
   tester
@@ -76,8 +77,8 @@ List<bool> selectedTips(WidgetTester tester) => [
       .selected,
 ];
 
-List<List<Color?>> recentSwatches(WidgetTester tester) =>
-    tester.widgetList<SwatchGrid>(find.byType(SwatchGrid)).last.colors;
+ToolPresetList toolPresetList(WidgetTester tester) =>
+    tester.widget<ToolPresetList>(find.byType(ToolPresetList));
 
 List<Object> historyState(WidgetTester tester) {
   final historyList = tester.widget<HistoryList>(find.byType(HistoryList));

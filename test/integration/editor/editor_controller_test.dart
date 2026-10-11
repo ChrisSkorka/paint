@@ -17,6 +17,8 @@ import 'package:paint/editor/history/pixel_history_entry.dart';
 import 'package:paint/editor/pointer_button.dart';
 import 'package:paint/editor/tools/brush_tip.dart';
 import 'package:paint/editor/tools/tool_kind.dart';
+import 'package:paint/editor/tools/tool_preset.dart';
+import 'package:paint/editor/tools/tool_presets.dart';
 
 import '../../support/document_probes.dart';
 import '../../support/layer_probes.dart';
@@ -1036,6 +1038,421 @@ void main() {
           editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
           final actual = [during, editorController.toolKind];
           const expected = [ToolKind.colorPicker, ToolKind.pen];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter toolPreset', () {
+      group('kinds', () {
+        test('pen', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.setPenSize(2);
+          final actual = editorController.toolPreset;
+          const expected = ToolPreset(
+            kind: ToolKind.pen,
+            color: PixelColor.black,
+            size: 2,
+            tip: BrushTip.square,
+          );
+          expect(actual, equals(expected));
+        });
+        test('eraser', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.selectTool(ToolKind.eraser);
+          final actual = editorController.toolPreset;
+          const expected = ToolPreset(kind: ToolKind.eraser, size: 1);
+          expect(actual, equals(expected));
+        });
+        test('select', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.selectTool(ToolKind.select);
+          final actual = editorController.toolPreset;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method applyToolPreset', () {
+      group('kinds', () {
+        test('pen', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)
+              ..toolPresets = const ToolPresets(
+                locked: [
+                  ToolPreset(
+                    kind: ToolKind.pen,
+                    color: PixelColor(argb: 0xFFFF0000),
+                    size: 3,
+                    tip: BrushTip.circle,
+                  ),
+                ],
+                recent: [
+                  ToolPreset(kind: ToolKind.eraser, size: 4),
+                  ToolPreset(
+                    kind: ToolKind.bucketFill,
+                    color: PixelColor(argb: 0xFF00FF00),
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.circle,
+                    color: PixelColor(argb: 0xFF0000FF),
+                    size: 5,
+                  ),
+                ],
+              ),
+          );
+          editorController.selectTool(ToolKind.eraser);
+          editorController.applyToolPreset(index: 0);
+          final actual = [
+            editorController.toolKind,
+            editorController.primaryColor,
+            editorController.penSize,
+            editorController.penTip,
+          ];
+          const expected = [
+            ToolKind.pen,
+            PixelColor(argb: 0xFFFF0000),
+            3,
+            BrushTip.circle,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('eraser', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)
+              ..toolPresets = const ToolPresets(
+                locked: [
+                  ToolPreset(
+                    kind: ToolKind.pen,
+                    color: PixelColor(argb: 0xFFFF0000),
+                    size: 3,
+                    tip: BrushTip.circle,
+                  ),
+                ],
+                recent: [
+                  ToolPreset(kind: ToolKind.eraser, size: 4),
+                  ToolPreset(
+                    kind: ToolKind.bucketFill,
+                    color: PixelColor(argb: 0xFF00FF00),
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.circle,
+                    color: PixelColor(argb: 0xFF0000FF),
+                    size: 5,
+                  ),
+                ],
+              ),
+          );
+          editorController.applyToolPreset(index: 1);
+          final actual = [
+            editorController.toolKind,
+            editorController.primaryColor,
+            editorController.eraserSize,
+          ];
+          const expected = [ToolKind.eraser, PixelColor.black, 4];
+          expect(actual, equals(expected));
+        });
+        test('fill', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)
+              ..toolPresets = const ToolPresets(
+                locked: [
+                  ToolPreset(
+                    kind: ToolKind.pen,
+                    color: PixelColor(argb: 0xFFFF0000),
+                    size: 3,
+                    tip: BrushTip.circle,
+                  ),
+                ],
+                recent: [
+                  ToolPreset(kind: ToolKind.eraser, size: 4),
+                  ToolPreset(
+                    kind: ToolKind.bucketFill,
+                    color: PixelColor(argb: 0xFF00FF00),
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.circle,
+                    color: PixelColor(argb: 0xFF0000FF),
+                    size: 5,
+                  ),
+                ],
+              ),
+          );
+          editorController.applyToolPreset(index: 2);
+          final actual = [
+            editorController.toolKind,
+            editorController.primaryColor,
+            editorController.penSize,
+            editorController.eraserSize,
+            editorController.shapeWidth,
+          ];
+          const expected = [
+            ToolKind.bucketFill,
+            PixelColor(argb: 0xFF00FF00),
+            1,
+            1,
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('shape', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)
+              ..toolPresets = const ToolPresets(
+                locked: [
+                  ToolPreset(
+                    kind: ToolKind.pen,
+                    color: PixelColor(argb: 0xFFFF0000),
+                    size: 3,
+                    tip: BrushTip.circle,
+                  ),
+                ],
+                recent: [
+                  ToolPreset(kind: ToolKind.eraser, size: 4),
+                  ToolPreset(
+                    kind: ToolKind.bucketFill,
+                    color: PixelColor(argb: 0xFF00FF00),
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.circle,
+                    color: PixelColor(argb: 0xFF0000FF),
+                    size: 5,
+                  ),
+                ],
+              ),
+          );
+          editorController.applyToolPreset(index: 3);
+          final actual = [
+            editorController.toolKind,
+            editorController.primaryColor,
+            editorController.shapeWidth,
+          ];
+          const expected = [ToolKind.circle, PixelColor(argb: 0xFF0000FF), 5];
+          expect(actual, equals(expected));
+        });
+      });
+      group('ignored', () {
+        test('out of range', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)
+              ..toolPresets = const ToolPresets(
+                locked: [
+                  ToolPreset(
+                    kind: ToolKind.pen,
+                    color: PixelColor(argb: 0xFFFF0000),
+                    size: 3,
+                    tip: BrushTip.circle,
+                  ),
+                ],
+                recent: [
+                  ToolPreset(kind: ToolKind.eraser, size: 4),
+                  ToolPreset(
+                    kind: ToolKind.bucketFill,
+                    color: PixelColor(argb: 0xFF00FF00),
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.circle,
+                    color: PixelColor(argb: 0xFF0000FF),
+                    size: 5,
+                  ),
+                ],
+              ),
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.applyToolPreset(index: 4);
+          final actual = [editorController.toolKind, notifications];
+          const expected = [ToolKind.pen, 0];
+          expect(actual, equals(expected));
+        });
+        test('during stroke', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)
+              ..toolPresets = const ToolPresets(
+                locked: [
+                  ToolPreset(
+                    kind: ToolKind.pen,
+                    color: PixelColor(argb: 0xFFFF0000),
+                    size: 3,
+                    tip: BrushTip.circle,
+                  ),
+                ],
+                recent: [
+                  ToolPreset(kind: ToolKind.eraser, size: 4),
+                  ToolPreset(
+                    kind: ToolKind.bucketFill,
+                    color: PixelColor(argb: 0xFF00FF00),
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.circle,
+                    color: PixelColor(argb: 0xFF0000FF),
+                    size: 5,
+                  ),
+                ],
+              ),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.applyToolPreset(index: 2);
+          final actual = [
+            editorController.toolKind,
+            editorController.primaryColor,
+          ];
+          const expected = [ToolKind.pen, PixelColor.black];
+          expect(actual, equals(expected));
+        });
+      });
+      group('order', () {
+        test('unchanged', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)
+              ..toolPresets = const ToolPresets(
+                locked: [
+                  ToolPreset(
+                    kind: ToolKind.pen,
+                    color: PixelColor(argb: 0xFFFF0000),
+                    size: 3,
+                    tip: BrushTip.circle,
+                  ),
+                ],
+                recent: [
+                  ToolPreset(kind: ToolKind.eraser, size: 4),
+                  ToolPreset(
+                    kind: ToolKind.bucketFill,
+                    color: PixelColor(argb: 0xFF00FF00),
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.circle,
+                    color: PixelColor(argb: 0xFF0000FF),
+                    size: 5,
+                  ),
+                ],
+              ),
+          );
+          editorController.applyToolPreset(index: 3);
+          final actual = editorController.toolPresets;
+          const expected = [
+            ToolPreset(
+              kind: ToolKind.pen,
+              color: PixelColor(argb: 0xFFFF0000),
+              size: 3,
+              tip: BrushTip.circle,
+            ),
+            ToolPreset(kind: ToolKind.eraser, size: 4),
+            ToolPreset(
+              kind: ToolKind.bucketFill,
+              color: PixelColor(argb: 0xFF00FF00),
+            ),
+            ToolPreset(
+              kind: ToolKind.circle,
+              color: PixelColor(argb: 0xFF0000FF),
+              size: 5,
+            ),
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method setToolPresetLocked', () {
+      group('locked', () {
+        test('lock', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)
+              ..toolPresets = const ToolPresets(
+                locked: [
+                  ToolPreset(
+                    kind: ToolKind.pen,
+                    color: PixelColor(argb: 0xFFFF0000),
+                    size: 3,
+                    tip: BrushTip.circle,
+                  ),
+                ],
+                recent: [
+                  ToolPreset(kind: ToolKind.eraser, size: 4),
+                  ToolPreset(
+                    kind: ToolKind.bucketFill,
+                    color: PixelColor(argb: 0xFF00FF00),
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.circle,
+                    color: PixelColor(argb: 0xFF0000FF),
+                    size: 5,
+                  ),
+                ],
+              ),
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setToolPresetLocked(index: 2, locked: true);
+          final actual = [
+            editorController.document.toolPresets.locked.length,
+            editorController.toolPresets[1],
+            notifications,
+          ];
+          const expected = [
+            2,
+            ToolPreset(
+              kind: ToolKind.bucketFill,
+              color: PixelColor(argb: 0xFF00FF00),
+            ),
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('unlock', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)
+              ..toolPresets = const ToolPresets(
+                locked: [
+                  ToolPreset(
+                    kind: ToolKind.pen,
+                    color: PixelColor(argb: 0xFFFF0000),
+                    size: 3,
+                    tip: BrushTip.circle,
+                  ),
+                ],
+                recent: [
+                  ToolPreset(kind: ToolKind.eraser, size: 4),
+                  ToolPreset(
+                    kind: ToolKind.bucketFill,
+                    color: PixelColor(argb: 0xFF00FF00),
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.circle,
+                    color: PixelColor(argb: 0xFF0000FF),
+                    size: 5,
+                  ),
+                ],
+              ),
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setToolPresetLocked(index: 0, locked: false);
+          final actual = [
+            editorController.document.toolPresets.locked.length,
+            editorController.toolPresets[0],
+            notifications,
+          ];
+          const expected = [
+            0,
+            ToolPreset(
+              kind: ToolKind.pen,
+              color: PixelColor(argb: 0xFFFF0000),
+              size: 3,
+              tip: BrushTip.circle,
+            ),
+            1,
+          ];
           expect(actual, equals(expected));
         });
       });
@@ -4456,13 +4873,13 @@ void main() {
         });
       });
 
-      group('recent colors', () {
+      group('tool presets', () {
         test('none', () {
           final editorController = EditorController.forDocument(
             document: Document.blank(width: 2, height: 1),
           );
-          final actual = editorController.recentColors;
-          const expected = <PixelColor>[];
+          final actual = editorController.toolPresets;
+          const expected = <ToolPreset>[];
           expect(actual, equals(expected));
         });
         test('pen primary', () {
@@ -4473,8 +4890,15 @@ void main() {
             point: const PixelPoint(x: 0, y: 0),
             button: PointerButton.primary,
           );
-          final actual = editorController.recentColors;
-          const expected = [PixelColor.black];
+          final actual = editorController.toolPresets;
+          const expected = [
+            ToolPreset(
+              kind: ToolKind.pen,
+              color: PixelColor.black,
+              size: 1,
+              tip: BrushTip.square,
+            ),
+          ];
           expect(actual, equals(expected));
         });
         test('pen secondary', () {
@@ -4485,8 +4909,15 @@ void main() {
             point: const PixelPoint(x: 0, y: 0),
             button: PointerButton.secondary,
           );
-          final actual = editorController.recentColors;
-          const expected = [PixelColor.white];
+          final actual = editorController.toolPresets;
+          const expected = [
+            ToolPreset(
+              kind: ToolKind.pen,
+              color: PixelColor.white,
+              size: 1,
+              tip: BrushTip.square,
+            ),
+          ];
           expect(actual, equals(expected));
         });
         test('newest first', () {
@@ -4498,55 +4929,73 @@ void main() {
             button: PointerButton.primary,
           );
           editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
-          editorController.pointerDown(
-            point: const PixelPoint(x: 0, y: 0),
-            button: PointerButton.secondary,
-          );
-          final actual = editorController.recentColors;
-          const expected = [PixelColor.white, PixelColor.black];
-          expect(actual, equals(expected));
-        });
-        test('repeated color', () {
-          final editorController = EditorController.forDocument(
-            document: Document.blank(width: 2, height: 1),
-          );
+          editorController.selectTool(ToolKind.eraser);
           editorController.pointerDown(
             point: const PixelPoint(x: 0, y: 0),
             button: PointerButton.primary,
           );
-          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
-          editorController.pointerDown(
-            point: const PixelPoint(x: 0, y: 0),
-            button: PointerButton.secondary,
-          );
-          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
-          editorController.pointerDown(
-            point: const PixelPoint(x: 0, y: 0),
-            button: PointerButton.primary,
-          );
-          final actual = editorController.recentColors;
-          const expected = [PixelColor.black, PixelColor.white];
-          expect(actual, equals(expected));
-        });
-        test('limit', () {
-          final editorController = EditorController.forDocument(
-            document: Document.blank(width: 2, height: 1),
-          );
-          for (var argb = 0xFF000001; argb <= 0xFF000006; argb++) {
-            editorController.selectColor(PixelColor(argb: argb));
-            editorController.pointerDown(
-              point: const PixelPoint(x: 0, y: 0),
-              button: PointerButton.primary,
-            );
-            editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
-          }
-          final actual = editorController.recentColors;
+          final actual = editorController.toolPresets;
           const expected = [
-            PixelColor(argb: 0xFF000006),
-            PixelColor(argb: 0xFF000005),
-            PixelColor(argb: 0xFF000004),
-            PixelColor(argb: 0xFF000003),
-            PixelColor(argb: 0xFF000002),
+            ToolPreset(kind: ToolKind.eraser, size: 1),
+            ToolPreset(
+              kind: ToolKind.pen,
+              color: PixelColor.black,
+              size: 1,
+              tip: BrushTip.square,
+            ),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('repeated preset', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          editorController.selectTool(ToolKind.eraser);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          editorController.selectTool(ToolKind.pen);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = editorController.toolPresets;
+          const expected = [
+            ToolPreset(
+              kind: ToolKind.pen,
+              color: PixelColor.black,
+              size: 1,
+              tip: BrushTip.square,
+            ),
+            ToolPreset(kind: ToolKind.eraser, size: 1),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('pen settings', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.setPenSize(3);
+          editorController.setPenTip(BrushTip.circle);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = editorController.toolPresets;
+          const expected = [
+            ToolPreset(
+              kind: ToolKind.pen,
+              color: PixelColor.black,
+              size: 3,
+              tip: BrushTip.circle,
+            ),
           ];
           expect(actual, equals(expected));
         });
@@ -4555,12 +5004,13 @@ void main() {
             document: Document.blank(width: 2, height: 1),
           );
           editorController.selectTool(ToolKind.eraser);
+          editorController.setEraserSize(4);
           editorController.pointerDown(
             point: const PixelPoint(x: 0, y: 0),
             button: PointerButton.primary,
           );
-          final actual = editorController.recentColors;
-          const expected = <PixelColor>[];
+          final actual = editorController.toolPresets;
+          const expected = [ToolPreset(kind: ToolKind.eraser, size: 4)];
           expect(actual, equals(expected));
         });
         test('bucket fill', () {
@@ -4572,8 +5022,10 @@ void main() {
             point: const PixelPoint(x: 0, y: 0),
             button: PointerButton.primary,
           );
-          final actual = editorController.recentColors;
-          const expected = [PixelColor.black];
+          final actual = editorController.toolPresets;
+          const expected = [
+            ToolPreset(kind: ToolKind.bucketFill, color: PixelColor.black),
+          ];
           expect(actual, equals(expected));
         });
         test('shape', () {
@@ -4581,12 +5033,19 @@ void main() {
             document: Document.blank(width: 2, height: 1),
           );
           editorController.selectTool(ToolKind.rectangle);
+          editorController.setShapeWidth(5);
           editorController.pointerDown(
             point: const PixelPoint(x: 0, y: 0),
             button: PointerButton.primary,
           );
-          final actual = editorController.recentColors;
-          const expected = [PixelColor.black];
+          final actual = editorController.toolPresets;
+          const expected = [
+            ToolPreset(
+              kind: ToolKind.rectangle,
+              color: PixelColor.black,
+              size: 5,
+            ),
+          ];
           expect(actual, equals(expected));
         });
         test('select', () {
@@ -4598,8 +5057,8 @@ void main() {
             point: const PixelPoint(x: 0, y: 0),
             button: PointerButton.primary,
           );
-          final actual = editorController.recentColors;
-          const expected = <PixelColor>[];
+          final actual = editorController.toolPresets;
+          const expected = <ToolPreset>[];
           expect(actual, equals(expected));
         });
         test('color picker', () {
@@ -4611,8 +5070,8 @@ void main() {
             point: const PixelPoint(x: 0, y: 0),
             button: PointerButton.primary,
           );
-          final actual = editorController.recentColors;
-          const expected = <PixelColor>[];
+          final actual = editorController.toolPresets;
+          const expected = <ToolPreset>[];
           expect(actual, equals(expected));
         });
       });

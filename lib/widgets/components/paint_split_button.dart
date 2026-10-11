@@ -8,22 +8,32 @@ class PaintSplitButton extends StatefulWidget {
   const PaintSplitButton({
     super.key,
     required this.icon,
+    this.trailing,
     required this.tooltip,
     this.shortcut,
     required this.onPressed,
-    required this.dropdown,
-    this.dropdownTooltip,
+    this.dropdown,
+    this.onSecondaryPressed,
+    this.secondaryIcon = FontAwesomeIcons.angleDown,
+    this.secondaryTooltip,
+    this.secondaryOnHover = false,
     this.color = PaintStyle.iconColor,
+    this.iconShadows,
     this.selected = false,
   });
 
   final FaIconData icon;
+  final Widget? trailing;
   final String tooltip;
   final String? shortcut;
   final VoidCallback onPressed;
-  final Widget dropdown;
-  final String? dropdownTooltip;
+  final Widget? dropdown;
+  final VoidCallback? onSecondaryPressed;
+  final FaIconData secondaryIcon;
+  final String? secondaryTooltip;
+  final bool secondaryOnHover;
   final Color color;
+  final List<Shadow>? iconShadows;
   final bool selected;
 
   @override
@@ -60,35 +70,59 @@ class _PaintSplitButtonState extends State<PaintSplitButton> {
                     left: Radius.circular(5),
                   ),
                   padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
-                  child: FaIcon(widget.icon, color: widget.color, size: 16),
-                ),
-              ),
-            ),
-            MenuAnchor(
-              controller: menuController,
-              alignmentOffset: const Offset(0, 4),
-              menuChildren: [widget.dropdown],
-              child: Tooltip(
-                message: widget.dropdownTooltip ?? '${widget.tooltip} options',
-                waitDuration: const Duration(milliseconds: 500),
-                child: GestureDetector(
-                  onTap: () => menuController.isOpen
-                      ? menuController.close()
-                      : menuController.open(),
-                  child: HighlightBox(
-                    highlighted: highlighted,
-                    borderRadius: const BorderRadius.horizontal(
-                      right: Radius.circular(5),
-                    ),
-                    padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-                    child: const FaIcon(FontAwesomeIcons.angleDown, size: 12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 4,
+                    children: [
+                      FaIcon(
+                        widget.icon,
+                        color: widget.color,
+                        size: 16,
+                        shadows: widget.iconShadows,
+                      ),
+                      ?widget.trailing,
+                    ],
                   ),
                 ),
               ),
             ),
+            _buildSecondary(highlighted: highlighted),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSecondary({required bool highlighted}) {
+    final dropdown = widget.dropdown;
+    final button = Tooltip(
+      message: widget.secondaryTooltip ?? '${widget.tooltip} options',
+      waitDuration: const Duration(milliseconds: 500),
+      child: GestureDetector(
+        onTap: dropdown == null
+            ? widget.onSecondaryPressed
+            : () => menuController.isOpen
+                  ? menuController.close()
+                  : menuController.open(),
+        child: HighlightBox(
+          highlighted: highlighted,
+          borderRadius: const BorderRadius.horizontal(
+            right: Radius.circular(5),
+          ),
+          padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+          child: Opacity(
+            opacity: hovered || !widget.secondaryOnHover ? 1 : 0,
+            child: FaIcon(widget.secondaryIcon, size: 12),
+          ),
+        ),
+      ),
+    );
+    if (dropdown == null) return button;
+    return MenuAnchor(
+      controller: menuController,
+      alignmentOffset: const Offset(0, 4),
+      menuChildren: [dropdown],
+      child: button,
     );
   }
 }

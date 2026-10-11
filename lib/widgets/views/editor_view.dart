@@ -37,6 +37,8 @@ import '../components/ribbon_section.dart';
 import '../components/side_panel.dart';
 import '../components/swatch_grid.dart';
 import '../components/timeline.dart';
+import '../components/tool_icons.dart';
+import '../components/tool_preset_list.dart';
 
 class EditorView extends StatefulWidget {
   const EditorView({
@@ -149,16 +151,6 @@ class _EditorViewState extends State<EditorView> {
     if (color != null) controller.selectColor(color);
   }
 
-  List<List<Color?>> _recentSwatches() => [
-    for (var index = 0; index < EditorController.recentColorLimit; index++)
-      [
-        if (index < controller.recentColors.length)
-          Color(controller.recentColors[index].argb)
-        else
-          null,
-      ],
-  ];
-
   List<List<Color>> _toColors(List<List<PixelColor>> palette) => [
     for (final row in palette) [for (final color in row) Color(color.argb)],
   ];
@@ -192,13 +184,13 @@ class _EditorViewState extends State<EditorView> {
             children: [
               const Text('Tip:'),
               PaintIconButton(
-                icon: FontAwesomeIcons.square,
+                icon: tipIcon(tip: BrushTip.square),
                 tooltip: 'Square tip',
                 selected: controller.penTip == BrushTip.square,
                 onPressed: () => controller.setPenTip(BrushTip.square),
               ),
               PaintIconButton(
-                icon: FontAwesomeIcons.circle,
+                icon: tipIcon(tip: BrushTip.circle),
                 tooltip: 'Circle tip',
                 selected: controller.penTip == BrushTip.circle,
                 onPressed: () => controller.setPenTip(BrushTip.circle),
@@ -211,12 +203,11 @@ class _EditorViewState extends State<EditorView> {
   }
 
   Widget _shapeButton({
-    required FaIconData icon,
     required ToolKind toolKind,
     required EditorShortcut shortcut,
   }) {
     return PaintSplitButton(
-      icon: icon,
+      icon: toolIcon(kind: toolKind),
       tooltip: toolKind.label,
       shortcut: shortcut.keys,
       color: PaintStyle.shapeColor,
@@ -406,7 +397,11 @@ class _EditorViewState extends State<EditorView> {
     }
     final shortcut = EditorShortcut.matching(event);
     if (shortcut == null) return KeyEventResult.ignored;
-    _shortcutActions[shortcut]!();
+    if (shortcut == EditorShortcut.toolPreset) {
+      controller.applyToolPreset(index: shortcut.activatorIndex(event));
+    } else {
+      _shortcutActions[shortcut]!();
+    }
     return KeyEventResult.handled;
   }
 
@@ -635,7 +630,7 @@ class _EditorViewState extends State<EditorView> {
                               icon: FontAwesomeIcons.download,
                               tooltip: 'Export as ${exportFormat.label}',
                               shortcut: EditorShortcut.export.keys,
-                              dropdownTooltip: 'Export formats',
+                              secondaryTooltip: 'Export formats',
                               onPressed: () => _export(exportFormat),
                               dropdown: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -746,7 +741,7 @@ class _EditorViewState extends State<EditorView> {
                         RibbonColumn(
                           children: [
                             PaintSplitButton(
-                              icon: FontAwesomeIcons.pencil,
+                              icon: toolIcon(kind: ToolKind.pen),
                               tooltip: 'Pen',
                               shortcut: EditorShortcut.pen.keys,
                               color: PaintStyle.penColor,
@@ -756,7 +751,7 @@ class _EditorViewState extends State<EditorView> {
                               dropdown: _penDropdown(),
                             ),
                             PaintSplitButton(
-                              icon: FontAwesomeIcons.eraser,
+                              icon: toolIcon(kind: ToolKind.eraser),
                               tooltip: 'Eraser',
                               shortcut: EditorShortcut.eraser.keys,
                               color: PaintStyle.eraserColor,
@@ -773,7 +768,7 @@ class _EditorViewState extends State<EditorView> {
                         RibbonColumn(
                           children: [
                             PaintIconButton(
-                              icon: FontAwesomeIcons.fill,
+                              icon: toolIcon(kind: ToolKind.bucketFill),
                               tooltip: 'Fill',
                               shortcut: EditorShortcut.fill.keys,
                               color: PaintStyle.fillColor,
@@ -783,7 +778,7 @@ class _EditorViewState extends State<EditorView> {
                                   controller.selectTool(ToolKind.bucketFill),
                             ),
                             PaintIconButton(
-                              icon: FontAwesomeIcons.eyeDropper,
+                              icon: toolIcon(kind: ToolKind.colorPicker),
                               tooltip: 'Color picker',
                               shortcut: EditorShortcut.colorPicker.keys,
                               color: PaintStyle.colorPickerColor,
@@ -797,7 +792,7 @@ class _EditorViewState extends State<EditorView> {
                         RibbonColumn(
                           children: [
                             PaintIconButton(
-                              icon: FontAwesomeIcons.borderTopLeft,
+                              icon: toolIcon(kind: ToolKind.select),
                               tooltip: 'Select',
                               shortcut: EditorShortcut.select.keys,
                               selected: controller.toolKind == ToolKind.select,
@@ -814,12 +809,10 @@ class _EditorViewState extends State<EditorView> {
                         RibbonColumn(
                           children: [
                             _shapeButton(
-                              icon: FontAwesomeIcons.slash,
                               toolKind: ToolKind.line,
                               shortcut: EditorShortcut.line,
                             ),
                             _shapeButton(
-                              icon: FontAwesomeIcons.square,
                               toolKind: ToolKind.rectangle,
                               shortcut: EditorShortcut.rectangle,
                             ),
@@ -828,12 +821,10 @@ class _EditorViewState extends State<EditorView> {
                         RibbonColumn(
                           children: [
                             _shapeButton(
-                              icon: FontAwesomeIcons.circle,
                               toolKind: ToolKind.circle,
                               shortcut: EditorShortcut.circle,
                             ),
                             _shapeButton(
-                              icon: FontAwesomeIcons.arrowRight,
                               toolKind: ToolKind.arrow,
                               shortcut: EditorShortcut.arrow,
                             ),
@@ -873,13 +864,6 @@ class _EditorViewState extends State<EditorView> {
                         Center(
                           child: SwatchGrid(
                             colors: _toColors(huePalette),
-                            onSelect: _selectColor,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Center(
-                          child: SwatchGrid(
-                            colors: _recentSwatches(),
                             onSelect: _selectColor,
                           ),
                         ),
@@ -1016,7 +1000,20 @@ class _EditorViewState extends State<EditorView> {
                   ],
                 ),
               ),
-              const Spacer(),
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: ToolPresetList(
+                    presets: controller.toolPresets,
+                    lockedCount: widget.document.toolPresets.locked.length,
+                    selected: controller.toolPreset,
+                    onApply: (index) =>
+                        controller.applyToolPreset(index: index),
+                    onLockChanged: controller.setToolPresetLocked,
+                  ),
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: NumericValueRange(

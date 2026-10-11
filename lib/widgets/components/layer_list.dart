@@ -75,7 +75,7 @@ class LayerList extends StatelessWidget {
         PaintSplitButton(
           icon: item.visible ? FontAwesomeIcons.eye : FontAwesomeIcons.eyeSlash,
           tooltip: item.visible ? 'Hide layer' : 'Show layer',
-          dropdownTooltip: 'Layer opacity',
+          secondaryTooltip: 'Layer opacity',
           onPressed: () =>
               onVisibilityChanged(index: index, visible: !item.visible),
           dropdown: NumericValueRange(

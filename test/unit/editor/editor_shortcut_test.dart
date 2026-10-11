@@ -22,6 +22,11 @@ void main() {
           const expected = 'Alt';
           expect(actual, equals(expected));
         });
+        test('keys label', () {
+          final actual = EditorShortcut.toolPreset.keys;
+          const expected = '1–9';
+          expect(actual, equals(expected));
+        });
         test('all shortcuts', () {
           final actual = [
             for (final shortcut in EditorShortcut.values) shortcut.keys,
@@ -47,6 +52,7 @@ void main() {
             'R',
             'O',
             'A',
+            '1–9',
             '[',
             ']',
             'X',
@@ -181,6 +187,65 @@ void main() {
       });
     });
 
+    group('method activatorIndex', () {
+      group('activators', () {
+        testWidgets('first', (tester) async {
+          int? actual;
+          await tester.pumpWidget(
+            Focus(
+              autofocus: true,
+              onKeyEvent: (node, event) {
+                if (event is KeyDownEvent) {
+                  actual = EditorShortcut.toolPreset.activatorIndex(event);
+                }
+                return KeyEventResult.handled;
+              },
+              child: const SizedBox(),
+            ),
+          );
+          await tester.sendKeyEvent(LogicalKeyboardKey.digit1);
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+        testWidgets('last', (tester) async {
+          int? actual;
+          await tester.pumpWidget(
+            Focus(
+              autofocus: true,
+              onKeyEvent: (node, event) {
+                if (event is KeyDownEvent) {
+                  actual = EditorShortcut.toolPreset.activatorIndex(event);
+                }
+                return KeyEventResult.handled;
+              },
+              child: const SizedBox(),
+            ),
+          );
+          await tester.sendKeyEvent(LogicalKeyboardKey.digit9);
+          const expected = 8;
+          expect(actual, equals(expected));
+        });
+        testWidgets('none', (tester) async {
+          int? actual;
+          await tester.pumpWidget(
+            Focus(
+              autofocus: true,
+              onKeyEvent: (node, event) {
+                if (event is KeyDownEvent) {
+                  actual = EditorShortcut.toolPreset.activatorIndex(event);
+                }
+                return KeyEventResult.handled;
+              },
+              child: const SizedBox(),
+            ),
+          );
+          await tester.sendKeyEvent(LogicalKeyboardKey.digit0);
+          const expected = -1;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method matching', () {
       group('match', () {
         testWidgets('plain key', (tester) async {
@@ -239,6 +304,24 @@ void main() {
           );
           await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
           const expected = EditorShortcut.deleteSelection;
+          expect(actual, equals(expected));
+        });
+        testWidgets('digit', (tester) async {
+          EditorShortcut? actual;
+          await tester.pumpWidget(
+            Focus(
+              autofocus: true,
+              onKeyEvent: (node, event) {
+                if (event is KeyDownEvent) {
+                  actual = EditorShortcut.matching(event);
+                }
+                return KeyEventResult.handled;
+              },
+              child: const SizedBox(),
+            ),
+          );
+          await tester.sendKeyEvent(LogicalKeyboardKey.digit5);
+          const expected = EditorShortcut.toolPreset;
           expect(actual, equals(expected));
         });
       });
