@@ -6,6 +6,8 @@ import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/editor/pointer_button.dart';
+import 'package:paint/editor/pointer_preview.dart';
+import 'package:paint/widgets/components/chess_grid.dart';
 import 'package:paint/widgets/components/pixel_canvas.dart';
 
 import '../../../support/hover.dart';
@@ -23,6 +25,7 @@ void main() {
                 height: 2,
                 zoom: 4,
                 layers: const [],
+                pointerPreview: PointerPreview.sized(width: 3, height: 2),
                 onPointerDown: ({required point, required button}) {},
                 onPointerMove: ({required point}) {},
                 onPointerUp: ({required point}) {},
@@ -47,6 +50,7 @@ void main() {
                 height: 2,
                 zoom: 4,
                 layers: [CanvasLayer(image: layer)],
+                pointerPreview: PointerPreview.sized(width: 3, height: 2),
                 onPointerDown: ({required point, required button}) {},
                 onPointerMove: ({required point}) {},
                 onPointerUp: ({required point}) {},
@@ -71,6 +75,85 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
+        testWidgets('pointer preview', (tester) async {
+          final layer = Layer.filled(
+            width: 3,
+            height: 2,
+            color: PixelColor.black,
+          );
+          final pointerPreview = PointerPreview.sized(width: 3, height: 2);
+          await tester.pumpWidget(
+            Center(
+              child: PixelCanvas(
+                width: 3,
+                height: 2,
+                zoom: 4,
+                layers: [CanvasLayer(image: layer)],
+                pointerPreview: pointerPreview,
+                onPointerDown: ({required point, required button}) {},
+                onPointerMove: ({required point}) {},
+                onPointerUp: ({required point}) {},
+                onPointerExit: () {},
+              ),
+            ),
+          );
+          final pointerPreviewPainter = tester
+              .widgetList<CustomPaint>(
+                find.descendant(
+                  of: find.byType(PixelCanvas),
+                  matching: find.byType(CustomPaint),
+                ),
+              )
+              .map((customPaint) => customPaint.foregroundPainter)
+              .whereType<PointerPreviewPainter>()
+              .single;
+          final actual = [
+            identical(pointerPreviewPainter.preview, pointerPreview),
+            pointerPreviewPainter.zoom,
+          ];
+          const expected = [true, 4];
+          expect(actual, equals(expected));
+        });
+        testWidgets('repaint boundaries', (tester) async {
+          final layer = Layer.filled(
+            width: 3,
+            height: 2,
+            color: PixelColor.black,
+          );
+          final pointerPreview = PointerPreview.sized(width: 3, height: 2);
+          await tester.pumpWidget(
+            Center(
+              child: PixelCanvas(
+                width: 3,
+                height: 2,
+                zoom: 4,
+                layers: [CanvasLayer(image: layer)],
+                pointerPreview: pointerPreview,
+                onPointerDown: ({required point, required button}) {},
+                onPointerMove: ({required point}) {},
+                onPointerUp: ({required point}) {},
+                onPointerExit: () {},
+              ),
+            ),
+          );
+          final actual = [
+            for (final repaintBoundary in tester.widgetList<RepaintBoundary>(
+              find.descendant(
+                of: find.byType(PixelCanvas),
+                matching: find.byType(RepaintBoundary),
+              ),
+            ))
+              if (repaintBoundary.child case final CustomPaint customPaint)
+                (customPaint.painter ?? customPaint.foregroundPainter)
+                    .runtimeType,
+          ];
+          const expected = [
+            ChessGridPainter,
+            PixelLayersPainter,
+            PointerPreviewPainter,
+          ];
+          expect(actual, equals(expected));
+        });
       });
     });
 
@@ -85,6 +168,7 @@ void main() {
                 height: 2,
                 zoom: 4,
                 layers: const [],
+                pointerPreview: PointerPreview.sized(width: 3, height: 2),
                 onPointerDown: ({required point, required button}) =>
                     events.add(['down', point, button]),
                 onPointerMove: ({required point}) =>
@@ -112,6 +196,7 @@ void main() {
                 height: 2,
                 zoom: 4,
                 layers: const [],
+                pointerPreview: PointerPreview.sized(width: 3, height: 2),
                 onPointerDown: ({required point, required button}) =>
                     events.add(['down', point, button]),
                 onPointerMove: ({required point}) =>
@@ -146,6 +231,7 @@ void main() {
                 height: 2,
                 zoom: 4,
                 layers: const [],
+                pointerPreview: PointerPreview.sized(width: 3, height: 2),
                 onPointerDown: ({required point, required button}) =>
                     events.add(['down', point, button]),
                 onPointerMove: ({required point}) =>
@@ -178,6 +264,7 @@ void main() {
                 height: 2,
                 zoom: 4,
                 layers: const [],
+                pointerPreview: PointerPreview.sized(width: 3, height: 2),
                 onPointerDown: ({required point, required button}) =>
                     events.add(['down', point, button]),
                 onPointerMove: ({required point}) =>
@@ -206,6 +293,7 @@ void main() {
                 height: 2,
                 zoom: 4,
                 layers: const [],
+                pointerPreview: PointerPreview.sized(width: 3, height: 2),
                 onPointerDown: ({required point, required button}) =>
                     events.add(['down', point, button]),
                 onPointerMove: ({required point}) =>
@@ -239,6 +327,7 @@ void main() {
                 height: 2,
                 zoom: 4,
                 layers: const [],
+                pointerPreview: PointerPreview.sized(width: 3, height: 2),
                 onPointerDown: ({required point, required button}) =>
                     events.add(['down', point, button]),
                 onPointerMove: ({required point}) =>
@@ -255,6 +344,49 @@ void main() {
             ['move', PixelPoint(x: 1, y: 1)],
             ['exit'],
           ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('lifecycle', () {
+      group('dispose', () {
+        testWidgets('unmounted', (tester) async {
+          final layer = Layer.filled(
+            width: 3,
+            height: 2,
+            color: PixelColor.black,
+          );
+          final pointerPreview = PointerPreview.sized(width: 3, height: 2);
+          await tester.pumpWidget(
+            Center(
+              child: PixelCanvas(
+                width: 3,
+                height: 2,
+                zoom: 4,
+                layers: [CanvasLayer(image: layer)],
+                pointerPreview: pointerPreview,
+                onPointerDown: ({required point, required button}) {},
+                onPointerMove: ({required point}) {},
+                onPointerUp: ({required point}) {},
+                onPointerExit: () {},
+              ),
+            ),
+          );
+          final pixelLayersPainter = tester
+              .widgetList<CustomPaint>(
+                find.descendant(
+                  of: find.byType(PixelCanvas),
+                  matching: find.byType(CustomPaint),
+                ),
+              )
+              .map((customPaint) => customPaint.foregroundPainter)
+              .whereType<PixelLayersPainter>()
+              .single;
+          final tiles = pixelLayersPainter.imageCache.tilesOf(layer);
+          await tester.pumpWidget(const SizedBox());
+          final actual = tiles.single.image.debugDisposed;
+          const expected = true;
           expect(actual, equals(expected));
         });
       });

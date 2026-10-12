@@ -18,6 +18,7 @@ import 'history/layer_snapshot.dart';
 import 'history/pixel_history_entry.dart';
 import 'history/structure_history_entry.dart';
 import 'pointer_button.dart';
+import 'pointer_preview.dart';
 import 'selection/selection.dart';
 import 'tools/brush_tip.dart';
 import 'tools/bucket_fill.dart';
@@ -32,24 +33,23 @@ import 'tools/tool_preset.dart';
 class EditorController extends ChangeNotifier {
   EditorController({
     required this.document,
-    required this.pointerLayer,
+    required this.pointerPreview,
     required this.history,
   });
 
   factory EditorController.forDocument({required Document document}) {
     return EditorController(
       document: document,
-      pointerLayer: Layer.filled(
+      pointerPreview: PointerPreview.sized(
         width: document.width,
         height: document.height,
-        color: PixelColor.transparent,
       ),
       history: History.forDocument(document: document),
     );
   }
 
   final Document document;
-  final Layer pointerLayer;
+  final PointerPreview pointerPreview;
   final History history;
 
   var _toolKind = ToolKind.pen;
@@ -62,12 +62,10 @@ class EditorController extends ChangeNotifier {
   var _primaryColor = PixelColor.black;
   var _secondaryColor = PixelColor.white;
   var _editingPrimary = true;
-  PixelPoint? _cursor;
   PixelPoint? _strokeOrigin;
   PixelPoint? _strokePoint;
   var _strokeColor = PixelColor.black;
   var _strokeButton = PointerButton.primary;
-  var _pointerArea = _noArea;
   Layer? _strokeBefore;
   var _strokeName = '';
   var _selectionOrigin = const PixelPoint(x: 0, y: 0);
@@ -79,6 +77,8 @@ class EditorController extends ChangeNotifier {
   var _playing = false;
   var _onionSkin = const OnionSkin();
   var _colorPickerHeld = false;
+  final _strokeProgress = _StrokeProgress();
+  late final layersChanged = Listenable.merge([this, _strokeProgress]);
 
   static const _noArea = PixelRectangle(left: 0, top: 0, width: 0, height: 0);
   static const minimumToolSize = ToolPreset.minimumSize;
@@ -86,6 +86,13 @@ class EditorController extends ChangeNotifier {
   static const defaultZoom = 4;
   static const minimumZoom = 1;
   static const maximumZoom = 100;
+
+  @override
+  void dispose() {
+    pointerPreview.dispose();
+    _strokeProgress.dispose();
+    super.dispose();
+  }
 
   ToolKind get toolKind => _toolKind;
   int get penSize => _penSize;
@@ -96,14 +103,16 @@ class EditorController extends ChangeNotifier {
   PixelColor get primaryColor => _primaryColor;
   PixelColor get secondaryColor => _secondaryColor;
   bool get editingPrimary => _editingPrimary;
-  PixelPoint? get cursor => _cursor;
+  Layer get pointerLayer => pointerPreview.layer;
+  PixelPoint? get cursor => pointerPreview.cursor;
   List<ToolPreset> get toolPresets => document.toolPresets.all;
   ToolPreset? get toolPreset => _presetWith(color: _primaryColor);
   PixelRectangle? get selectionArea => _selectingArea ?? _selection?.area;
   bool get hasSelection => _selection != null;
+  bool get drawsPointer => _tool != null;
   Layer? get selectionContent => _selection?.content;
   bool get pointerOverSelection {
-    final cursor = _cursor;
+    final cursor = pointerPreview.cursor;
     final selection = _selection;
     return cursor != null &&
         selection != null &&
@@ -145,7 +154,6 @@ class EditorController extends ChangeNotifier {
       ),
     for (var index = 0; index < document.layers.length; index++)
       ..._onionSkinLayers(index: index),
-    CanvasLayer(image: pointerLayer),
   ];
 
   List<CanvasLayer> _onionSkinLayers({required int index}) {
@@ -687,7 +695,7 @@ class EditorController extends ChangeNotifier {
   void pointerMove({required PixelPoint point}) {
     final strokePoint = _strokePoint;
     if (strokePoint == null) {
-      _movePointer(point: point, color: _primaryColor);
+      _redrawPointer(point: point, color: _primaryColor);
       return;
     }
     _sampleColor(point: point);
@@ -702,7 +710,12 @@ class EditorController extends ChangeNotifier {
     );
     if (altered != null) _strokeArea = _strokeArea.union(altered);
     _strokePoint = point;
-    _movePointer(point: point, color: _strokeColor);
+    _redrawPointer(point: point, color: _strokeColor);
+    if (_toolKind == ToolKind.colorPicker) {
+      notifyListeners();
+    } else {
+      _strokeProgress.advance();
+    }
   }
 
   void pointerUp({required PixelPoint point}) {
@@ -724,11 +737,7 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void pointerExit() {
-    _clearPointer();
-    _cursor = null;
-    notifyListeners();
-  }
+  void pointerExit() => pointerPreview.clear();
 
   void selectAll() {
     if (_strokePoint != null) return;
@@ -914,17 +923,10 @@ class EditorController extends ChangeNotifier {
   }
 
   void _redrawPointer({required PixelPoint point, required PixelColor color}) {
-    _clearPointer();
-    _pointerArea =
-        _tool?.drawPointer(layer: pointerLayer, point: point, color: color) ??
-        _noArea;
-    _cursor = document.activeLayer.contains(point) ? point : null;
+    pointerPreview.draw(tool: _tool, point: point, color: color);
   }
+}
 
-  void _clearPointer() {
-    pointerLayer.fillRectangle(
-      rectangle: _pointerArea,
-      color: PixelColor.transparent,
-    );
-  }
+class _StrokeProgress extends ChangeNotifier {
+  void advance() => notifyListeners();
 }

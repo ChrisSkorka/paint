@@ -305,6 +305,7 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] pen ribbon: split size & tip into own ribbon
 - [ ] ribbon between shapes & colors
 - [ ] pen, eraser, and shapes use same settings
+- [ ] tool pointer works for all tools
 - [ ] transparency mode for transparent color & selections?
 
 ### phase 7.2: shape tools
@@ -337,8 +338,14 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 8.1: performance
 
-- [ ] check memory consumption & performance of history stack
+- [x] FPS on larger canvases
   - a 4096*4096 canvas is unusable
+  - Layer image cache
+  - Checkerboard improvements
+  - Hover & tool preview move into own render layer
+  - While drawing, only paint canvas
+- [x] Hide system cursor
+- [ ] check memory consumption & performance of history stack
 - [ ] history stack memory management
   - [ ] stack limit
   - [ ] or progressive history item merging

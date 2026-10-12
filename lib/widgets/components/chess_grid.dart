@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
 import 'paint_style.dart';
@@ -5,24 +7,35 @@ import 'paint_style.dart';
 class ChessGridPainter extends CustomPainter {
   const ChessGridPainter();
 
+  static final pattern = _drawPattern();
+  static final shader = ImageShader(
+    pattern,
+    TileMode.repeated,
+    TileMode.repeated,
+    Matrix4.identity().storage,
+    filterQuality: FilterQuality.none,
+  );
+
+  static ui.Image _drawPattern() {
+    const cell = PaintStyle.chessCellSize;
+    final dark = Paint()..color = PaintStyle.chessDark;
+    final recorder = ui.PictureRecorder();
+    Canvas(recorder)
+      ..drawRect(
+        const Rect.fromLTWH(0, 0, cell * 2, cell * 2),
+        Paint()..color = PaintStyle.chessLight,
+      )
+      ..drawRect(const Rect.fromLTWH(0, 0, cell, cell), dark)
+      ..drawRect(const Rect.fromLTWH(cell, cell, cell, cell), dark);
+    final picture = recorder.endRecording();
+    final image = picture.toImageSync((cell * 2).toInt(), (cell * 2).toInt());
+    picture.dispose();
+    return image;
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = PaintStyle.chessLight);
-    final dark = Paint()..color = PaintStyle.chessDark;
-    const cell = PaintStyle.chessCellSize;
-    for (var y = 0; y * cell < size.height; y++) {
-      for (var x = y % 2; x * cell < size.width; x += 2) {
-        canvas.drawRect(
-          Rect.fromLTWH(
-            x * cell,
-            y * cell,
-            cell,
-            cell,
-          ).intersect(Offset.zero & size),
-          dark,
-        );
-      }
-    }
+    canvas.drawRect(Offset.zero & size, Paint()..shader = shader);
   }
 
   @override

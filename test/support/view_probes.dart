@@ -6,11 +6,12 @@ import 'package:paint/widgets/components/pixel_canvas.dart';
 
 Size? canvasSize(WidgetTester tester) => tester
     .widget<CustomPaint>(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is CustomPaint &&
-            widget.painter is ChessGridPainter &&
-            widget.foregroundPainter is PixelLayersPainter,
+      find.descendant(
+        of: find.byType(PixelCanvas),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is CustomPaint && widget.painter is ChessGridPainter,
+        ),
       ),
     )
     .size;

@@ -245,6 +245,12 @@ class _EditorViewState extends State<EditorView> {
   VoidCallback? _whenSelected(VoidCallback action) =>
       controller.hasSelection ? action : null;
 
+  MouseCursor _canvasCursor() {
+    if (controller.pointerOverSelection) return SystemMouseCursors.move;
+    if (controller.drawsPointer) return SystemMouseCursors.none;
+    return SystemMouseCursors.precise;
+  }
+
   String _cursorText() {
     final cursor = controller.cursor;
     return cursor == null ? '-' : '${cursor.x}, ${cursor.y}';
@@ -482,19 +488,22 @@ class _EditorViewState extends State<EditorView> {
                     decoration: const BoxDecoration(
                       boxShadow: PaintStyle.faintShadow,
                     ),
-                    child: PixelCanvas(
-                      width: widget.document.width,
-                      height: widget.document.height,
-                      zoom: controller.zoom,
-                      layers: controller.canvasLayers,
-                      onPointerDown: _pointerDown,
-                      onPointerMove: controller.pointerMove,
-                      onPointerUp: controller.pointerUp,
-                      onPointerExit: controller.pointerExit,
-                      selection: controller.selectionArea,
-                      cursor: controller.pointerOverSelection
-                          ? SystemMouseCursors.move
-                          : SystemMouseCursors.precise,
+                    child: ListenableBuilder(
+                      listenable: controller.pointerPreview,
+                      builder: (context, _) => PixelCanvas(
+                        width: widget.document.width,
+                        height: widget.document.height,
+                        zoom: controller.zoom,
+                        layers: controller.canvasLayers,
+                        pointerPreview: controller.pointerPreview,
+                        layersChanged: controller.layersChanged,
+                        onPointerDown: _pointerDown,
+                        onPointerMove: controller.pointerMove,
+                        onPointerUp: controller.pointerUp,
+                        onPointerExit: controller.pointerExit,
+                        selection: controller.selectionArea,
+                        cursor: _canvasCursor(),
+                      ),
                     ),
                   ),
                 ),
@@ -1030,11 +1039,14 @@ class _EditorViewState extends State<EditorView> {
             children: [
               _buildStatusSection(
                 icon: FontAwesomeIcons.arrowPointer,
-                child: StableText(
-                  text: _cursorText(),
-                  alternatives: [
-                    '${widget.document.width - 1}, ${widget.document.height - 1}',
-                  ],
+                child: ListenableBuilder(
+                  listenable: controller.pointerPreview,
+                  builder: (context, _) => StableText(
+                    text: _cursorText(),
+                    alternatives: [
+                      '${widget.document.width - 1}, ${widget.document.height - 1}',
+                    ],
+                  ),
                 ),
               ),
               _buildStatusSection(

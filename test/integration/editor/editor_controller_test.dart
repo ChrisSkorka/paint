@@ -1,5 +1,4 @@
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/canvas_layer.dart';
 import 'package:paint/editor/canvas/document.dart';
@@ -70,16 +69,13 @@ void main() {
 
     group('getter canvasLayers', () {
       group('layers', () {
-        test('document then pointer', () {
+        test('document layer', () {
           final document = Document.blank(width: 3, height: 2);
           final editorController = EditorController.forDocument(
             document: document,
           );
           final actual = editorController.canvasLayers;
-          final expected = [
-            CanvasLayer(image: document.activeLayer),
-            CanvasLayer(image: editorController.pointerLayer),
-          ];
+          final expected = [CanvasLayer(image: document.activeLayer)];
           expect(actual, equals(expected));
         });
       });
@@ -113,7 +109,6 @@ void main() {
             CanvasLayer(
               image: Layer.filled(width: 1, height: 1, color: PixelColor.black),
             ),
-            CanvasLayer(image: editorController.pointerLayer),
           ];
           expect(actual, equals(expected));
         });
@@ -141,7 +136,6 @@ void main() {
               image: Layer.filled(width: 1, height: 1, color: PixelColor.white),
               opacity: 0,
             ),
-            CanvasLayer(image: editorController.pointerLayer),
           ];
           expect(actual, equals(expected));
         });
@@ -167,7 +161,6 @@ void main() {
                 [green],
               ]),
             ),
-            CanvasLayer(image: editorController.pointerLayer),
           ];
           expect(actual, equals(expected));
         });
@@ -193,7 +186,6 @@ void main() {
                 [green],
               ]),
             ),
-            CanvasLayer(image: editorController.pointerLayer),
           ];
           expect(actual, equals(expected));
         });
@@ -231,7 +223,6 @@ void main() {
               opacity: 50,
               tint: OnionSkin.nextTint,
             ),
-            CanvasLayer(image: editorController.pointerLayer),
           ];
           expect(actual, equals(expected));
         });
@@ -262,7 +253,6 @@ void main() {
               opacity: 50,
               tint: OnionSkin.previousTint,
             ),
-            CanvasLayer(image: editorController.pointerLayer),
           ];
           expect(actual, equals(expected));
         });
@@ -293,7 +283,6 @@ void main() {
               opacity: 50,
               tint: OnionSkin.nextTint,
             ),
-            CanvasLayer(image: editorController.pointerLayer),
           ];
           expect(actual, equals(expected));
         });
@@ -345,7 +334,6 @@ void main() {
               opacity: 50,
               tint: OnionSkin.nextTint,
             ),
-            CanvasLayer(image: editorController.pointerLayer),
           ];
           expect(actual, equals(expected));
         });
@@ -376,7 +364,6 @@ void main() {
               opacity: 50,
               tint: OnionSkin.nextTint,
             ),
-            CanvasLayer(image: editorController.pointerLayer),
           ];
           expect(actual, equals(expected));
         });
@@ -408,7 +395,6 @@ void main() {
               opacity: 50,
               tint: OnionSkin.previousTint,
             ),
-            CanvasLayer(image: editorController.pointerLayer),
           ];
           expect(actual, equals(expected));
         });
@@ -441,7 +427,6 @@ void main() {
               opacity: 25,
               tint: OnionSkin.previousTint,
             ),
-            CanvasLayer(image: editorController.pointerLayer),
           ];
           expect(actual, equals(expected));
         });
@@ -461,7 +446,6 @@ void main() {
                 [white],
               ]),
             ),
-            CanvasLayer(image: editorController.pointerLayer),
           ];
           expect(actual, equals(expected));
         });
@@ -486,7 +470,6 @@ void main() {
                 [green],
               ]),
             ),
-            CanvasLayer(image: editorController.pointerLayer),
           ];
           expect(actual, equals(expected));
         });
@@ -506,7 +489,6 @@ void main() {
                 [white],
               ]),
             ),
-            CanvasLayer(image: editorController.pointerLayer),
           ];
           expect(actual, equals(expected));
         });
@@ -572,7 +554,6 @@ void main() {
               opacity: 50,
               tint: OnionSkin.nextTint,
             ),
-            CanvasLayer(image: editorController.pointerLayer),
           ];
           expect(actual, equals(expected));
         });
@@ -636,7 +617,6 @@ void main() {
               opacity: 50,
               tint: OnionSkin.nextTint,
             ),
-            CanvasLayer(image: editorController.pointerLayer),
           ];
           expect(actual, equals(expected));
         });
@@ -663,7 +643,6 @@ void main() {
                 [red],
               ]),
             ),
-            CanvasLayer(image: editorController.pointerLayer),
           ];
           expect(actual, equals(expected));
         });
@@ -5112,7 +5091,7 @@ void main() {
             document: document,
           );
           var notifications = 0;
-          editorController.addListener(() => notifications++);
+          editorController.pointerPreview.addListener(() => notifications++);
           editorController.pointerMove(point: const PixelPoint(x: 1, y: 0));
           final actual = [
             pixelRows(document.activeLayer),
@@ -5212,13 +5191,18 @@ void main() {
             point: const PixelPoint(x: 0, y: 0),
             button: PointerButton.primary,
           );
-          var notifications = 0;
-          editorController.addListener(() => notifications++);
+          var editorNotifications = 0;
+          var layerNotifications = 0;
+          editorController.addListener(() => editorNotifications++);
+          editorController.layersChanged.addListener(
+            () => layerNotifications++,
+          );
           editorController.pointerMove(point: const PixelPoint(x: 2, y: 0));
           final actual = [
             pixelRows(document.activeLayer),
             pixelRows(editorController.pointerLayer),
-            notifications,
+            editorNotifications,
+            layerNotifications,
           ];
           const expected = [
             [
@@ -5227,6 +5211,7 @@ void main() {
             [
               [transparent, transparent, black, transparent],
             ],
+            0,
             1,
           ];
           expect(actual, equals(expected));
@@ -5392,6 +5377,22 @@ void main() {
           const expected = [PixelColor.black, PixelColor.white];
           expect(actual, equals(expected));
         });
+        test('color picker notifications', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.selectTool(ToolKind.colorPicker);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 0));
+          final actual = notifications;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
       });
     });
 
@@ -5415,7 +5416,7 @@ void main() {
             [
               [black, transparent, transparent],
             ],
-            2,
+            1,
           ];
           expect(actual, equals(expected));
         });
@@ -6154,6 +6155,81 @@ void main() {
           editorController.selectTool(ToolKind.pen);
           final actual = editorController.selectionArea;
           const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter drawsPointer', () {
+      group('tools', () {
+        test('pen', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 1, height: 1),
+          );
+          final actual = editorController.drawsPointer;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        test('select', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 1, height: 1),
+          );
+          editorController.selectTool(ToolKind.select);
+          final actual = editorController.drawsPointer;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('color picker', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 1, height: 1),
+          );
+          editorController.selectTool(ToolKind.colorPicker);
+          final actual = editorController.drawsPointer;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter layersChanged', () {
+      group('pointer', () {
+        test('hover', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          var notifications = 0;
+          editorController.layersChanged.addListener(() => notifications++);
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 0));
+          final actual = notifications;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+        test('stroke move', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          var notifications = 0;
+          editorController.layersChanged.addListener(() => notifications++);
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 0));
+          final actual = notifications;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+      });
+      group('editor', () {
+        test('editor change', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 1, height: 1),
+          );
+          var notifications = 0;
+          editorController.layersChanged.addListener(() => notifications++);
+          editorController.selectTool(ToolKind.eraser);
+          final actual = notifications;
+          const expected = 1;
           expect(actual, equals(expected));
         });
       });
@@ -7042,6 +7118,19 @@ void main() {
       });
     });
 
+    group('method dispose', () {
+      group('notifiers', () {
+        test('pointer preview', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 1, height: 1),
+          );
+          editorController.dispose();
+          void event() => editorController.pointerPreview.addListener(() {});
+          expect(event, throwsA(isA<FlutterError>()));
+        });
+      });
+    });
+
     group('method pointerExit', () {
       group('pointer', () {
         test('after hover', () {
@@ -7050,7 +7139,7 @@ void main() {
           );
           editorController.pointerMove(point: const PixelPoint(x: 1, y: 0));
           var notifications = 0;
-          editorController.addListener(() => notifications++);
+          editorController.pointerPreview.addListener(() => notifications++);
           editorController.pointerExit();
           final actual = [
             pixelRows(editorController.pointerLayer),

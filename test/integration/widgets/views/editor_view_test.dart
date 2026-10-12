@@ -1651,6 +1651,53 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('canvas cursor', () {
+        testWidgets('pen', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await hoverOver(tester, find.byType(PixelCanvas));
+          final actual = tester
+              .widget<PixelCanvas>(find.byType(PixelCanvas))
+              .cursor;
+          const expected = SystemMouseCursors.none;
+          expect(actual, equals(expected));
+        });
+        testWidgets('color picker', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Color picker (I)'));
+          await tester.pump();
+          await hoverOver(tester, find.byType(PixelCanvas));
+          final actual = tester
+              .widget<PixelCanvas>(find.byType(PixelCanvas))
+              .cursor;
+          const expected = SystemMouseCursors.precise;
+          expect(actual, equals(expected));
+        });
+      });
+
       group('selection', () {
         testWidgets('select tool', (tester) async {
           useDesktopView(tester);
@@ -2714,7 +2761,7 @@ void main() {
           await tester.tap(find.byTooltip('Onion skinning (F3)'));
           await tester.pump();
           final actual = [before, canvasLayers(tester).length];
-          const expected = [3, 4];
+          const expected = [2, 3];
           expect(actual, equals(expected));
         });
         testWidgets('layer timeframe', (tester) async {
@@ -2864,7 +2911,7 @@ void main() {
           await tester.tap(find.byTooltip('Pause (Enter)'));
           await tester.pump();
           final actual = [playing, canvasLayers(tester).length];
-          const expected = [3, 4];
+          const expected = [2, 3];
           expect(actual, equals(expected));
         });
         testWidgets('drawing', (tester) async {
@@ -5863,7 +5910,7 @@ void main() {
               [100],
               0,
             ],
-            1,
+            0,
             [
               ['Start', 'Hide layer'],
               1,
@@ -5901,7 +5948,7 @@ void main() {
               [100],
               0,
             ],
-            2,
+            1,
             [
               ['Start', 'Hide layer', 'Show layer'],
               2,

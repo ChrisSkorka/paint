@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/widgets/components/chess_grid.dart';
 
+import '../../../support/image_probes.dart';
 import '../../../support/stub_canvas.dart';
 
 void main() {
@@ -13,30 +14,21 @@ void main() {
           const chessGridPainter = ChessGridPainter();
           final stubCanvas = StubCanvas();
           chessGridPainter.paint(stubCanvas, Size.zero);
-          final actual = stubCanvas.drawnRectangles;
-          const expected = [(Rect.fromLTRB(0, 0, 0, 0), 0xFFFFFFFF)];
+          final actual = [stubCanvas.drawnRectangles, stubCanvas.drawnShaders];
+          final expected = [
+            [(Rect.zero, 0xFF000000)],
+            [ChessGridPainter.shader],
+          ];
           expect(actual, equals(expected));
         });
         test('smaller than a cell', () {
           const chessGridPainter = ChessGridPainter();
           final stubCanvas = StubCanvas();
           chessGridPainter.paint(stubCanvas, const Size(4, 4));
-          final actual = stubCanvas.drawnRectangles;
-          const expected = [
-            (Rect.fromLTRB(0, 0, 4, 4), 0xFFFFFFFF),
-            (Rect.fromLTRB(0, 0, 4, 4), 0xFFDDDDDD),
-          ];
-          expect(actual, equals(expected));
-        });
-        test('whole cells', () {
-          const chessGridPainter = ChessGridPainter();
-          final stubCanvas = StubCanvas();
-          chessGridPainter.paint(stubCanvas, const Size(16, 16));
-          final actual = stubCanvas.drawnRectangles;
-          const expected = [
-            (Rect.fromLTRB(0, 0, 16, 16), 0xFFFFFFFF),
-            (Rect.fromLTRB(0, 0, 8, 8), 0xFFDDDDDD),
-            (Rect.fromLTRB(8, 8, 16, 16), 0xFFDDDDDD),
+          final actual = [stubCanvas.drawnRectangles, stubCanvas.drawnShaders];
+          final expected = [
+            [(const Rect.fromLTRB(0, 0, 4, 4), 0xFF000000)],
+            [ChessGridPainter.shader],
           ];
           expect(actual, equals(expected));
         });
@@ -44,12 +36,311 @@ void main() {
           const chessGridPainter = ChessGridPainter();
           final stubCanvas = StubCanvas();
           chessGridPainter.paint(stubCanvas, const Size(20, 10));
-          final actual = stubCanvas.drawnRectangles;
+          final actual = [stubCanvas.drawnRectangles, stubCanvas.drawnShaders];
+          final expected = [
+            [(const Rect.fromLTRB(0, 0, 20, 10), 0xFF000000)],
+            [ChessGridPainter.shader],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter pattern', () {
+      group('cells', () {
+        test('checkered cells', () async {
+          const light = 0xFFFFFFFF;
+          const dark = 0xFFDDDDDD;
+          final actual = await imageRows(ChessGridPainter.pattern);
           const expected = [
-            (Rect.fromLTRB(0, 0, 20, 10), 0xFFFFFFFF),
-            (Rect.fromLTRB(0, 0, 8, 8), 0xFFDDDDDD),
-            (Rect.fromLTRB(16, 0, 20, 8), 0xFFDDDDDD),
-            (Rect.fromLTRB(8, 8, 16, 10), 0xFFDDDDDD),
+            [
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+            ],
+            [
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+            ],
+            [
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+            ],
+            [
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+            ],
+            [
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+            ],
+            [
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+            ],
+            [
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+            ],
+            [
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+            ],
+            [
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+            ],
+            [
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+            ],
+            [
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+            ],
+            [
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+            ],
+            [
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+            ],
+            [
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+            ],
+            [
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+            ],
+            [
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              light,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+              dark,
+            ],
           ];
           expect(actual, equals(expected));
         });

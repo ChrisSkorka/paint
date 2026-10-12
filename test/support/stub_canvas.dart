@@ -2,6 +2,8 @@ import 'dart:ui';
 
 class StubCanvas implements Canvas {
   final drawnRectangles = <(Rect, int)>[];
+  final drawnShaders = <Shader?>[];
+  final drawnImages = <(Image, Rect, Rect)>[];
   final drawnPaths = <(Rect, int)>[];
   final clippedRectangles = <Rect>[];
   final savedLayers = <(Rect?, int)>[];
@@ -18,8 +20,14 @@ class StubCanvas implements Canvas {
   void restore() => restoreCount++;
 
   @override
-  void drawRect(Rect rect, Paint paint) =>
-      drawnRectangles.add((rect, paint.color.toARGB32()));
+  void drawRect(Rect rect, Paint paint) {
+    drawnRectangles.add((rect, paint.color.toARGB32()));
+    drawnShaders.add(paint.shader);
+  }
+
+  @override
+  void drawImageRect(Image image, Rect src, Rect dst, Paint paint) =>
+      drawnImages.add((image, src, dst));
 
   @override
   void drawPath(Path path, Paint paint) =>
