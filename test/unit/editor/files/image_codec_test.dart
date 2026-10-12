@@ -113,9 +113,8 @@ void main() {
           expect(actual, equals(expected));
         });
         test('truncated bytes', () {
-          final actual = ImageCodec.decode(
-            bytes: Uint8List.fromList([1, 2, 3, 4]),
-          );
+          final png = image.encodePng(image.Image(width: 2, height: 2));
+          final actual = ImageCodec.decode(bytes: png.sublist(0, 8));
           const expected = null;
           expect(actual, equals(expected));
         });

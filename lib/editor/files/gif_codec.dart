@@ -73,7 +73,7 @@ abstract final class GifCodec {
   static image.Image? _tryDecode({required Uint8List bytes}) {
     try {
       return image.GifDecoder().decode(bytes);
-    } on RangeError {
+    } on image.ImageException {
       return null;
     }
   }

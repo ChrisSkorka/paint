@@ -39,7 +39,7 @@ abstract final class ImageCodec {
   static image.Image? _tryDecode({required Uint8List bytes}) {
     try {
       return image.decodeImage(bytes);
-    } on RangeError {
+    } on image.ImageException {
       return null;
     }
   }
