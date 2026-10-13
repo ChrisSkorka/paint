@@ -1037,6 +1037,193 @@ void main() {
       });
     });
 
+    group('method setShapeOutlined', () {
+      group('outlined', () {
+        test('turn off without fill', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setShapeOutlined(false);
+          final actual = [
+            editorController.shapeOutlined,
+            editorController.shapeFilled,
+            notifications,
+          ];
+          const expected = [true, false, 0];
+          expect(actual, equals(expected));
+        });
+        test('turn off with fill', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..setShapeFilled(true);
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setShapeOutlined(false);
+          final actual = [
+            editorController.shapeOutlined,
+            editorController.shapeFilled,
+            notifications,
+          ];
+          const expected = [false, true, 1];
+          expect(actual, equals(expected));
+        });
+      });
+      group('drawing', () {
+        test('fill only', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..selectTool(ToolKind.rectangle)
+                ..setShapeFilled(true)
+                ..setShapeOutlined(false);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 2));
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [white, white, white],
+            [white, white, white],
+            [white, white, white],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('line ignores', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..selectTool(ToolKind.line)
+                ..setShapeFilled(true)
+                ..setShapeOutlined(false);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 2));
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [black, transparent, transparent],
+            [transparent, black, transparent],
+            [transparent, transparent, black],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method setShapeFilled', () {
+      group('filled', () {
+        test('defaults', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          final actual = [
+            editorController.shapeOutlined,
+            editorController.shapeFilled,
+          ];
+          const expected = [true, false];
+          expect(actual, equals(expected));
+        });
+        test('turn on', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setShapeFilled(true);
+          final actual = [
+            editorController.shapeOutlined,
+            editorController.shapeFilled,
+            notifications,
+          ];
+          const expected = [true, true, 1];
+          expect(actual, equals(expected));
+        });
+        test('turn off without outline', () {
+          final editorController =
+              EditorController.forDocument(
+                  document: Document.blank(width: 3, height: 3),
+                )
+                ..setShapeFilled(true)
+                ..setShapeOutlined(false);
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setShapeFilled(false);
+          final actual = [
+            editorController.shapeOutlined,
+            editorController.shapeFilled,
+            notifications,
+          ];
+          const expected = [false, true, 0];
+          expect(actual, equals(expected));
+        });
+      });
+      group('drawing', () {
+        test('primary', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..selectTool(ToolKind.rectangle)
+                ..setShapeFilled(true);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 2));
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [black, black, black],
+            [black, white, black],
+            [black, black, black],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('secondary', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..selectTool(ToolKind.rectangle)
+                ..setShapeFilled(true);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.secondary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 2));
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [white, white, white],
+            [white, black, white],
+            [white, white, white],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('circle', () {
+          final document = Document.blank(width: 5, height: 5);
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..selectTool(ToolKind.circle)
+                ..setShapeFilled(true);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 4, y: 4));
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, black, black, black, transparent],
+            [black, white, white, white, black],
+            [black, white, white, white, black],
+            [black, white, white, white, black],
+            [transparent, black, black, black, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method holdShapeConstraint', () {
       group('held', () {
         test('hover', () {

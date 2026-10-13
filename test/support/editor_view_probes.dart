@@ -149,6 +149,18 @@ List<bool> penSettingsEnabled(WidgetTester tester) => [
         null,
 ];
 
+List<bool> shapeStyle(WidgetTester tester) => [
+  for (final tooltip in const ['Outline', 'Fill shape'])
+    ...switch (tester.widget<PaintIconButton>(
+      find.ancestor(
+        of: find.byTooltip(tooltip),
+        matching: find.byType(PaintIconButton),
+      ),
+    )) {
+      final button => [button.selected, button.onPressed != null],
+    },
+];
+
 bool selectToolSelected(WidgetTester tester) => tester
     .widget<PaintIconButton>(
       find.ancestor(

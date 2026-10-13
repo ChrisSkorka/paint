@@ -20,6 +20,8 @@ enum Shape {
     required int width,
     required BrushTip tip,
     required PixelColor color,
+    required bool outlined,
+    required PixelColor? fillColor,
   }) {
     final box = BrushTip.square
         .area(center: from, size: width)
@@ -49,11 +51,28 @@ enum Shape {
           box: box,
           width: width,
           color: color,
+          outlined: outlined,
+          fillColor: fillColor,
         );
       case Shape.rectangle:
-        _drawRectangle(layer: layer, box: box, width: width, color: color);
+        if (fillColor != null) {
+          layer.fillRectangle(rectangle: box, color: fillColor);
+        }
+        if (outlined) {
+          _drawRectangle(layer: layer, box: box, width: width, color: color);
+        }
       case Shape.ellipse:
-        _drawEllipse(layer: layer, box: box, width: width, color: color);
+        if (fillColor != null) {
+          _drawEllipse(
+            layer: layer,
+            box: box,
+            width: box.width + box.height,
+            color: fillColor,
+          );
+        }
+        if (outlined) {
+          _drawEllipse(layer: layer, box: box, width: width, color: color);
+        }
     }
     return box.intersection(layer.bounds);
   }
@@ -183,6 +202,8 @@ enum Shape {
     required PixelRectangle box,
     required int width,
     required PixelColor color,
+    required bool outlined,
+    required PixelColor? fillColor,
   }) {
     final left = box.left + width ~/ 2;
     final top = box.top + width ~/ 2;
@@ -195,14 +216,26 @@ enum Shape {
       PixelPoint(x: left, y: bottom),
     ];
     final pen = Pen(size: width, tip: BrushTip.circle);
-    return [
-      for (var index = 0; index < corners.length; index++)
-        pen.stroke(
-          layer: layer,
-          previous: corners[index],
-          point: corners[(index + 1) % corners.length],
-          color: color,
+    if (fillColor != null) {
+      layer.fillRectangle(
+        rectangle: PixelRectangle.fromEdges(
+          left: left,
+          top: top,
+          right: right,
+          bottom: bottom,
         ),
+        color: fillColor,
+      );
+    }
+    return [
+      for (final strokeColor in [?fillColor, if (outlined) color])
+        for (var index = 0; index < corners.length; index++)
+          pen.stroke(
+            layer: layer,
+            previous: corners[index],
+            point: corners[(index + 1) % corners.length],
+            color: strokeColor,
+          ),
     ].reduce((area, side) => area.union(side));
   }
 

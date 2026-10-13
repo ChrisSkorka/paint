@@ -15,6 +15,8 @@ class ShapeTool implements Tool {
     required this.origin,
     required this.constrained,
     required this.centered,
+    required this.outlined,
+    required this.fillColor,
   });
 
   final Shape shape;
@@ -23,6 +25,8 @@ class ShapeTool implements Tool {
   final PixelPoint? origin;
   final bool constrained;
   final bool centered;
+  final bool outlined;
+  final PixelColor? fillColor;
 
   @override
   PixelRectangle start({
@@ -84,6 +88,8 @@ class ShapeTool implements Tool {
       width: width,
       tip: tip,
       color: color,
+      outlined: outlined,
+      fillColor: fillColor,
     );
   }
 

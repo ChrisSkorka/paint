@@ -78,6 +78,8 @@ class EditorController extends ChangeNotifier {
   var _colorPickerHeld = false;
   var _shapeConstrained = false;
   var _shapeCentered = false;
+  var _shapeOutlined = true;
+  var _shapeFilled = false;
   final _strokeProgress = _StrokeProgress();
   late final layersChanged = Listenable.merge([this, _strokeProgress]);
 
@@ -101,6 +103,8 @@ class EditorController extends ChangeNotifier {
   int get zoom => _zoom;
   PixelColor get primaryColor => _primaryColor;
   PixelColor get secondaryColor => _secondaryColor;
+  bool get shapeOutlined => _shapeOutlined;
+  bool get shapeFilled => _shapeFilled;
   bool get editingPrimary => _editingPrimary;
   Layer get pointerLayer => pointerPreview.layer;
   PixelPoint? get cursor => pointerPreview.cursor;
@@ -217,7 +221,14 @@ class EditorController extends ChangeNotifier {
     origin: _strokeOrigin,
     constrained: _shapeConstrained,
     centered: _shapeCentered,
+    outlined: !_toolKind.hasFill || _shapeOutlined,
+    fillColor: _toolKind.hasFill && _shapeFilled ? _fillColor : null,
   );
+
+  PixelColor get _fillColor => switch (_strokeButton) {
+    PointerButton.primary => _secondaryColor,
+    PointerButton.secondary => _primaryColor,
+  };
 
   ToolPreset? _presetWith({required PixelColor color}) {
     if (!_toolKind.presettable) return null;
@@ -274,6 +285,18 @@ class EditorController extends ChangeNotifier {
     _colorPickerHeld = held;
     if (_strokePoint != null) return;
     _toolKind = held ? ToolKind.colorPicker : _drawingToolKind;
+    notifyListeners();
+  }
+
+  void setShapeOutlined(bool outlined) {
+    if (!outlined && !_shapeFilled) return;
+    _shapeOutlined = outlined;
+    notifyListeners();
+  }
+
+  void setShapeFilled(bool filled) {
+    if (!filled && !_shapeOutlined) return;
+    _shapeFilled = filled;
     notifyListeners();
   }
 

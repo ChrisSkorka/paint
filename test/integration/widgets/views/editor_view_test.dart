@@ -367,6 +367,87 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('shape style', () {
+        testWidgets('pen', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final actual = shapeStyle(tester);
+          const expected = [true, false, false, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('rectangle', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rectangle (R)'));
+          await tester.pump();
+          final actual = shapeStyle(tester);
+          const expected = [true, true, false, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('circle', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Circle (O)'));
+          await tester.pump();
+          final actual = shapeStyle(tester);
+          const expected = [true, true, false, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('line', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Line (L)'));
+          await tester.pump();
+          final actual = shapeStyle(tester);
+          const expected = [true, false, false, false];
+          expect(actual, equals(expected));
+        });
+      });
+
       group('pen size', () {
         testWidgets('field width', (tester) async {
           useDesktopView(tester);
@@ -586,6 +667,34 @@ void main() {
           final afterSave = statusSectionWidths(tester);
           final actual = [afterStroke, afterSave];
           final expected = [initial, initial];
+          expect(actual, equals(expected));
+        });
+        testWidgets('shape buttons', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final line = tester.getCenter(find.byTooltip('Line (L)'));
+          final arrow = tester.getCenter(find.byTooltip('Arrow (A)'));
+          final circle = tester.getCenter(find.byTooltip('Circle (O)'));
+          final rectangle = tester.getCenter(find.byTooltip('Rectangle (R)'));
+          final actual = [
+            arrow.dx == line.dx,
+            arrow.dy > line.dy,
+            circle.dx > line.dx,
+            rectangle.dx == circle.dx,
+            rectangle.dy > circle.dy,
+          ];
+          const expected = [true, true, true, true, true];
           expect(actual, equals(expected));
         });
         testWidgets('canvas edge shadow', (tester) async {
@@ -5117,6 +5226,161 @@ void main() {
           const expected = [
             ['Middle', 'Background', 'Top'],
             0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('shape style', () {
+        testWidgets('fill on', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rectangle (R)'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Fill shape'));
+          await tester.pump();
+          final actual = shapeStyle(tester);
+          const expected = [true, true, true, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('outline off', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rectangle (R)'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Fill shape'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Outline'));
+          await tester.pump();
+          final actual = shapeStyle(tester);
+          const expected = [false, true, true, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('last style stays', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rectangle (R)'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Outline'));
+          await tester.pump();
+          final actual = shapeStyle(tester);
+          const expected = [true, true, false, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('fill off', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rectangle (R)'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Fill shape'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Fill shape'));
+          await tester.pump();
+          final actual = shapeStyle(tester);
+          const expected = [true, true, false, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('outline on', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rectangle (R)'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Fill shape'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Outline'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Outline'));
+          await tester.pump();
+          final actual = shapeStyle(tester);
+          const expected = [true, true, true, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('filled rectangle', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 3, height: 3);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rectangle (R)'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Fill shape'));
+          await tester.pump();
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          final gesture = await tester.startGesture(
+            topLeft + const Offset(1, 1),
+          );
+          await gesture.moveTo(topLeft + const Offset(9, 9));
+          await gesture.up();
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [black, black, black],
+            [black, white, black],
+            [black, black, black],
           ];
           expect(actual, equals(expected));
         });

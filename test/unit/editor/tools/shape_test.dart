@@ -10,6 +10,7 @@ import '../../../support/layer_probes.dart';
 void main() {
   const transparent = 0x00000000;
   const black = 0xFF000000;
+  const white = 0xFFFFFFFF;
 
   List<Object> drawOnBlank({
     required Shape shape,
@@ -19,6 +20,8 @@ void main() {
     required PixelPoint to,
     required int width,
     required BrushTip tip,
+    bool outlined = true,
+    PixelColor? fillColor,
   }) {
     final layer = layerFromRows([
       for (var y = 0; y < layerHeight; y++)
@@ -31,6 +34,8 @@ void main() {
       width: width,
       tip: tip,
       color: PixelColor.black,
+      outlined: outlined,
+      fillColor: fillColor,
     );
     return [area, pixelRows(layer)];
   }
@@ -583,6 +588,148 @@ void main() {
               [transparent, transparent, transparent],
               [transparent, black, transparent],
               [transparent, transparent, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('fill', () {
+        test('rectangle', () {
+          final actual = drawOnBlank(
+            shape: Shape.rectangle,
+            layerWidth: 4,
+            layerHeight: 4,
+            from: const PixelPoint(x: 0, y: 0),
+            to: const PixelPoint(x: 3, y: 3),
+            width: 1,
+            tip: BrushTip.square,
+            outlined: true,
+            fillColor: PixelColor.white,
+          );
+          final expected = [
+            const PixelRectangle(left: 0, top: 0, width: 4, height: 4),
+            [
+              [black, black, black, black],
+              [black, white, white, black],
+              [black, white, white, black],
+              [black, black, black, black],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('rectangle without outline', () {
+          final actual = drawOnBlank(
+            shape: Shape.rectangle,
+            layerWidth: 4,
+            layerHeight: 4,
+            from: const PixelPoint(x: 0, y: 0),
+            to: const PixelPoint(x: 3, y: 3),
+            width: 1,
+            tip: BrushTip.square,
+            outlined: false,
+            fillColor: PixelColor.white,
+          );
+          final expected = [
+            const PixelRectangle(left: 0, top: 0, width: 4, height: 4),
+            [
+              [white, white, white, white],
+              [white, white, white, white],
+              [white, white, white, white],
+              [white, white, white, white],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('round rectangle', () {
+          final actual = drawOnBlank(
+            shape: Shape.rectangle,
+            layerWidth: 4,
+            layerHeight: 4,
+            from: const PixelPoint(x: 0, y: 0),
+            to: const PixelPoint(x: 3, y: 3),
+            width: 1,
+            tip: BrushTip.circle,
+            outlined: true,
+            fillColor: PixelColor.white,
+          );
+          final expected = [
+            const PixelRectangle(left: 0, top: 0, width: 4, height: 4),
+            [
+              [black, black, black, black],
+              [black, white, white, black],
+              [black, white, white, black],
+              [black, black, black, black],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('round rectangle without outline', () {
+          final actual = drawOnBlank(
+            shape: Shape.rectangle,
+            layerWidth: 4,
+            layerHeight: 4,
+            from: const PixelPoint(x: 0, y: 0),
+            to: const PixelPoint(x: 3, y: 3),
+            width: 1,
+            tip: BrushTip.circle,
+            outlined: false,
+            fillColor: PixelColor.white,
+          );
+          final expected = [
+            const PixelRectangle(left: 0, top: 0, width: 4, height: 4),
+            [
+              [white, white, white, white],
+              [white, white, white, white],
+              [white, white, white, white],
+              [white, white, white, white],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('ellipse', () {
+          final actual = drawOnBlank(
+            shape: Shape.ellipse,
+            layerWidth: 5,
+            layerHeight: 5,
+            from: const PixelPoint(x: 0, y: 0),
+            to: const PixelPoint(x: 4, y: 4),
+            width: 1,
+            tip: BrushTip.square,
+            outlined: true,
+            fillColor: PixelColor.white,
+          );
+          final expected = [
+            const PixelRectangle(left: 0, top: 0, width: 5, height: 5),
+            [
+              [transparent, black, black, black, transparent],
+              [black, white, white, white, black],
+              [black, white, white, white, black],
+              [black, white, white, white, black],
+              [transparent, black, black, black, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('ellipse without outline', () {
+          final actual = drawOnBlank(
+            shape: Shape.ellipse,
+            layerWidth: 5,
+            layerHeight: 5,
+            from: const PixelPoint(x: 0, y: 0),
+            to: const PixelPoint(x: 4, y: 4),
+            width: 1,
+            tip: BrushTip.square,
+            outlined: false,
+            fillColor: PixelColor.white,
+          );
+          final expected = [
+            const PixelRectangle(left: 0, top: 0, width: 5, height: 5),
+            [
+              [transparent, white, white, white, transparent],
+              [white, white, white, white, white],
+              [white, white, white, white, white],
+              [white, white, white, white, white],
+              [transparent, white, white, white, transparent],
             ],
           ];
           expect(actual, equals(expected));

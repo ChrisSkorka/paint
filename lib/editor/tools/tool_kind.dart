@@ -4,6 +4,7 @@ enum ToolKind {
     usesColor: true,
     hasSize: true,
     hasTip: true,
+    hasFill: false,
     presettable: true,
   ),
   eraser(
@@ -11,6 +12,7 @@ enum ToolKind {
     usesColor: false,
     hasSize: true,
     hasTip: true,
+    hasFill: false,
     presettable: true,
   ),
   bucketFill(
@@ -18,6 +20,7 @@ enum ToolKind {
     usesColor: true,
     hasSize: false,
     hasTip: false,
+    hasFill: false,
     presettable: true,
   ),
   line(
@@ -25,6 +28,7 @@ enum ToolKind {
     usesColor: true,
     hasSize: true,
     hasTip: true,
+    hasFill: false,
     presettable: true,
   ),
   rectangle(
@@ -32,6 +36,7 @@ enum ToolKind {
     usesColor: true,
     hasSize: true,
     hasTip: true,
+    hasFill: true,
     presettable: true,
   ),
   circle(
@@ -39,6 +44,7 @@ enum ToolKind {
     usesColor: true,
     hasSize: true,
     hasTip: false,
+    hasFill: true,
     presettable: true,
   ),
   arrow(
@@ -46,6 +52,7 @@ enum ToolKind {
     usesColor: true,
     hasSize: true,
     hasTip: true,
+    hasFill: false,
     presettable: true,
   ),
   colorPicker(
@@ -53,6 +60,7 @@ enum ToolKind {
     usesColor: false,
     hasSize: false,
     hasTip: false,
+    hasFill: false,
     presettable: false,
   ),
   select(
@@ -60,6 +68,7 @@ enum ToolKind {
     usesColor: false,
     hasSize: false,
     hasTip: false,
+    hasFill: false,
     presettable: false,
   );
 
@@ -68,6 +77,7 @@ enum ToolKind {
     required this.usesColor,
     required this.hasSize,
     required this.hasTip,
+    required this.hasFill,
     required this.presettable,
   });
 
@@ -75,5 +85,6 @@ enum ToolKind {
   final bool usesColor;
   final bool hasSize;
   final bool hasTip;
+  final bool hasFill;
   final bool presettable;
 }

@@ -11,6 +11,7 @@ import '../../../support/layer_probes.dart';
 void main() {
   const transparent = 0x00000000;
   const black = 0xFF000000;
+  const white = 0xFFFFFFFF;
 
   group('class ShapeTool', () {
     group('method start', () {
@@ -26,6 +27,8 @@ void main() {
             origin: PixelPoint(x: 0, y: 0),
             constrained: false,
             centered: false,
+            outlined: true,
+            fillColor: null,
           );
           final area = tool.start(
             layer: layer,
@@ -57,6 +60,8 @@ void main() {
             origin: PixelPoint(x: 0, y: 0),
             constrained: false,
             centered: false,
+            outlined: true,
+            fillColor: null,
           );
           final area = tool.stroke(
             layer: layer,
@@ -89,6 +94,8 @@ void main() {
             origin: PixelPoint(x: 0, y: 0),
             constrained: false,
             centered: false,
+            outlined: true,
+            fillColor: null,
           );
           final area = tool.end(
             layer: layer,
@@ -121,6 +128,8 @@ void main() {
             origin: PixelPoint(x: 0, y: 0),
             constrained: false,
             centered: false,
+            outlined: true,
+            fillColor: null,
           );
           final area = tool.drawPointer(
             layer: layer,
@@ -149,6 +158,8 @@ void main() {
             origin: null,
             constrained: false,
             centered: false,
+            outlined: true,
+            fillColor: null,
           );
           final area = tool.drawPointer(
             layer: layer,
@@ -177,6 +188,8 @@ void main() {
             origin: null,
             constrained: false,
             centered: false,
+            outlined: true,
+            fillColor: null,
           );
           final area = tool.drawPointer(
             layer: layer,
@@ -209,6 +222,8 @@ void main() {
             origin: null,
             constrained: false,
             centered: false,
+            outlined: true,
+            fillColor: null,
           );
           final area = tool.drawPointer(
             layer: layer,
@@ -273,6 +288,8 @@ void main() {
             origin: PixelPoint(x: 2, y: 2),
             constrained: false,
             centered: false,
+            outlined: true,
+            fillColor: null,
           );
           final area = tool.drawPointer(
             layer: layer,
@@ -325,6 +342,8 @@ void main() {
             origin: PixelPoint(x: 0, y: 0),
             constrained: true,
             centered: false,
+            outlined: true,
+            fillColor: null,
           );
           final area = tool.drawPointer(
             layer: layer,
@@ -355,6 +374,8 @@ void main() {
             origin: PixelPoint(x: 0, y: 0),
             constrained: true,
             centered: false,
+            outlined: true,
+            fillColor: null,
           );
           final area = tool.end(
             layer: layer,
@@ -390,6 +411,8 @@ void main() {
             origin: PixelPoint(x: 1, y: 1),
             constrained: false,
             centered: true,
+            outlined: true,
+            fillColor: null,
           );
           final area = tool.end(
             layer: layer,
@@ -420,6 +443,8 @@ void main() {
             origin: PixelPoint(x: 1, y: 1),
             constrained: true,
             centered: true,
+            outlined: true,
+            fillColor: null,
           );
           final area = tool.end(
             layer: layer,
@@ -432,6 +457,43 @@ void main() {
             [
               [black, black, black],
               [black, transparent, black],
+              [black, black, black],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('filled', () {
+      group('points', () {
+        test('rectangle', () {
+          final layer = layerFromRows([
+            [transparent, transparent, transparent],
+            [transparent, transparent, transparent],
+            [transparent, transparent, transparent],
+          ]);
+          const tool = ShapeTool(
+            shape: Shape.rectangle,
+            width: 1,
+            tip: BrushTip.square,
+            origin: PixelPoint(x: 0, y: 0),
+            constrained: false,
+            centered: false,
+            outlined: true,
+            fillColor: PixelColor.white,
+          );
+          final area = tool.end(
+            layer: layer,
+            point: const PixelPoint(x: 2, y: 2),
+            color: PixelColor.black,
+          );
+          final actual = [area, pixelRows(layer)];
+          final expected = [
+            const PixelRectangle(left: 0, top: 0, width: 3, height: 3),
+            [
+              [black, black, black],
+              [black, white, black],
               [black, black, black],
             ],
           ];

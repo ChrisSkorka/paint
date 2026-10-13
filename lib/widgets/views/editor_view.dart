@@ -929,8 +929,8 @@ class _EditorViewState extends State<EditorView> {
                               shortcut: EditorShortcut.line,
                             ),
                             _shapeButton(
-                              toolKind: ToolKind.rectangle,
-                              shortcut: EditorShortcut.rectangle,
+                              toolKind: ToolKind.arrow,
+                              shortcut: EditorShortcut.arrow,
                             ),
                           ],
                         ),
@@ -941,8 +941,32 @@ class _EditorViewState extends State<EditorView> {
                               shortcut: EditorShortcut.circle,
                             ),
                             _shapeButton(
-                              toolKind: ToolKind.arrow,
-                              shortcut: EditorShortcut.arrow,
+                              toolKind: ToolKind.rectangle,
+                              shortcut: EditorShortcut.rectangle,
+                            ),
+                          ],
+                        ),
+                        RibbonColumn(
+                          children: [
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.square,
+                              tooltip: 'Outline',
+                              selected: controller.shapeOutlined,
+                              onPressed: controller.toolKind.hasFill
+                                  ? () => controller.setShapeOutlined(
+                                      !controller.shapeOutlined,
+                                    )
+                                  : null,
+                            ),
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.solidSquare,
+                              tooltip: 'Fill shape',
+                              selected: controller.shapeFilled,
+                              onPressed: controller.toolKind.hasFill
+                                  ? () => controller.setShapeFilled(
+                                      !controller.shapeFilled,
+                                    )
+                                  : null,
                             ),
                           ],
                         ),
