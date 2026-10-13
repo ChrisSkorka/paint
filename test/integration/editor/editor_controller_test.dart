@@ -1817,6 +1817,287 @@ void main() {
     });
 
     group('method applyToolPreset', () {
+      group('text', () {
+        test('recorded on commit', () async {
+          final editorController =
+              EditorController.forDocument(
+                  document: Document.blank(width: 3, height: 3),
+                )
+                ..selectTool(ToolKind.text)
+                ..setTextFormat(const TextFormat(size: 2, bold: true));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.editText('a');
+          await editorController.commitText();
+          final actual = [
+            editorController.document.toolPresets.recent,
+            editorController.toolPreset,
+          ];
+          const preset = ToolPreset(
+            kind: ToolKind.text,
+            color: PixelColor.black,
+            textFormat: TextFormat(size: 2, bold: true),
+          );
+          const expected = [
+            [preset],
+            preset,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('secondary outlined', () async {
+          final editorController =
+              EditorController.forDocument(
+                  document: Document.blank(width: 3, height: 3),
+                )
+                ..selectTool(ToolKind.text)
+                ..setTextFormat(const TextFormat(size: 2, outlined: true));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.secondary,
+          );
+          editorController.editText('a');
+          await editorController.commitText();
+          final actual = editorController.document.toolPresets.recent;
+          const expected = [
+            ToolPreset(
+              kind: ToolKind.text,
+              color: PixelColor.white,
+              secondaryColor: PixelColor.black,
+              textFormat: TextFormat(size: 2, outlined: true),
+            ),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('empty not recorded', () async {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.text);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          await editorController.commitText();
+          final actual = editorController.document.toolPresets.recent;
+          const expected = <ToolPreset>[];
+          expect(actual, equals(expected));
+        });
+        test('apply', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)
+              ..toolPresets = const ToolPresets(
+                recent: [
+                  ToolPreset(
+                    kind: ToolKind.text,
+                    color: PixelColor(argb: 0xFFFF0000),
+                    secondaryColor: PixelColor(argb: 0xFF0000FF),
+                    textFormat: TextFormat(size: 20, outlined: true),
+                  ),
+                ],
+              ),
+          );
+          editorController.applyToolPreset(index: 0);
+          final actual = [
+            editorController.toolKind,
+            editorController.primaryColor,
+            editorController.secondaryColor,
+            editorController.textFormat,
+          ];
+          const expected = [
+            ToolKind.text,
+            PixelColor(argb: 0xFFFF0000),
+            PixelColor(argb: 0xFF0000FF),
+            TextFormat(size: 20, outlined: true),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('apply commits draft', () {
+          final editorController =
+              EditorController.forDocument(
+                  document: Document.blank(width: 3, height: 3)
+                    ..toolPresets = const ToolPresets(
+                      locked: [
+                        ToolPreset(
+                          kind: ToolKind.text,
+                          color: PixelColor.black,
+                          textFormat: TextFormat(size: 20),
+                        ),
+                      ],
+                    ),
+                )
+                ..selectTool(ToolKind.text)
+                ..setTextFormat(const TextFormat(size: 2));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.editText('a');
+          editorController.applyToolPreset(index: 0);
+          final actual = [
+            editorController.textOrigin,
+            editorController.document.toolPresets.recent,
+            editorController.textFormat,
+          ];
+          const expected = [
+            null,
+            [
+              ToolPreset(
+                kind: ToolKind.text,
+                color: PixelColor.black,
+                textFormat: TextFormat(size: 2),
+              ),
+            ],
+            TextFormat(size: 20),
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('shape style', () {
+        test('filled', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)
+              ..toolPresets = const ToolPresets(
+                recent: [
+                  ToolPreset(
+                    kind: ToolKind.rectangle,
+                    color: PixelColor(argb: 0xFFFF0000),
+                    secondaryColor: PixelColor(argb: 0xFF0000FF),
+                    size: 3,
+                    tip: BrushTip.square,
+                  ),
+                ],
+              ),
+          );
+          editorController.applyToolPreset(index: 0);
+          final actual = [
+            editorController.shapeOutlined,
+            editorController.shapeFilled,
+            editorController.primaryColor,
+            editorController.secondaryColor,
+          ];
+          const expected = [
+            true,
+            true,
+            PixelColor(argb: 0xFFFF0000),
+            PixelColor(argb: 0xFF0000FF),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('fill only', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)
+              ..toolPresets = const ToolPresets(
+                recent: [
+                  ToolPreset(
+                    kind: ToolKind.circle,
+                    secondaryColor: PixelColor(argb: 0xFF0000FF),
+                    size: 3,
+                  ),
+                ],
+              ),
+          );
+          editorController.applyToolPreset(index: 0);
+          final actual = [
+            editorController.shapeOutlined,
+            editorController.shapeFilled,
+            editorController.primaryColor,
+            editorController.secondaryColor,
+          ];
+          const expected = [
+            false,
+            true,
+            PixelColor.black,
+            PixelColor(argb: 0xFF0000FF),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('outline only', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)
+              ..toolPresets = const ToolPresets(
+                recent: [
+                  ToolPreset(
+                    kind: ToolKind.circle,
+                    color: PixelColor(argb: 0xFFFF0000),
+                    size: 3,
+                  ),
+                ],
+              ),
+          )..setShapeFilled(true);
+          editorController.applyToolPreset(index: 0);
+          final actual = [
+            editorController.shapeOutlined,
+            editorController.shapeFilled,
+            editorController.primaryColor,
+            editorController.secondaryColor,
+          ];
+          const expected = [
+            true,
+            false,
+            PixelColor(argb: 0xFFFF0000),
+            PixelColor.white,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('line keeps style', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)
+              ..toolPresets = const ToolPresets(
+                recent: [
+                  ToolPreset(
+                    kind: ToolKind.line,
+                    color: PixelColor(argb: 0xFFFF0000),
+                    size: 3,
+                    tip: BrushTip.square,
+                  ),
+                ],
+              ),
+          )..setShapeFilled(true);
+          editorController.applyToolPreset(index: 0);
+          final actual = [
+            editorController.shapeOutlined,
+            editorController.shapeFilled,
+            editorController.primaryColor,
+            editorController.secondaryColor,
+          ];
+          const expected = [
+            true,
+            true,
+            PixelColor(argb: 0xFFFF0000),
+            PixelColor.white,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('recorded', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..selectTool(ToolKind.rectangle)
+                ..setShapeFilled(true)
+                ..setShapeOutlined(false);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 2));
+          final actual = [
+            document.toolPresets.recent,
+            editorController.toolPreset,
+          ];
+          const preset = ToolPreset(
+            kind: ToolKind.rectangle,
+            secondaryColor: PixelColor.white,
+            size: 1,
+            tip: BrushTip.square,
+          );
+          const expected = [
+            [preset],
+            preset,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
       group('kinds', () {
         test('pen', () {
           final editorController = EditorController.forDocument(

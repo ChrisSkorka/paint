@@ -12,6 +12,7 @@ import '../canvas/layer_timeframe.dart';
 import '../canvas/pixel_color.dart';
 import '../canvas/pixel_point.dart';
 import '../tools/brush_tip.dart';
+import '../tools/text_format.dart';
 import '../tools/tool_kind.dart';
 import '../tools/tool_preset.dart';
 import '../tools/tool_presets.dart';
@@ -151,8 +152,17 @@ abstract final class OraCodec {
             attributes: {
               'kind': preset.kind.name,
               'color': ?preset.color?.hex.toLowerCase(),
+              'secondary-color': ?preset.secondaryColor?.hex.toLowerCase(),
               'size': ?preset.size?.toString(),
               'tip': ?preset.tip?.name,
+              if (preset.textFormat case final format?) ...{
+                'text-size': '${format.size}',
+                'bold': '${format.bold}',
+                'italic': '${format.italic}',
+                'underline': '${format.underline}',
+                'strikethrough': '${format.strikethrough}',
+                if (format.outlined) 'outline-width': '${format.outlineWidth}',
+              },
               'locked': '${presets.isLocked(index: index)}',
             },
           );
@@ -279,17 +289,32 @@ abstract final class OraCodec {
   static ToolPreset? _toolPreset({required XmlElement tool}) {
     final kind = ToolKind.values.asNameMap()[tool.getAttribute('kind')];
     if (kind == null || !kind.presettable) return null;
+    PixelColor? color(String name) =>
+        PixelColor.tryParseHex(tool.getAttribute(name) ?? '');
+    int? number(String name) => int.tryParse(tool.getAttribute(name) ?? '');
+    bool flag(String name) => tool.getAttribute(name) == 'true';
+    final primary = color('color');
+    final secondary = color('secondary-color');
     return ToolPreset.configured(
       kind: kind,
-      color:
-          PixelColor.tryParseHex(tool.getAttribute('color') ?? '') ??
-          PixelColor.black,
-      size:
-          int.tryParse(tool.getAttribute('size') ?? '') ??
-          ToolPreset.minimumSize,
+      color: primary ?? PixelColor.black,
+      secondaryColor: secondary ?? PixelColor.white,
+      shapeOutlined: primary != null,
+      shapeFilled: secondary != null,
+      size: number('size') ?? ToolPreset.minimumSize,
       tip:
           BrushTip.values.asNameMap()[tool.getAttribute('tip')] ??
           BrushTip.square,
+      textFormat: TextFormat(
+        size: number('text-size') ?? TextFormat.defaultSize,
+        bold: flag('bold'),
+        italic: flag('italic'),
+        underline: flag('underline'),
+        strikethrough: flag('strikethrough'),
+        filled: primary != null,
+        outlined: secondary != null,
+        outlineWidth: number('outline-width') ?? TextFormat.defaultOutlineWidth,
+      ),
     );
   }
 

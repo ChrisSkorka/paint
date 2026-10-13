@@ -129,7 +129,11 @@ class EditorController extends ChangeNotifier {
   Layer get pointerLayer => pointerPreview.layer;
   PixelPoint? get cursor => pointerPreview.cursor;
   List<ToolPreset> get toolPresets => document.toolPresets.all;
-  ToolPreset? get toolPreset => _presetWith(color: _primaryColor);
+  ToolPreset? get toolPreset => _presetWith(
+    kind: _toolKind,
+    color: _primaryColor,
+    secondaryColor: _secondaryColor,
+  );
   PixelRectangle? get selectionArea => _selectingArea ?? _selection?.area;
   bool get hasSelection => _selection != null;
   bool get canTransform => hasSelection || _textOrigin != null;
@@ -251,23 +255,42 @@ class EditorController extends ChangeNotifier {
     PointerButton.secondary => _primaryColor,
   };
 
-  ToolPreset? _presetWith({required PixelColor color}) {
-    if (!_toolKind.presettable) return null;
+  ToolPreset? _presetWith({
+    required ToolKind kind,
+    required PixelColor color,
+    required PixelColor secondaryColor,
+  }) {
+    if (!kind.presettable) return null;
     return ToolPreset.configured(
-      kind: _toolKind,
+      kind: kind,
       color: color,
+      secondaryColor: secondaryColor,
+      shapeOutlined: _shapeOutlined,
+      shapeFilled: _shapeFilled,
       size: _penSize,
       tip: _penTip,
+      textFormat: _textFormat,
     );
+  }
+
+  void _usePreset(ToolPreset? preset) {
+    if (preset != null) document.toolPresets = document.toolPresets.use(preset);
   }
 
   void applyToolPreset({required int index}) {
     final presets = toolPresets;
     if (index >= presets.length || _strokePoint != null) return;
     final preset = presets[index];
+    unawaited(commitText());
     if (preset.color case final color?) _primaryColor = color;
+    if (preset.secondaryColor case final color?) _secondaryColor = color;
     if (preset.tip case final tip?) _penTip = tip;
     if (preset.size case final size?) _penSize = size;
+    if (preset.textFormat case final format?) _textFormat = format;
+    if (preset.kind.hasFill) {
+      _shapeOutlined = preset.color != null;
+      _shapeFilled = preset.secondaryColor != null;
+    }
     selectTool(preset.kind);
   }
 
@@ -350,6 +373,13 @@ class EditorController extends ChangeNotifier {
     _text = '';
     notifyListeners();
     if (stamp.text.isEmpty) return;
+    _usePreset(
+      _presetWith(
+        kind: ToolKind.text,
+        color: textColor,
+        secondaryColor: textOutlineColor,
+      ),
+    );
     final orientation = _textOrientation;
     final image = orientation.apply(await stamp.rasterize());
     final before = Layer.copyOf(document.activeLayer);
@@ -767,8 +797,13 @@ class EditorController extends ChangeNotifier {
     _strokeButton = button;
     _strokeOrigin = point;
     _strokeName = _toolKind.label;
-    final preset = _presetWith(color: _strokeColor);
-    if (preset != null) document.toolPresets = document.toolPresets.use(preset);
+    _usePreset(
+      _presetWith(
+        kind: _toolKind,
+        color: _strokeColor,
+        secondaryColor: _fillColor,
+      ),
+    );
     _sampleColor(point: point);
     if (_toolKind == ToolKind.select) _startSelecting(point);
     final tool = _tool;

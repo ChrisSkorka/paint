@@ -9,6 +9,7 @@ import 'package:paint/editor/files/document_format_exception.dart';
 import 'package:paint/editor/files/image_codec.dart';
 import 'package:paint/editor/files/ora_codec.dart';
 import 'package:paint/editor/tools/brush_tip.dart';
+import 'package:paint/editor/tools/text_format.dart';
 import 'package:paint/editor/tools/tool_kind.dart';
 import 'package:paint/editor/tools/tool_preset.dart';
 import 'package:paint/editor/tools/tool_presets.dart';
@@ -111,6 +112,23 @@ void main() {
         ToolPreset(
           kind: ToolKind.bucketFill,
           color: PixelColor(argb: blue),
+        ),
+        ToolPreset(
+          kind: ToolKind.circle,
+          secondaryColor: PixelColor(argb: blue),
+          size: 3,
+        ),
+        ToolPreset(
+          kind: ToolKind.text,
+          color: PixelColor(argb: red),
+          secondaryColor: PixelColor(argb: blue),
+          textFormat: TextFormat(
+            size: 20,
+            bold: true,
+            underline: true,
+            outlined: true,
+            outlineWidth: 2,
+          ),
         ),
       ],
     ),
@@ -318,6 +336,12 @@ void main() {
               'locked="false"/>\n'
               '    <paint:tool kind="bucketFill" color="#0000ffff" '
               'locked="false"/>\n'
+              '    <paint:tool kind="circle" secondary-color="#0000ffff" size="3" '
+              'locked="false"/>\n'
+              '    <paint:tool kind="text" color="#ff0000ff" '
+              'secondary-color="#0000ffff" text-size="20" bold="true" '
+              'italic="false" underline="true" strikethrough="false" '
+              'outline-width="2" locked="false"/>\n'
               '  </paint:tools>\n'
               '  <stack>\n'
               '    <layer name="Background" src="data/layer0.png" x="0" y="0" '
@@ -790,6 +814,101 @@ void main() {
                 color: PixelColor.black,
                 size: 3,
                 tip: BrushTip.square,
+              ),
+            ],
+          );
+          expect(actual, equals(expected));
+        });
+        test('legacy shape', () {
+          final actual = decodedPresets(
+            '<paint:tools>'
+            '<paint:tool kind="rectangle" color="#ff0000ff" size="2"/>'
+            '</paint:tools>',
+          );
+          const expected = ToolPresets(
+            recent: [
+              ToolPreset(
+                kind: ToolKind.rectangle,
+                color: PixelColor(argb: red),
+                size: 2,
+                tip: BrushTip.square,
+              ),
+            ],
+          );
+          expect(actual, equals(expected));
+        });
+        test('filled shape', () {
+          final actual = decodedPresets(
+            '<paint:tools>'
+            '<paint:tool kind="rectangle" color="#ff0000ff" secondary-color="#0000ffff" '
+            'size="2"/>'
+            '</paint:tools>',
+          );
+          const expected = ToolPresets(
+            recent: [
+              ToolPreset(
+                kind: ToolKind.rectangle,
+                color: PixelColor(argb: red),
+                secondaryColor: PixelColor(argb: blue),
+                size: 2,
+                tip: BrushTip.square,
+              ),
+            ],
+          );
+          expect(actual, equals(expected));
+        });
+        test('invalid fill', () {
+          final actual = decodedPresets(
+            '<paint:tools>'
+            '<paint:tool kind="circle" secondary-color="blue" size="2"/>'
+            '</paint:tools>',
+          );
+          const expected = ToolPresets(
+            recent: [
+              ToolPreset(
+                kind: ToolKind.circle,
+                color: PixelColor.black,
+                size: 2,
+              ),
+            ],
+          );
+          expect(actual, equals(expected));
+        });
+        test('text defaults', () {
+          final actual = decodedPresets(
+            '<paint:tools><paint:tool kind="text"/></paint:tools>',
+          );
+          const expected = ToolPresets(
+            recent: [
+              ToolPreset(
+                kind: ToolKind.text,
+                color: PixelColor.black,
+                textFormat: TextFormat(),
+              ),
+            ],
+          );
+          expect(actual, equals(expected));
+        });
+        test('text outline only', () {
+          final actual = decodedPresets(
+            '<paint:tools>'
+            '<paint:tool kind="text" secondary-color="#0000ffff" '
+            'text-size="abc" italic="true" strikethrough="true" '
+            'outline-width="3"/>'
+            '</paint:tools>',
+          );
+          const expected = ToolPresets(
+            recent: [
+              ToolPreset(
+                kind: ToolKind.text,
+                secondaryColor: PixelColor(argb: blue),
+                textFormat: TextFormat(
+                  italic: true,
+                  strikethrough: true,
+                  filled: false,
+                  outlined: true,
+                  outlineWidth: 3,
+                ),
               ),
             ],
           );

@@ -41,8 +41,8 @@ class ToolPresetList extends StatelessWidget {
   Widget _buildItem({required int index}) {
     final preset = presets[index];
     final locked = index < lockedCount;
-    final color = preset.color;
-    final size = preset.size;
+    final color = preset.color ?? preset.secondaryColor;
+    final size = preset.size ?? preset.textFormat?.size;
     final tip = preset.tip;
     final iconColor = color == null
         ? PaintStyle.eraserColor

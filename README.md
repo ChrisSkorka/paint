@@ -327,11 +327,7 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - fill uses secondary color
   - defaults: outline=on, fill=off
 - [x] swap rectangle & arrow tool buttons
-- [ ] save boarder/fill values to recents/favorites
-  - use layered outline and filled shapes to show fill & border
-  - if filled: show filled icon with fill color
-  - if outlined: show outline icon with outline color
-  - shadow for light icons based on outline color if outlined, otherwise on fill color
+- [x] save boarder/fill values to recents/favorites
 
 ### phase 7.3: text tool
 
@@ -346,23 +342,28 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - rotate & mirror: selection buttons
 - [x] optional border
 - [x] shortcut: T
-- [ ] recents/favorites
+- [x] recents/favorites
   - icon: A icon with text color fill and outline color
   - trailing: circle icon with fill & outline rules matching shapes
   - text: {font size} px
 
-### phase 7.3: colors
+### phase 7.4: colors
 
-- [ ] higher brightness range
-- [ ] colors: add no-color option, no-color button below dialog button
+- [ ] higher brightness range in 12x5 picker
 - [ ] color picker: better UI
+  - lib: flutter_colorpicker or flutter_color_picker_plus (which ever works better)
+  - variant: hue & alpha slider + rectangle value & saturation
+  - maintain hex text input
+  - maintain org v new color
+- [ ] colors: add no-color option, no-color button below dialog button
 - [ ] transparent colors: blend mode
 
-### phase 7.4: history
+### phase 7.5: history
 
 - [ ] history & layer item preview enlarges on hover
 - [ ] history slider
-- [ ] feature to convert history diff into layer
+- [ ] feature to convert history diff into layer?
+- [ ] feature to remove/undo intermediate history item
 
 ### phase 8: polish
 

@@ -293,8 +293,8 @@ void main() {
           );
           final actual = toolPresets.toString();
           const expected =
-              'ToolPresets(locked: [ToolPreset(eraser, null, 1, null)], '
-              'recent: [ToolPreset(eraser, null, 2, null)])';
+              'ToolPresets(locked: [ToolPreset(eraser, null, null, 1, null, null)], '
+              'recent: [ToolPreset(eraser, null, null, 2, null, null)])';
           expect(actual, equals(expected));
         });
       });
