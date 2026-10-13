@@ -1037,6 +1037,106 @@ void main() {
       });
     });
 
+    group('method holdShapeConstraint', () {
+      group('held', () {
+        test('hover', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.rectangle);
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 1));
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.holdShapeConstraint(held: true);
+          final actual = notifications;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+        test('during stroke', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.rectangle);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 1));
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.holdShapeConstraint(held: true);
+          final actual = [
+            pixelRows(editorController.pointerLayer),
+            notifications,
+          ];
+          const expected = [
+            [
+              [black, black, black],
+              [black, transparent, black],
+              [black, black, black],
+            ],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('press twice', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.rectangle);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.holdShapeConstraint(held: true);
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.holdShapeConstraint(held: true);
+          final actual = notifications;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+        test('stroke end', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController = EditorController.forDocument(
+            document: document,
+          )..selectTool(ToolKind.rectangle);
+          editorController.holdShapeConstraint(held: true);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 1));
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 1));
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [black, black, black],
+            [black, transparent, black],
+            [black, black, black],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('released', () {
+        test('during stroke', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.rectangle);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 1));
+          editorController.holdShapeConstraint(held: true);
+          editorController.holdShapeConstraint(held: false);
+          final actual = pixelRows(editorController.pointerLayer);
+          const expected = [
+            [black, black, black],
+            [black, black, black],
+            [transparent, transparent, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method applyToolPreset', () {
       group('kinds', () {
         test('pen', () {

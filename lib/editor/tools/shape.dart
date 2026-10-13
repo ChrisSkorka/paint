@@ -58,6 +58,30 @@ enum Shape {
     return box.intersection(layer.bounds);
   }
 
+  PixelPoint constrain({required PixelPoint from, required PixelPoint to}) {
+    final deltaX = to.x - from.x;
+    final deltaY = to.y - from.y;
+    final (directionX, directionY) = switch (this) {
+      Shape.line ||
+      Shape.arrow => _nearestDirection(deltaX: deltaX, deltaY: deltaY),
+      Shape.rectangle ||
+      Shape.ellipse => (deltaX < 0 ? -1 : 1, deltaY < 0 ? -1 : 1),
+    };
+    final length = max(
+      deltaX.abs() * directionX.abs(),
+      deltaY.abs() * directionY.abs(),
+    );
+    return PixelPoint(
+      x: from.x + directionX * length,
+      y: from.y + directionY * length,
+    );
+  }
+
+  (int, int) _nearestDirection({required int deltaX, required int deltaY}) {
+    final angle = (atan2(deltaY, deltaX) / (pi / 4)).round() * (pi / 4);
+    return (cos(angle).round(), sin(angle).round());
+  }
+
   PixelRectangle _drawLine({
     required Layer layer,
     required PixelPoint from,

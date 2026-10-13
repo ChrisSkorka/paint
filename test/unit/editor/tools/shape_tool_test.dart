@@ -24,6 +24,7 @@ void main() {
             width: 1,
             tip: BrushTip.square,
             origin: PixelPoint(x: 0, y: 0),
+            constrained: false,
           );
           final area = tool.start(
             layer: layer,
@@ -53,6 +54,7 @@ void main() {
             width: 1,
             tip: BrushTip.square,
             origin: PixelPoint(x: 0, y: 0),
+            constrained: false,
           );
           final area = tool.stroke(
             layer: layer,
@@ -83,6 +85,7 @@ void main() {
             width: 1,
             tip: BrushTip.square,
             origin: PixelPoint(x: 0, y: 0),
+            constrained: false,
           );
           final area = tool.end(
             layer: layer,
@@ -113,6 +116,7 @@ void main() {
             width: 1,
             tip: BrushTip.square,
             origin: PixelPoint(x: 0, y: 0),
+            constrained: false,
           );
           final area = tool.drawPointer(
             layer: layer,
@@ -139,6 +143,7 @@ void main() {
             width: 2,
             tip: BrushTip.square,
             origin: null,
+            constrained: false,
           );
           final area = tool.drawPointer(
             layer: layer,
@@ -165,6 +170,7 @@ void main() {
             width: 2,
             tip: BrushTip.square,
             origin: null,
+            constrained: false,
           );
           final area = tool.drawPointer(
             layer: layer,
@@ -195,6 +201,7 @@ void main() {
             width: 4,
             tip: BrushTip.circle,
             origin: null,
+            constrained: false,
           );
           final area = tool.drawPointer(
             layer: layer,
@@ -257,6 +264,7 @@ void main() {
             width: 4,
             tip: BrushTip.circle,
             origin: PixelPoint(x: 2, y: 2),
+            constrained: false,
           );
           final area = tool.drawPointer(
             layer: layer,
@@ -287,6 +295,69 @@ void main() {
                 transparent,
                 transparent,
               ],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('constrained', () {
+      group('points', () {
+        test('square', () {
+          final layer = layerFromRows([
+            [transparent, transparent, transparent],
+            [transparent, transparent, transparent],
+            [transparent, transparent, transparent],
+          ]);
+          const tool = ShapeTool(
+            shape: Shape.rectangle,
+            width: 1,
+            tip: BrushTip.square,
+            origin: PixelPoint(x: 0, y: 0),
+            constrained: true,
+          );
+          final area = tool.drawPointer(
+            layer: layer,
+            point: const PixelPoint(x: 2, y: 1),
+            color: PixelColor.black,
+          );
+          final actual = [area, pixelRows(layer)];
+          final expected = [
+            const PixelRectangle(left: 0, top: 0, width: 3, height: 3),
+            [
+              [black, black, black],
+              [black, transparent, black],
+              [black, black, black],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('diagonal line', () {
+          final layer = layerFromRows([
+            [transparent, transparent, transparent],
+            [transparent, transparent, transparent],
+            [transparent, transparent, transparent],
+          ]);
+          const tool = ShapeTool(
+            shape: Shape.line,
+            width: 1,
+            tip: BrushTip.square,
+            origin: PixelPoint(x: 0, y: 0),
+            constrained: true,
+          );
+          final area = tool.end(
+            layer: layer,
+            point: const PixelPoint(x: 2, y: 1),
+            color: PixelColor.black,
+          );
+          final actual = [area, pixelRows(layer)];
+          final expected = [
+            const PixelRectangle(left: 0, top: 0, width: 3, height: 3),
+            [
+              [black, transparent, transparent],
+              [transparent, black, transparent],
+              [transparent, transparent, black],
             ],
           ];
           expect(actual, equals(expected));

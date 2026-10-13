@@ -589,5 +589,80 @@ void main() {
         });
       });
     });
+
+    group('method constrain', () {
+      group('line', () {
+        test('horizontal', () {
+          final actual = Shape.line.constrain(
+            from: const PixelPoint(x: 0, y: 0),
+            to: const PixelPoint(x: 5, y: 1),
+          );
+          const expected = PixelPoint(x: 5, y: 0);
+          expect(actual, equals(expected));
+        });
+        test('vertical', () {
+          final actual = Shape.line.constrain(
+            from: const PixelPoint(x: 0, y: 0),
+            to: const PixelPoint(x: 1, y: -5),
+          );
+          const expected = PixelPoint(x: 0, y: -5);
+          expect(actual, equals(expected));
+        });
+        test('diagonal', () {
+          final actual = Shape.line.constrain(
+            from: const PixelPoint(x: 0, y: 0),
+            to: const PixelPoint(x: 4, y: 3),
+          );
+          const expected = PixelPoint(x: 4, y: 4);
+          expect(actual, equals(expected));
+        });
+        test('same point', () {
+          final actual = Shape.line.constrain(
+            from: const PixelPoint(x: 2, y: 2),
+            to: const PixelPoint(x: 2, y: 2),
+          );
+          const expected = PixelPoint(x: 2, y: 2);
+          expect(actual, equals(expected));
+        });
+      });
+      group('arrow', () {
+        test('reversed diagonal', () {
+          final actual = Shape.arrow.constrain(
+            from: const PixelPoint(x: 5, y: 5),
+            to: const PixelPoint(x: 1, y: 2),
+          );
+          const expected = PixelPoint(x: 1, y: 1);
+          expect(actual, equals(expected));
+        });
+      });
+      group('rectangle', () {
+        test('square', () {
+          final actual = Shape.rectangle.constrain(
+            from: const PixelPoint(x: 0, y: 0),
+            to: const PixelPoint(x: 5, y: 2),
+          );
+          const expected = PixelPoint(x: 5, y: 5);
+          expect(actual, equals(expected));
+        });
+        test('reversed', () {
+          final actual = Shape.rectangle.constrain(
+            from: const PixelPoint(x: 5, y: 5),
+            to: const PixelPoint(x: 3, y: 0),
+          );
+          const expected = PixelPoint(x: 0, y: 0);
+          expect(actual, equals(expected));
+        });
+      });
+      group('ellipse', () {
+        test('circle', () {
+          final actual = Shape.ellipse.constrain(
+            from: const PixelPoint(x: 0, y: 0),
+            to: const PixelPoint(x: 2, y: -4),
+          );
+          const expected = PixelPoint(x: 4, y: -4);
+          expect(actual, equals(expected));
+        });
+      });
+    });
   });
 }

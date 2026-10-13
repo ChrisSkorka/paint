@@ -76,6 +76,7 @@ class EditorController extends ChangeNotifier {
   var _playing = false;
   var _onionSkin = const OnionSkin();
   var _colorPickerHeld = false;
+  var _shapeConstrained = false;
   final _strokeProgress = _StrokeProgress();
   late final layersChanged = Listenable.merge([this, _strokeProgress]);
 
@@ -213,6 +214,7 @@ class EditorController extends ChangeNotifier {
     width: _penSize,
     tip: _toolKind.hasTip ? _penTip : BrushTip.circle,
     origin: _strokeOrigin,
+    constrained: _shapeConstrained,
   );
 
   ToolPreset? _presetWith({required PixelColor color}) {
@@ -271,6 +273,14 @@ class EditorController extends ChangeNotifier {
     if (_strokePoint != null) return;
     _toolKind = held ? ToolKind.colorPicker : _drawingToolKind;
     notifyListeners();
+  }
+
+  void holdShapeConstraint({required bool held}) {
+    if (held == _shapeConstrained) return;
+    _shapeConstrained = held;
+    final strokePoint = _strokePoint;
+    if (strokePoint == null) return;
+    _movePointer(point: strokePoint, color: _strokeColor);
   }
 
   void setLayerVisibility({required int index, required bool visible}) {

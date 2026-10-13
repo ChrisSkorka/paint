@@ -5122,6 +5122,111 @@ void main() {
         });
       });
 
+      group('held shape constraint', () {
+        testWidgets('shift down', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 3, height: 3);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rectangle (R)'));
+          await tester.pump();
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          final gesture = await tester.startGesture(
+            topLeft + const Offset(1, 1),
+          );
+          await gesture.moveTo(topLeft + const Offset(9, 5));
+          await gesture.up();
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [black, black, black],
+            [black, transparent, black],
+            [black, black, black],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('shift up', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 3, height: 3);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rectangle (R)'));
+          await tester.pump();
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          final gesture = await tester.startGesture(
+            topLeft + const Offset(1, 1),
+          );
+          await gesture.moveTo(topLeft + const Offset(9, 5));
+          await gesture.up();
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [black, black, black],
+            [black, black, black],
+            [transparent, transparent, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('right shift', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 3, height: 3);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rectangle (R)'));
+          await tester.pump();
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftRight);
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          final gesture = await tester.startGesture(
+            topLeft + const Offset(1, 1),
+          );
+          await gesture.moveTo(topLeft + const Offset(9, 5));
+          await gesture.up();
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftRight);
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [black, black, black],
+            [black, transparent, black],
+            [black, black, black],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
       group('held color picker', () {
         testWidgets('alt down', (tester) async {
           useDesktopView(tester);
