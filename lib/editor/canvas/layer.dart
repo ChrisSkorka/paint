@@ -164,6 +164,27 @@ class Layer {
     }
   }
 
+  void composite({required Layer source, required PixelPoint at}) {
+    final overlap = PixelRectangle(
+      left: at.x,
+      top: at.y,
+      width: source.width,
+      height: source.height,
+    ).intersection(bounds);
+    for (var y = overlap.top; y < overlap.bottom; y++) {
+      for (var x = overlap.left; x < overlap.right; x++) {
+        final point = PixelPoint(x: x, y: y);
+        _write(
+          offset: _offset(x: x, y: y),
+          color: PixelColor.composited(
+            source: source.getPixel(PixelPoint(x: x - at.x, y: y - at.y)),
+            destination: getPixel(point),
+          ),
+        );
+      }
+    }
+  }
+
   int _offset({required int x, required int y}) => (y * width + x) * 4;
 
   void _write({required int offset, required PixelColor color}) {

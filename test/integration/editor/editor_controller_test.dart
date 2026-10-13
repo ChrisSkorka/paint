@@ -15,12 +15,15 @@ import 'package:paint/editor/history/layer_snapshot.dart';
 import 'package:paint/editor/history/pixel_history_entry.dart';
 import 'package:paint/editor/pointer_button.dart';
 import 'package:paint/editor/tools/brush_tip.dart';
+import 'package:paint/editor/tools/text_format.dart';
+import 'package:paint/editor/tools/text_orientation.dart';
 import 'package:paint/editor/tools/tool_kind.dart';
 import 'package:paint/editor/tools/tool_preset.dart';
 import 'package:paint/editor/tools/tool_presets.dart';
 
 import '../../support/document_probes.dart';
 import '../../support/layer_probes.dart';
+import '../../support/notifications.dart';
 
 void main() {
   const transparent = 0x00000000;
@@ -650,6 +653,37 @@ void main() {
     });
 
     group('method selectTool', () {
+      group('text draft', () {
+        test('commits', () async {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..selectTool(ToolKind.text)
+                ..setTextFormat(const TextFormat(size: 2));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 1),
+            button: PointerButton.primary,
+          );
+          editorController.editText('a');
+          editorController.selectTool(ToolKind.pen);
+          await nextNotification(editorController);
+          final actual = [
+            editorController.toolKind,
+            editorController.textOrigin,
+            pixelRows(document.activeLayer),
+          ];
+          const expected = [
+            ToolKind.pen,
+            null,
+            [
+              [transparent, transparent, transparent],
+              [transparent, black, black],
+              [transparent, black, black],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
       group('tools', () {
         test('eraser', () {
           final editorController = EditorController.forDocument(
@@ -1399,6 +1433,384 @@ void main() {
             [transparent, black, black],
             [transparent, black, black],
           ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method setTextFormat', () {
+      group('formats', () {
+        test('default', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          final actual = editorController.textFormat;
+          const expected = TextFormat();
+          expect(actual, equals(expected));
+        });
+        test('changed', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setTextFormat(
+            const TextFormat(size: 20, bold: true),
+          );
+          final actual = [editorController.textFormat, notifications];
+          const expected = [TextFormat(size: 20, bold: true), 1];
+          expect(actual, equals(expected));
+        });
+        test('neither fill nor outline', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setTextFormat(const TextFormat(filled: false));
+          final actual = [editorController.textFormat, notifications];
+          const expected = [TextFormat(), 0];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method moveText', () {
+      group('draft', () {
+        test('moved', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.text);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 1),
+            button: PointerButton.primary,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.moveText(offsetX: 2, offsetY: -3);
+          final actual = [editorController.textOrigin, notifications];
+          const expected = [PixelPoint(x: 3, y: -2), 1];
+          expect(actual, equals(expected));
+        });
+        test('none', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.moveText(offsetX: 2, offsetY: 3);
+          final actual = [editorController.textOrigin, notifications];
+          const expected = [null, 0];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter textColor', () {
+      group('buttons', () {
+        test('primary', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.text);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = editorController.textColor;
+          const expected = PixelColor.black;
+          expect(actual, equals(expected));
+        });
+        test('secondary', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.text);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.secondary,
+          );
+          final actual = editorController.textColor;
+          const expected = PixelColor.white;
+          expect(actual, equals(expected));
+        });
+        test('color changed', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.text);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.selectColor(const PixelColor(argb: red));
+          final actual = editorController.textColor;
+          const expected = PixelColor(argb: red);
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter textOutlineColor', () {
+      group('buttons', () {
+        test('primary', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.text);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = editorController.textOutlineColor;
+          const expected = PixelColor.white;
+          expect(actual, equals(expected));
+        });
+        test('secondary', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.text);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.secondary,
+          );
+          final actual = editorController.textOutlineColor;
+          const expected = PixelColor.black;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter canTransform', () {
+      group('states', () {
+        test('idle', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          final actual = editorController.canTransform;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('selection', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectAll();
+          final actual = editorController.canTransform;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        test('text draft', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.text);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = editorController.canTransform;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method commitText', () {
+      group('no draft', () {
+        test('idle', () async {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          await editorController.commitText();
+          final actual = [
+            editorController.history.entries.length,
+            notifications,
+          ];
+          const expected = [0, 0];
+          expect(actual, equals(expected));
+        });
+      });
+      group('draft', () {
+        test('text', () async {
+          final document = Document.blank(width: 4, height: 3);
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..selectTool(ToolKind.text)
+                ..setTextFormat(const TextFormat(size: 2));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 1),
+            button: PointerButton.primary,
+          );
+          editorController.editText('a');
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          await editorController.commitText();
+          final actual = [
+            editorController.textOrigin,
+            pixelRows(document.activeLayer),
+            editorController.history.entries.map((entry) => entry.name),
+            notifications,
+          ];
+          const expected = [
+            null,
+            [
+              [transparent, transparent, transparent, transparent],
+              [transparent, black, black, transparent],
+              [transparent, black, black, transparent],
+            ],
+            ['Text'],
+            2,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('secondary', () async {
+          final document = Document.blank(width: 2, height: 2);
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..selectTool(ToolKind.text)
+                ..setTextFormat(const TextFormat(size: 2));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.secondary,
+          );
+          editorController.editText('a');
+          await editorController.commitText();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [white, white],
+            [white, white],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('clipped', () async {
+          final document = Document.blank(width: 3, height: 2);
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..selectTool(ToolKind.text)
+                ..setTextFormat(const TextFormat(size: 2));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 2, y: 1),
+            button: PointerButton.primary,
+          );
+          editorController.editText('ab');
+          await editorController.commitText();
+          final actual = [
+            pixelRows(document.activeLayer),
+            (editorController.history.entries.single as PixelHistoryEntry)
+                .after
+                .area,
+          ];
+          const expected = [
+            [
+              [transparent, transparent, transparent],
+              [transparent, transparent, black],
+            ],
+            PixelRectangle(left: 2, top: 1, width: 1, height: 1),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('empty', () async {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.text);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          await editorController.commitText();
+          final actual = [
+            editorController.textOrigin,
+            editorController.history.entries.length,
+            notifications,
+          ];
+          const expected = [null, 0, 1];
+          expect(actual, equals(expected));
+        });
+        test('oriented', () async {
+          final document = Document.blank(width: 4, height: 4);
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..selectTool(ToolKind.text)
+                ..setTextFormat(const TextFormat(size: 2));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.editText('ab');
+          editorController.rotateSelection(clockwise: true);
+          await editorController.commitText();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, black, black, transparent],
+            [transparent, black, black, transparent],
+            [transparent, black, black, transparent],
+            [transparent, black, black, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('outlined', () async {
+          final document = Document.blank(width: 4, height: 4);
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..selectTool(ToolKind.text)
+                ..setTextFormat(
+                  const TextFormat(size: 2, outlined: true, filled: false),
+                )
+                ..selectColor(const PixelColor(argb: red));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.secondary,
+          );
+          editorController.editText('a');
+          await editorController.commitText();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [0x91ff0000, red, red, 0x91ff0000],
+            [red, red, red, red],
+            [red, red, red, red],
+            [0x91ff0000, red, red, 0x91ff0000],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('orientation reset', () async {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.text);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.rotateSelection(clockwise: true);
+          await editorController.commitText();
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = editorController.textOrientation;
+          const expected = TextOrientation();
+          expect(actual, equals(expected));
+        });
+        test('next draft', () async {
+          final editorController =
+              EditorController.forDocument(
+                  document: Document.blank(width: 3, height: 3),
+                )
+                ..selectTool(ToolKind.text)
+                ..setTextFormat(const TextFormat(size: 2));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.editText('a');
+          await editorController.commitText();
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 1),
+            button: PointerButton.primary,
+          );
+          await editorController.commitText();
+          final actual = editorController.history.entries.map(
+            (entry) => entry.name,
+          );
+          const expected = ['Text'];
           expect(actual, equals(expected));
         });
       });
@@ -4960,6 +5372,57 @@ void main() {
     });
 
     group('method pointerDown', () {
+      group('text tool', () {
+        test('starts draft', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.text);
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 2),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 2));
+          final actual = [
+            editorController.textOrigin,
+            editorController.history.entries.length,
+            notifications,
+          ];
+          const expected = [PixelPoint(x: 1, y: 2), 0, 1];
+          expect(actual, equals(expected));
+        });
+        test('commits draft', () async {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..selectTool(ToolKind.text)
+                ..setTextFormat(const TextFormat(size: 2));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.editText('a');
+          editorController.pointerDown(
+            point: const PixelPoint(x: 2, y: 2),
+            button: PointerButton.primary,
+          );
+          await nextNotification(editorController);
+          final actual = [
+            editorController.textOrigin,
+            pixelRows(document.activeLayer),
+          ];
+          const expected = [
+            null,
+            [
+              [black, black, transparent],
+              [black, black, transparent],
+              [transparent, transparent, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
       group('buttons', () {
         test('primary', () {
           final document = Document.blank(width: 3, height: 1);
@@ -6653,6 +7116,31 @@ void main() {
     });
 
     group('method selectAll', () {
+      group('text draft', () {
+        test('commits', () async {
+          final document = Document.blank(width: 2, height: 2);
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..selectTool(ToolKind.text)
+                ..setTextFormat(const TextFormat(size: 2));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.editText('a');
+          editorController.selectAll();
+          await nextNotification(editorController);
+          final actual = [
+            editorController.textOrigin,
+            editorController.history.entries.map((entry) => entry.name),
+          ];
+          const expected = [
+            null,
+            ['Text'],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
       group('state', () {
         test('idle', () {
           final document = Document.blank(width: 3, height: 2);
@@ -6926,6 +7414,35 @@ void main() {
     });
 
     group('method paste', () {
+      group('text draft', () {
+        test('commits', () async {
+          final document = Document.blank(width: 2, height: 2);
+          final editorController =
+              EditorController.forDocument(document: document)
+                ..selectTool(ToolKind.text)
+                ..setTextFormat(const TextFormat(size: 2));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.editText('a');
+          editorController.paste(
+            layerFromRows([
+              [red],
+            ]),
+          );
+          await nextNotification(editorController);
+          final actual = [
+            editorController.textOrigin,
+            editorController.history.entries.map((entry) => entry.name),
+          ];
+          const expected = [
+            null,
+            ['Paste', 'Text'],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
       group('into selection', () {
         test('fits', () {
           final document = Document.blank(
@@ -7211,6 +7728,27 @@ void main() {
     });
 
     group('method rotateSelection', () {
+      group('text draft', () {
+        test('rotated', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.text);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.rotateSelection(clockwise: true);
+          final actual = [
+            editorController.textOrientation,
+            editorController.history.entries.length,
+            notifications,
+          ];
+          const expected = [TextOrientation(quarterTurns: 1), 0, 1];
+          expect(actual, equals(expected));
+        });
+      });
       group('directions', () {
         test('clockwise', () {
           final document = Document.blank(width: 2, height: 2);
@@ -7305,6 +7843,31 @@ void main() {
     });
 
     group('method mirrorSelection', () {
+      group('text draft', () {
+        test('mirrored', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.text);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.mirrorSelection(horizontally: false);
+          final actual = [
+            editorController.textOrientation,
+            editorController.history.entries.length,
+            notifications,
+          ];
+          const expected = [
+            TextOrientation(quarterTurns: 2, mirrored: true),
+            0,
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
       group('directions', () {
         test('horizontally', () {
           final document = Document.blank(width: 2, height: 1);

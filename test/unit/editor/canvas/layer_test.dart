@@ -765,6 +765,82 @@ void main() {
       });
     });
 
+    group('method composite', () {
+      group('positions', () {
+        test('inside', () {
+          final layer = layerFromRows([
+            [transparent, transparent, transparent],
+            [transparent, transparent, transparent],
+          ]);
+          layer.composite(
+            source: layerFromRows([
+              [red, green],
+            ]),
+            at: const PixelPoint(x: 1, y: 1),
+          );
+          final actual = pixelRows(layer);
+          const expected = [
+            [transparent, transparent, transparent],
+            [transparent, red, green],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('clipped', () {
+          final layer = layerFromRows([
+            [transparent, transparent],
+            [transparent, transparent],
+          ]);
+          layer.composite(
+            source: layerFromRows([
+              [red, green],
+              [blue, cyan],
+            ]),
+            at: const PixelPoint(x: -1, y: 1),
+          );
+          final actual = pixelRows(layer);
+          const expected = [
+            [transparent, transparent],
+            [green, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('blending', () {
+        test('transparent source', () {
+          final layer = layerFromRows([
+            [red, green],
+          ]);
+          layer.composite(
+            source: layerFromRows([
+              [transparent, transparent],
+            ]),
+            at: const PixelPoint(x: 0, y: 0),
+          );
+          final actual = pixelRows(layer);
+          const expected = [
+            [red, green],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('translucent source', () {
+          final layer = layerFromRows([
+            [blue, transparent],
+          ]);
+          layer.composite(
+            source: layerFromRows([
+              [0x80ff0000, 0x80ff0000],
+            ]),
+            at: const PixelPoint(x: 0, y: 0),
+          );
+          final actual = pixelRows(layer);
+          const expected = [
+            [0xff80007f, 0x80ff0000],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('operator ==', () {
       group('equals', () {
         test('same fields', () {

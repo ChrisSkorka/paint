@@ -172,6 +172,71 @@ void main() {
       });
     });
 
+    group('factory composited', () {
+      group('opaque source', () {
+        test('over opaque', () {
+          final actual = PixelColor.composited(
+            source: const PixelColor(argb: 0xffff0000),
+            destination: const PixelColor(argb: 0xff0000ff),
+          );
+          const expected = PixelColor(argb: 0xffff0000);
+          expect(actual, equals(expected));
+        });
+        test('over transparent', () {
+          final actual = PixelColor.composited(
+            source: const PixelColor(argb: 0xffff0000),
+            destination: PixelColor.transparent,
+          );
+          const expected = PixelColor(argb: 0xffff0000);
+          expect(actual, equals(expected));
+        });
+      });
+      group('transparent source', () {
+        test('over opaque', () {
+          final actual = PixelColor.composited(
+            source: const PixelColor(argb: 0x00ff0000),
+            destination: const PixelColor(argb: 0xff0000ff),
+          );
+          const expected = PixelColor(argb: 0xff0000ff);
+          expect(actual, equals(expected));
+        });
+        test('over transparent', () {
+          final actual = PixelColor.composited(
+            source: const PixelColor(argb: 0x00ff0000),
+            destination: const PixelColor(argb: 0x000000ff),
+          );
+          const expected = PixelColor.transparent;
+          expect(actual, equals(expected));
+        });
+      });
+      group('translucent source', () {
+        test('over opaque', () {
+          final actual = PixelColor.composited(
+            source: const PixelColor(argb: 0x80ff0000),
+            destination: const PixelColor(argb: 0xff0000ff),
+          );
+          const expected = PixelColor(argb: 0xff80007f);
+          expect(actual, equals(expected));
+        });
+        test('over transparent', () {
+          final actual = PixelColor.composited(
+            source: const PixelColor(argb: 0x80ff0000),
+            destination: PixelColor.transparent,
+          );
+          const expected = PixelColor(argb: 0x80ff0000);
+          expect(actual, equals(expected));
+        });
+        test('over translucent', () {
+          final actual = PixelColor.composited(
+            source: const PixelColor(argb: 0x80ff0000),
+            destination: const PixelColor(argb: 0x800000ff),
+          );
+          const expected = PixelColor(argb: 0xc0aa0055);
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method tryParseHex', () {
       group('valid', () {
         test('six digits', () {

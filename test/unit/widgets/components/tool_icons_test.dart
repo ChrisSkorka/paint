@@ -20,6 +20,7 @@ void main() {
             FontAwesomeIcons.square.codePoint,
             FontAwesomeIcons.circle.codePoint,
             FontAwesomeIcons.arrowRight.codePoint,
+            FontAwesomeIcons.font.codePoint,
             FontAwesomeIcons.eyeDropper.codePoint,
             FontAwesomeIcons.borderTopLeft.codePoint,
           ];

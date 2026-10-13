@@ -13,6 +13,8 @@ import 'package:paint/editor/files/export_format.dart';
 import 'package:paint/editor/tools/brush_tip.dart';
 import 'package:paint/editor/tools/tool_kind.dart';
 import 'package:paint/editor/tools/tool_preset.dart';
+import 'package:paint/editor/tools/text_format.dart';
+import 'package:paint/editor/tools/text_orientation.dart';
 import 'package:paint/editor/tools/tool_presets.dart';
 import 'package:paint/widgets/components/edge_shadow.dart';
 import 'package:paint/widgets/components/number_stepper.dart';
@@ -23,6 +25,7 @@ import 'package:paint/widgets/components/pixel_canvas.dart';
 import 'package:paint/widgets/components/side_pane.dart';
 import 'package:paint/widgets/components/side_panel.dart';
 import 'package:paint/widgets/components/swatch_grid.dart';
+import 'package:paint/widgets/components/text_draft.dart';
 import 'package:paint/widgets/components/timeline.dart';
 import 'package:paint/widgets/views/editor_view.dart';
 
@@ -38,6 +41,7 @@ import '../../../support/wheel.dart';
 import '../../../support/stub_document_store.dart';
 import '../../../support/stub_file_access.dart';
 import '../../../support/stub_image_clipboard.dart';
+import '../../../support/text_commits.dart';
 
 void main() {
   const transparent = 0x00000000;
@@ -367,6 +371,122 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('text tool', () {
+        testWidgets('cursor', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text (T)'));
+          await tester.pump();
+          final actual = tester
+              .widget<PixelCanvas>(find.byType(PixelCanvas))
+              .cursor;
+          const expected = SystemMouseCursors.text;
+          expect(actual, equals(expected));
+        });
+        testWidgets('transform buttons', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text (T)'));
+          await tester.pump();
+          await tester.tapAt(tester.getTopLeft(find.byType(PixelCanvas)));
+          await tester.pump();
+          final actual = selectionActionsEnabled(tester);
+          const expected = [true, true, true, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('options', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text options'));
+          await tester.pump();
+          final actual = textOptions(tester);
+          const expected = [12, false, false, false, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('no draft', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text (T)'));
+          await tester.pump();
+          final actual = find.byType(TextDraft).evaluate().length;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+        testWidgets('draft', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text (T)'));
+          await tester.pump();
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(9, 5));
+          await tester.pump();
+          final actual = [
+            textFieldOffset(tester),
+            tester.widget<TextDraft>(find.byType(TextDraft)).style,
+          ];
+          final expected = [
+            const Offset(8, 4),
+            const TextFormat().style(scale: 4, color: PixelColor.black),
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
       group('shape style', () {
         testWidgets('pen', (tester) async {
           useDesktopView(tester);
@@ -5487,6 +5607,567 @@ void main() {
             [black, transparent, black],
             [black, black, black],
           ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('text tool', () {
+        testWidgets('shortcut', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyT);
+          final actual = textToolSelected(tester);
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        testWidgets('rotate draft', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text (T)'));
+          await tester.pump();
+          await tester.tapAt(tester.getTopLeft(find.byType(PixelCanvas)));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Rotate right'));
+          await tester.pump();
+          final actual = tester
+              .widget<RotatedBox>(
+                find.descendant(
+                  of: find.byType(TextDraft),
+                  matching: find.byType(RotatedBox),
+                ),
+              )
+              .quarterTurns;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        testWidgets('mirror draft', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text (T)'));
+          await tester.pump();
+          await tester.tapAt(tester.getTopLeft(find.byType(PixelCanvas)));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Mirror horizontally'));
+          await tester.pump();
+          final actual = tester
+              .widget<TextDraft>(find.byType(TextDraft))
+              .orientation;
+          const expected = TextOrientation(mirrored: true);
+          expect(actual, equals(expected));
+        });
+        testWidgets('transform keeps focus', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text (T)'));
+          await tester.pump();
+          await tester.tapAt(tester.getTopLeft(find.byType(PixelCanvas)));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Rotate left'));
+          await tester.pump();
+          final actual =
+              FocusManager.instance.primaryFocus?.context
+                  ?.findAncestorWidgetOfExactType<TextDraft>() !=
+              null;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        testWidgets('increase size', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text options'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Increase text size'));
+          await tester.pump();
+          final actual = textOptions(tester);
+          const expected = [13, false, false, false, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('increase rounded size', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text options'));
+          await tester.pump();
+          await tester.enterText(
+            find.descendant(
+              of: find.ancestor(
+                of: find.byTooltip('Increase text size'),
+                matching: find.byType(NumberStepper),
+              ),
+              matching: find.byType(TextField),
+            ),
+            '63',
+          );
+          await tester.testTextInput.receiveAction(TextInputAction.done);
+          await tester.pump();
+          await tester.tap(find.byTooltip('Increase text size'));
+          await tester.pump();
+          final actual = textOptions(tester);
+          const expected = [65, false, false, false, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('decrease rounded size', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text options'));
+          await tester.pump();
+          await tester.enterText(
+            find.descendant(
+              of: find.ancestor(
+                of: find.byTooltip('Increase text size'),
+                matching: find.byType(NumberStepper),
+              ),
+              matching: find.byType(TextField),
+            ),
+            '63',
+          );
+          await tester.testTextInput.receiveAction(TextInputAction.done);
+          await tester.pump();
+          await tester.tap(find.byTooltip('Decrease text size'));
+          await tester.pump();
+          final actual = textOptions(tester);
+          const expected = [60, false, false, false, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('size slider', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text options'));
+          await tester.pump();
+          await tester.tap(
+            find.descendant(
+              of: find
+                  .ancestor(
+                    of: find.byTooltip('Increase text size'),
+                    matching: find.byType(IntrinsicWidth),
+                  )
+                  .first,
+              matching: find.byType(Slider),
+            ),
+          );
+          await tester.pump();
+          final actual = textOptions(tester);
+          const expected = [22, false, false, false, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('rounded size slider', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text options'));
+          await tester.pump();
+          final slider = find.descendant(
+            of: find
+                .ancestor(
+                  of: find.byTooltip('Increase text size'),
+                  matching: find.byType(IntrinsicWidth),
+                )
+                .first,
+            matching: find.byType(Slider),
+          );
+          final rect = tester.getRect(slider);
+          await tester.tapAt(
+            Offset(rect.left + rect.width * 0.75, rect.center.dy),
+          );
+          await tester.pump();
+          final actual = textOptions(tester);
+          const expected = [130, false, false, false, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('toggles', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text options'));
+          await tester.pump();
+          for (final tooltip in [
+            'Bold',
+            'Italic',
+            'Underline',
+            'Strikethrough',
+          ]) {
+            await tester.tap(find.byTooltip(tooltip));
+            await tester.pump();
+          }
+          final actual = textOptions(tester);
+          const expected = [12, true, true, true, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('outline options', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text options'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Outline text'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Fill text'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Increase outline width'));
+          await tester.pump();
+          final actual = textOutlineOptions(tester);
+          const expected = [false, true, 2, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('outline width disabled', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text options'));
+          await tester.pump();
+          final actual = textOutlineOptions(tester);
+          const expected = [true, false, 1, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('hollow draft', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text (T)'));
+          await tester.pump();
+          await tester.tapAt(tester.getTopLeft(find.byType(PixelCanvas)));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Text options'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Outline text'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Fill text'));
+          await tester.pump();
+          final textDraft = tester.widget<TextDraft>(find.byType(TextDraft));
+          final actual = [
+            textDraft.style.color,
+            textDraft.outlineStyle?.foreground?.color,
+            textDraft.cursorColor,
+            textDraft.padding,
+          ];
+          const expected = [
+            Color(0x00000000),
+            Color(0xffffffff),
+            Color(0xff000000),
+            4.0,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('draft style', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text (T)'));
+          await tester.pump();
+          await tester.tapAt(tester.getTopLeft(find.byType(PixelCanvas)));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Text options'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Bold'));
+          await tester.pump();
+          final actual = tester.widget<TextDraft>(find.byType(TextDraft)).style;
+          final expected = const TextFormat(
+            bold: true,
+          ).style(scale: 4, color: PixelColor.black);
+          expect(actual, equals(expected));
+        });
+        testWidgets('move draft', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text (T)'));
+          await tester.pump();
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(5, 5));
+          await tester.pump();
+          final gesture = await tester.startGesture(
+            tester.getTopLeft(find.byType(TextDraft)) + const Offset(2, 2),
+            kind: PointerDeviceKind.mouse,
+          );
+          await gesture.moveBy(const Offset(8, 4));
+          await gesture.up();
+          await tester.pump();
+          final actual = textFieldOffset(tester);
+          const expected = Offset(12, 8);
+          expect(actual, equals(expected));
+        });
+        testWidgets('move draft partial pixels', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text (T)'));
+          await tester.pump();
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(5, 5));
+          await tester.pump();
+          final gesture = await tester.startGesture(
+            tester.getTopLeft(find.byType(TextDraft)) + const Offset(2, 2),
+            kind: PointerDeviceKind.mouse,
+          );
+          await gesture.moveBy(const Offset(30, 0));
+          await gesture.moveBy(const Offset(-21, 0));
+          await gesture.moveBy(const Offset(-2, 0));
+          await gesture.up();
+          await tester.pump();
+          final actual = textFieldOffset(tester);
+          const expected = Offset(12, 4);
+          expect(actual, equals(expected));
+        });
+        testWidgets('typing letters', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text (T)'));
+          await tester.pump();
+          await tester.tapAt(tester.getTopLeft(find.byType(PixelCanvas)));
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
+          await tester.pump();
+          final actual = textToolSelected(tester);
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        testWidgets('commit', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 5, height: 5);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text (T)'));
+          await tester.pump();
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(9, 9));
+          await tester.pump();
+          await tester.enterText(
+            find.descendant(
+              of: find.byType(TextDraft),
+              matching: find.byType(TextField),
+            ),
+            'a',
+          );
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await settleTextCommit(tester);
+          final actual = [
+            pixelRows(document.activeLayer),
+            find.byType(TextDraft).evaluate().length,
+          ];
+          const expected = [
+            [
+              [transparent, transparent, transparent, transparent, transparent],
+              [transparent, transparent, transparent, transparent, transparent],
+              [transparent, transparent, transparent, transparent, transparent],
+              [transparent, transparent, black, black, black],
+              [transparent, transparent, black, black, black],
+            ],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('shortcuts after commit', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text (T)'));
+          await tester.pump();
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(13, 13));
+          await tester.pump();
+          await tester.tapAt(topLeft);
+          await tester.pump();
+          await pressShortcut(tester, key: LogicalKeyboardKey.keyP);
+          final actual = selectedTools(tester);
+          const expected = [true, false, false, false];
           expect(actual, equals(expected));
         });
       });

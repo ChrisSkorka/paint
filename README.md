@@ -327,14 +327,29 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - fill uses secondary color
   - defaults: outline=on, fill=off
 - [x] swap rectangle & arrow tool buttons
+- [ ] save boarder/fill values to recents/favorites
+  - use layered outline and filled shapes to show fill & border
+  - if filled: show filled icon with fill color
+  - if outlined: show outline icon with outline color
+  - shadow for light icons based on outline color if outlined, otherwise on fill color
 
 ### phase 7.3: text tool
 
-- [ ] text tool: above selection tool
-- [ ] options: size (not using pen size)
-- [ ] using pen color
-- [ ] font: whatever the app uses, no config needed
-- [ ] shortcut: T
+- [x] text tool: above selection tool in tools ribbon
+- [x] options: (dropdown from tool)
+  - size (not using pen size)
+  - bold, italics, underline, strike through
+- [x] using pen color
+- [x] font: whatever the app uses, no config needed
+- [x] transformations: until placed you can
+  - move: drag box edge
+  - rotate & mirror: selection buttons
+- [x] optional border
+- [x] shortcut: T
+- [ ] recents/favorites
+  - icon: A icon with text color fill and outline color
+  - trailing: circle icon with fill & outline rules matching shapes
+  - text: {font size} px
 
 ### phase 7.3: colors
 

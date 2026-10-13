@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -26,6 +27,9 @@ import 'tools/eraser.dart';
 import 'tools/pen.dart';
 import 'tools/shape.dart';
 import 'tools/shape_tool.dart';
+import 'tools/text_format.dart';
+import 'tools/text_orientation.dart';
+import 'tools/text_stamp.dart';
 import 'tools/tool.dart';
 import 'tools/tool_kind.dart';
 import 'tools/tool_preset.dart';
@@ -80,6 +84,11 @@ class EditorController extends ChangeNotifier {
   var _shapeCentered = false;
   var _shapeOutlined = true;
   var _shapeFilled = false;
+  var _textFormat = const TextFormat();
+  var _textOrientation = const TextOrientation();
+  PixelPoint? _textOrigin;
+  var _textButton = PointerButton.primary;
+  var _text = '';
   final _strokeProgress = _StrokeProgress();
   late final layersChanged = Listenable.merge([this, _strokeProgress]);
 
@@ -105,6 +114,17 @@ class EditorController extends ChangeNotifier {
   PixelColor get secondaryColor => _secondaryColor;
   bool get shapeOutlined => _shapeOutlined;
   bool get shapeFilled => _shapeFilled;
+  TextFormat get textFormat => _textFormat;
+  PixelPoint? get textOrigin => _textOrigin;
+  TextOrientation get textOrientation => _textOrientation;
+  PixelColor get textOutlineColor => switch (_textButton) {
+    PointerButton.primary => _secondaryColor,
+    PointerButton.secondary => _primaryColor,
+  };
+  PixelColor get textColor => switch (_textButton) {
+    PointerButton.primary => _primaryColor,
+    PointerButton.secondary => _secondaryColor,
+  };
   bool get editingPrimary => _editingPrimary;
   Layer get pointerLayer => pointerPreview.layer;
   PixelPoint? get cursor => pointerPreview.cursor;
@@ -112,6 +132,7 @@ class EditorController extends ChangeNotifier {
   ToolPreset? get toolPreset => _presetWith(color: _primaryColor);
   PixelRectangle? get selectionArea => _selectingArea ?? _selection?.area;
   bool get hasSelection => _selection != null;
+  bool get canTransform => hasSelection || _textOrigin != null;
   bool get drawsPointer => _tool != null;
   Layer? get selectionContent => _selection?.content;
   bool get pointerOverSelection {
@@ -211,7 +232,7 @@ class EditorController extends ChangeNotifier {
     ToolKind.rectangle => _shapeTool(Shape.rectangle),
     ToolKind.circle => _shapeTool(Shape.ellipse),
     ToolKind.arrow => _shapeTool(Shape.arrow),
-    ToolKind.colorPicker || ToolKind.select => null,
+    ToolKind.text || ToolKind.colorPicker || ToolKind.select => null,
   };
 
   ShapeTool _shapeTool(Shape shape) => ShapeTool(
@@ -259,6 +280,7 @@ class EditorController extends ChangeNotifier {
 
   void selectTool(ToolKind toolKind) {
     if (_strokePoint != null) return;
+    unawaited(commitText());
     _selection = null;
     _toolKind = toolKind;
     if (toolKind != ToolKind.colorPicker) _drawingToolKind = toolKind;
@@ -297,6 +319,62 @@ class EditorController extends ChangeNotifier {
   void setShapeFilled(bool filled) {
     if (!filled && !_shapeOutlined) return;
     _shapeFilled = filled;
+    notifyListeners();
+  }
+
+  void setTextFormat(TextFormat format) {
+    if (!format.filled && !format.outlined) return;
+    _textFormat = format;
+    notifyListeners();
+  }
+
+  void moveText({required int offsetX, required int offsetY}) {
+    final origin = _textOrigin;
+    if (origin == null) return;
+    _textOrigin = PixelPoint(x: origin.x + offsetX, y: origin.y + offsetY);
+    notifyListeners();
+  }
+
+  void editText(String text) => _text = text;
+
+  Future<void> commitText() async {
+    final origin = _textOrigin;
+    if (origin == null) return;
+    final stamp = TextStamp(
+      text: _text,
+      format: _textFormat,
+      color: textColor,
+      outlineColor: textOutlineColor,
+    );
+    _textOrigin = null;
+    _text = '';
+    notifyListeners();
+    if (stamp.text.isEmpty) return;
+    final orientation = _textOrientation;
+    final image = orientation.apply(await stamp.rasterize());
+    final before = Layer.copyOf(document.activeLayer);
+    document.activeLayer.composite(source: image, at: origin);
+    _record(
+      name: 'Text',
+      before: before,
+      area: PixelRectangle(
+        left: origin.x,
+        top: origin.y,
+        width: image.width,
+        height: image.height,
+      ).intersection(document.activeLayer.bounds),
+    );
+    notifyListeners();
+  }
+
+  void _pressText({required PixelPoint point, required PointerButton button}) {
+    if (_textOrigin != null) {
+      unawaited(commitText());
+      return;
+    }
+    _textOrigin = point;
+    _textButton = button;
+    _textOrientation = const TextOrientation();
     notifyListeners();
   }
 
@@ -678,6 +756,10 @@ class EditorController extends ChangeNotifier {
   }
 
   void pointerDown({required PixelPoint point, required PointerButton button}) {
+    if (_toolKind == ToolKind.text) {
+      _pressText(point: point, button: button);
+      return;
+    }
     _strokeColor = switch (button) {
       PointerButton.primary => _primaryColor,
       PointerButton.secondary => _secondaryColor,
@@ -751,6 +833,7 @@ class EditorController extends ChangeNotifier {
 
   void selectAll() {
     if (_strokePoint != null) return;
+    unawaited(commitText());
     _toolKind = ToolKind.select;
     _drawingToolKind = ToolKind.select;
     _selection = Selection.lift(
@@ -785,6 +868,7 @@ class EditorController extends ChangeNotifier {
 
   void paste(Layer image) {
     if (_strokePoint != null) return;
+    unawaited(commitText());
     _toolKind = ToolKind.select;
     _drawingToolKind = ToolKind.select;
     final area = _selection?.area;
@@ -812,6 +896,10 @@ class EditorController extends ChangeNotifier {
   }
 
   void rotateSelection({required bool clockwise}) {
+    if (_textOrigin != null) {
+      _orientText(_textOrientation.rotate(clockwise: clockwise));
+      return;
+    }
     _transformSelection(
       name: clockwise ? 'Rotate right' : 'Rotate left',
       transform: (selection) =>
@@ -820,6 +908,10 @@ class EditorController extends ChangeNotifier {
   }
 
   void mirrorSelection({required bool horizontally}) {
+    if (_textOrigin != null) {
+      _orientText(_textOrientation.mirror(horizontally: horizontally));
+      return;
+    }
     _transformSelection(
       name: horizontally ? 'Mirror horizontally' : 'Mirror vertically',
       transform: (selection) => selection.mirrored(
@@ -827,6 +919,11 @@ class EditorController extends ChangeNotifier {
         horizontally: horizontally,
       ),
     );
+  }
+
+  void _orientText(TextOrientation orientation) {
+    _textOrientation = orientation;
+    notifyListeners();
   }
 
   void _transformSelection({

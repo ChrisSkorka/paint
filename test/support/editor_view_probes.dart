@@ -11,8 +11,10 @@ import 'package:paint/widgets/components/history_list.dart';
 import 'package:paint/widgets/components/layer_list.dart';
 import 'package:paint/widgets/components/number_stepper.dart';
 import 'package:paint/widgets/components/paint_icon_button.dart';
+import 'package:paint/widgets/components/paint_split_button.dart';
 import 'package:paint/widgets/components/ribbon_section.dart';
 import 'package:paint/widgets/components/swatch_grid.dart';
+import 'package:paint/widgets/components/text_draft.dart';
 import 'package:paint/widgets/components/timeline.dart';
 import 'package:paint/widgets/components/tool_preset_list.dart';
 
@@ -300,3 +302,69 @@ Finder canvasArea() => find.byWidgetPredicate(
 Offset canvasOffset(WidgetTester tester) =>
     tester.getTopLeft(find.byType(PixelCanvas)) -
     tester.getTopLeft(canvasArea());
+
+bool textToolSelected(WidgetTester tester) => tester
+    .widget<PaintSplitButton>(
+      find.ancestor(
+        of: find.byTooltip('Text (T)'),
+        matching: find.byType(PaintSplitButton),
+      ),
+    )
+    .selected;
+
+List<Object> textOptions(WidgetTester tester) => [
+  tester
+      .widget<NumberStepper>(
+        find.ancestor(
+          of: find.byTooltip('Increase text size'),
+          matching: find.byType(NumberStepper),
+        ),
+      )
+      .value,
+  for (final tooltip in ['Bold', 'Italic', 'Underline', 'Strikethrough'])
+    tester
+        .widget<PaintIconButton>(
+          find.ancestor(
+            of: find.byTooltip(tooltip),
+            matching: find.byType(PaintIconButton),
+          ),
+        )
+        .selected,
+];
+
+Offset textFieldOffset(WidgetTester tester) =>
+    tester.getTopLeft(
+      find.descendant(
+        of: find.byType(TextDraft),
+        matching: find.byType(TextField),
+      ),
+    ) -
+    tester.getTopLeft(find.byType(PixelCanvas));
+
+List<Object> textOutlineOptions(WidgetTester tester) => [
+  for (final tooltip in ['Fill text', 'Outline text'])
+    tester
+        .widget<PaintIconButton>(
+          find.ancestor(
+            of: find.byTooltip(tooltip),
+            matching: find.byType(PaintIconButton),
+          ),
+        )
+        .selected,
+  tester
+      .widget<NumberStepper>(
+        find.ancestor(
+          of: find.byTooltip('Increase outline width'),
+          matching: find.byType(NumberStepper),
+        ),
+      )
+      .value,
+  tester
+      .widget<NumberStepper>(
+        find.ancestor(
+          of: find.byTooltip('Increase outline width'),
+          matching: find.byType(NumberStepper),
+        ),
+      )
+      .enabled,
+];

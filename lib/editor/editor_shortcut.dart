@@ -155,6 +155,11 @@ enum EditorShortcut {
     group: ShortcutGroup.tools,
     activators: [SingleActivator(LogicalKeyboardKey.keyM)],
   ),
+  text(
+    label: 'Text',
+    group: ShortcutGroup.tools,
+    activators: [SingleActivator(LogicalKeyboardKey.keyT)],
+  ),
   line(
     label: 'Line',
     group: ShortcutGroup.tools,

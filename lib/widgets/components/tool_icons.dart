@@ -11,6 +11,7 @@ FaIconData toolIcon({required ToolKind kind}) => switch (kind) {
   ToolKind.rectangle => FontAwesomeIcons.square,
   ToolKind.circle => FontAwesomeIcons.circle,
   ToolKind.arrow => FontAwesomeIcons.arrowRight,
+  ToolKind.text => FontAwesomeIcons.font,
   ToolKind.colorPicker => FontAwesomeIcons.eyeDropper,
   ToolKind.select => FontAwesomeIcons.borderTopLeft,
 };

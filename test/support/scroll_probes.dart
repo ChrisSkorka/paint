@@ -21,7 +21,7 @@ Widget horizontalScrollApp({required double contentWidth}) => MaterialApp(
 );
 
 Widget scrollBehaviorApp({required Axis axis}) => MaterialApp(
-  scrollBehavior: const PaintScrollBehavior(),
+  scrollBehavior: PaintScrollBehavior(),
   home: Scaffold(
     body: PrimaryScrollController.none(
       child: ListView(

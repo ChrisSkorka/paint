@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../editor/tools/text_format.dart';
+
 abstract final class PaintStyle {
   static const barBackground = Color(0xFFF8F8F8);
   static const canvasAreaBackground = Color(0xFFEEEEEE);
@@ -21,6 +23,7 @@ abstract final class PaintStyle {
   static const eraserColor = Color(0xFFCD5C5C);
   static const fillColor = Color(0xFF8A2BE2);
   static const shapeColor = Color(0xFF2E8B57);
+  static const textColor = Color(0xFF4682B4);
   static const colorPickerColor = Color(0xFF1E90FF);
   static const saveColor = Color(0xFF00BFFF);
   static const selectionLight = Color(0xFFFFFFFF);
@@ -28,7 +31,7 @@ abstract final class PaintStyle {
   static const changeOutlineColor = Color(0xFF1E90FF);
 
   static const radius = BorderRadius.all(Radius.circular(5));
-  static const fontFamily = 'Arial';
+  static const fontFamily = TextFormat.fontFamily;
   static const ribbonContentHeight = 80.0;
   static const swatchSize = 15.0;
   static const chessCellSize = 8.0;

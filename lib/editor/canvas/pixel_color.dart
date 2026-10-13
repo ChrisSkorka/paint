@@ -16,6 +16,24 @@ class PixelColor {
     );
   }
 
+  factory PixelColor.composited({
+    required PixelColor source,
+    required PixelColor destination,
+  }) {
+    final covered = source.alpha * 0xff;
+    final remaining = destination.alpha * (0xff - source.alpha);
+    final total = covered + remaining;
+    if (total == 0) return transparent;
+    int channel({required int source, required int destination}) =>
+        ((source * covered + destination * remaining) / total).round();
+    return PixelColor.fromChannels(
+      red: channel(source: source.red, destination: destination.red),
+      green: channel(source: source.green, destination: destination.green),
+      blue: channel(source: source.blue, destination: destination.blue),
+      alpha: (total / 0xff).round(),
+    );
+  }
+
   static PixelColor? tryParseHex(String text) {
     final digits = text.startsWith('#') ? text.substring(1) : text;
     if (!_hexDigits.hasMatch(digits)) return null;

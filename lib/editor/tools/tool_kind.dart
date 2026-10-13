@@ -55,6 +55,14 @@ enum ToolKind {
     hasFill: false,
     presettable: true,
   ),
+  text(
+    label: 'Text',
+    usesColor: true,
+    hasSize: false,
+    hasTip: false,
+    hasFill: false,
+    presettable: false,
+  ),
   colorPicker(
     label: 'Color picker',
     usesColor: false,

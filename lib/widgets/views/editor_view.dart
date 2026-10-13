@@ -22,6 +22,8 @@ import '../../editor/history/pixel_history_entry.dart';
 import '../../editor/pointer_button.dart';
 import '../../editor/tools/brush_tip.dart';
 import '../../editor/tools/color_palettes.dart';
+import '../../editor/tools/text_format.dart';
+import '../../editor/tools/text_stamp.dart';
 import '../../editor/tools/tool_kind.dart';
 import '../../editor/tools/tool_size.dart';
 import '../components/canvas_margin.dart';
@@ -44,6 +46,7 @@ import '../components/ribbon_section.dart';
 import '../components/side_pane.dart';
 import '../components/stable_text.dart';
 import '../components/swatch_grid.dart';
+import '../components/text_draft.dart';
 import '../components/timeline.dart';
 import '../components/tool_icons.dart';
 import '../components/tool_preset_list.dart';
@@ -84,6 +87,7 @@ class _EditorViewState extends State<EditorView> {
   final verticalScroll = ScrollController();
   final horizontalScroll = ScrollController();
   var unsaved = false;
+  var textDrag = Offset.zero;
 
   @override
   void initState() {
@@ -209,9 +213,13 @@ class _EditorViewState extends State<EditorView> {
   VoidCallback? _whenSelected(VoidCallback action) =>
       controller.hasSelection ? action : null;
 
+  VoidCallback? _whenTransformable(VoidCallback action) =>
+      controller.canTransform ? action : null;
+
   MouseCursor _canvasCursor() {
     if (controller.pointerOverSelection) return SystemMouseCursors.move;
     if (controller.drawsPointer) return SystemMouseCursors.none;
+    if (controller.toolKind == ToolKind.text) return SystemMouseCursors.text;
     return SystemMouseCursors.precise;
   }
 
@@ -344,6 +352,7 @@ class _EditorViewState extends State<EditorView> {
     EditorShortcut.colorPicker: () =>
         controller.selectTool(ToolKind.colorPicker),
     EditorShortcut.select: () => controller.selectTool(ToolKind.select),
+    EditorShortcut.text: () => controller.selectTool(ToolKind.text),
     EditorShortcut.line: () => controller.selectTool(ToolKind.line),
     EditorShortcut.rectangle: () => controller.selectTool(ToolKind.rectangle),
     EditorShortcut.circle: () => controller.selectTool(ToolKind.circle),
@@ -460,28 +469,204 @@ class _EditorViewState extends State<EditorView> {
                     decoration: const BoxDecoration(
                       boxShadow: PaintStyle.faintShadow,
                     ),
-                    child: ListenableBuilder(
-                      listenable: controller.pointerPreview,
-                      builder: (context, _) => PixelCanvas(
-                        width: widget.document.width,
-                        height: widget.document.height,
-                        zoom: controller.zoom,
-                        layers: controller.canvasLayers,
-                        pointerPreview: controller.pointerPreview,
-                        layersChanged: controller.layersChanged,
-                        onPointerDown: _pointerDown,
-                        onPointerMove: controller.pointerMove,
-                        onPointerUp: controller.pointerUp,
-                        onPointerExit: controller.pointerExit,
-                        selection: controller.selectionArea,
-                        cursor: _canvasCursor(),
-                      ),
+                    child: Stack(
+                      children: [
+                        ListenableBuilder(
+                          listenable: controller.pointerPreview,
+                          builder: (context, _) => PixelCanvas(
+                            width: widget.document.width,
+                            height: widget.document.height,
+                            zoom: controller.zoom,
+                            layers: controller.canvasLayers,
+                            pointerPreview: controller.pointerPreview,
+                            layersChanged: controller.layersChanged,
+                            onPointerDown: _pointerDown,
+                            onPointerMove: controller.pointerMove,
+                            onPointerUp: controller.pointerUp,
+                            onPointerExit: controller.pointerExit,
+                            selection: controller.selectionArea,
+                            cursor: _canvasCursor(),
+                          ),
+                        ),
+                        ?_buildTextDraft(),
+                      ],
                     ),
                   ),
                 ),
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget? _buildTextDraft() {
+    final origin = controller.textOrigin;
+    if (origin == null) return null;
+    final zoom = controller.zoom;
+    final scale = zoom.toDouble();
+    final format = controller.textFormat;
+    return Positioned(
+      left: origin.x * zoom - TextDraft.handleWidth,
+      top: origin.y * zoom - TextDraft.handleWidth,
+      child: TextDraft(
+        style: format.style(
+          scale: scale,
+          color: format.filled ? controller.textColor : PixelColor.transparent,
+        ),
+        outlineStyle: format.outlined
+            ? format.outlineStyle(
+                scale: scale,
+                color: controller.textOutlineColor,
+              )
+            : null,
+        cursorColor: Color(controller.textColor.argb),
+        padding: format.padding * scale,
+        orientation: controller.textOrientation,
+        extentOf: (text) =>
+            TextStamp(
+              text: text,
+              format: format,
+              color: controller.textColor,
+              outlineColor: controller.textOutlineColor,
+            ).extent *
+            scale,
+        onChanged: controller.editText,
+        onMoved: _moveText,
+      ),
+    );
+  }
+
+  void _moveText(Offset delta) {
+    textDrag += delta;
+    final zoom = controller.zoom;
+    final offsetX = textDrag.dx ~/ zoom;
+    final offsetY = textDrag.dy ~/ zoom;
+    textDrag -= Offset(offsetX * zoom.toDouble(), offsetY * zoom.toDouble());
+    controller.moveText(offsetX: offsetX, offsetY: offsetY);
+  }
+
+  void _setTextFormat({
+    int? size,
+    bool? bold,
+    bool? italic,
+    bool? underline,
+    bool? strikethrough,
+    bool? filled,
+    bool? outlined,
+    int? outlineWidth,
+  }) => controller.setTextFormat(
+    controller.textFormat.copyWith(
+      size: size,
+      bold: bold,
+      italic: italic,
+      underline: underline,
+      strikethrough: strikethrough,
+      filled: filled,
+      outlined: outlined,
+      outlineWidth: outlineWidth,
+    ),
+  );
+
+  Widget _buildTextOptions() {
+    final format = controller.textFormat;
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: IntrinsicWidth(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            NumberStepper(
+              value: format.size,
+              minimum: TextFormat.minimumSize,
+              maximum: TextFormat.maximumSize,
+              decreaseTooltip: 'Decrease text size',
+              increaseTooltip: 'Increase text size',
+              valueWidth: EditorView.penSizeWidth,
+              decrement: smallerToolSize,
+              increment: largerToolSize,
+              onChanged: (size) => _setTextFormat(size: size),
+            ),
+            ZeroIntrinsicWidth(
+              child: SliderTheme(
+                data: PaintStyle.sliderTheme,
+                child: Slider(
+                  value: exponentialPosition(
+                    value: format.size,
+                    minimum: TextFormat.minimumSize,
+                    maximum: TextFormat.maximumSize,
+                  ),
+                  onChanged: (position) => _setTextFormat(
+                    size: roundToolSize(
+                      exponentialValue(
+                        position: position,
+                        minimum: TextFormat.minimumSize,
+                        maximum: TextFormat.maximumSize,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                PaintIconButton(
+                  icon: FontAwesomeIcons.bold,
+                  tooltip: 'Bold',
+                  selected: format.bold,
+                  onPressed: () => _setTextFormat(bold: !format.bold),
+                ),
+                PaintIconButton(
+                  icon: FontAwesomeIcons.italic,
+                  tooltip: 'Italic',
+                  selected: format.italic,
+                  onPressed: () => _setTextFormat(italic: !format.italic),
+                ),
+                PaintIconButton(
+                  icon: FontAwesomeIcons.underline,
+                  tooltip: 'Underline',
+                  selected: format.underline,
+                  onPressed: () => _setTextFormat(underline: !format.underline),
+                ),
+                PaintIconButton(
+                  icon: FontAwesomeIcons.strikethrough,
+                  tooltip: 'Strikethrough',
+                  selected: format.strikethrough,
+                  onPressed: () =>
+                      _setTextFormat(strikethrough: !format.strikethrough),
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                PaintIconButton(
+                  icon: FontAwesomeIcons.solidSquare,
+                  tooltip: 'Fill text',
+                  selected: format.filled,
+                  onPressed: () => _setTextFormat(filled: !format.filled),
+                ),
+                PaintIconButton(
+                  icon: FontAwesomeIcons.square,
+                  tooltip: 'Outline text',
+                  selected: format.outlined,
+                  onPressed: () => _setTextFormat(outlined: !format.outlined),
+                ),
+                NumberStepper(
+                  value: format.outlineWidth,
+                  minimum: TextFormat.minimumOutlineWidth,
+                  maximum: TextFormat.maximumOutlineWidth,
+                  decreaseTooltip: 'Decrease outline width',
+                  increaseTooltip: 'Increase outline width',
+                  enabled: format.outlined,
+                  onChanged: (outlineWidth) =>
+                      _setTextFormat(outlineWidth: outlineWidth),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -756,7 +941,7 @@ class _EditorViewState extends State<EditorView> {
                             PaintIconButton(
                               icon: FontAwesomeIcons.arrowRotateLeft,
                               tooltip: 'Rotate left',
-                              onPressed: _whenSelected(
+                              onPressed: _whenTransformable(
                                 () => controller.rotateSelection(
                                   clockwise: false,
                                 ),
@@ -765,7 +950,7 @@ class _EditorViewState extends State<EditorView> {
                             PaintIconButton(
                               icon: FontAwesomeIcons.arrowsLeftRight,
                               tooltip: 'Mirror horizontally',
-                              onPressed: _whenSelected(
+                              onPressed: _whenTransformable(
                                 () => controller.mirrorSelection(
                                   horizontally: true,
                                 ),
@@ -778,7 +963,7 @@ class _EditorViewState extends State<EditorView> {
                             PaintIconButton(
                               icon: FontAwesomeIcons.arrowRotateRight,
                               tooltip: 'Rotate right',
-                              onPressed: _whenSelected(
+                              onPressed: _whenTransformable(
                                 () =>
                                     controller.rotateSelection(clockwise: true),
                               ),
@@ -786,7 +971,7 @@ class _EditorViewState extends State<EditorView> {
                             PaintIconButton(
                               icon: FontAwesomeIcons.arrowsUpDown,
                               tooltip: 'Mirror vertically',
-                              onPressed: _whenSelected(
+                              onPressed: _whenTransformable(
                                 () => controller.mirrorSelection(
                                   horizontally: false,
                                 ),
@@ -907,6 +1092,17 @@ class _EditorViewState extends State<EditorView> {
                         ),
                         RibbonColumn(
                           children: [
+                            PaintSplitButton(
+                              icon: toolIcon(kind: ToolKind.text),
+                              tooltip: 'Text',
+                              shortcut: EditorShortcut.text.keys,
+                              secondaryTooltip: 'Text options',
+                              color: PaintStyle.textColor,
+                              selected: controller.toolKind == ToolKind.text,
+                              onPressed: () =>
+                                  controller.selectTool(ToolKind.text),
+                              dropdown: _buildTextOptions(),
+                            ),
                             PaintIconButton(
                               icon: toolIcon(kind: ToolKind.select),
                               tooltip: 'Select',
