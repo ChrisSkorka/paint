@@ -302,11 +302,20 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 7.1: pen ribbon
 
-- [ ] pen ribbon: split size & tip into own ribbon
-- [ ] ribbon between shapes & colors
-- [ ] pen, eraser, and shapes use same settings
-- [ ] tool pointer works for all tools
-- [ ] transparency mode for transparent color & selections?
+- [x] pen ribbon: split size & tip into own ribbon, tools no longer have that dropdown/popup
+- [x] ribbon between selection & tools
+- [x] pen, eraser, and shapes use same shared pes settings
+- [x] eraser & shapes support also support round tip
+- [x] pen tool settings are disabled if the current tool doesn't support that setting (e.g. fill, color picker, & select have all of them disabled)
+  - [x] line, arrow, and square shapes produce different results with different tips (e.g. rounded rectangle) but circle tool wouldn't, so tips are disabled for circle shape tool
+- [x] tool pointer works for all tools (e.g. rectangle tool uses the pens pointer)
+- [x] handle large pen sizes
+  - +/- buttons, [/] shortcuts & slider round to: (text input can manually be set to anything)
+    - 1-50: 1
+    - 50-100: 5
+    - 100-500: 10
+    - 500+: 50
+
 
 ### phase 7.2: shape tools
 
@@ -324,6 +333,7 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 7.3: colors
 
+- [ ] higher brightness range
 - [ ] colors: add no-color option, no-color button below dialog button
 - [ ] color picker: better UI
 - [ ] transparent colors: blend mode
@@ -345,11 +355,13 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - Hover & tool preview move into own render layer
   - While drawing, only paint canvas
 - [x] Hide system cursor
+- [ ] separate threads for input capture & render
 - [ ] check memory consumption & performance of history stack
 - [ ] history stack memory management
   - [ ] stack limit
   - [ ] or progressive history item merging
   - [ ] image compression (package:archive, XOR against previous layer)
+- [ ] drawing with huge tools, crashes app
 
 ### phase 8.5: image properties
 
@@ -358,6 +370,7 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 8.7: misc
 
+- [ ] new docs tab shows loading indicator when loading takes longer than 1s
 - [ ] move image previews to left of layer, frames & history items
 - [ ] text inputs have unit text on right side
 - [ ] right click on web triggers system context menu
@@ -369,6 +382,7 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase x: todo
 
+- [ ] when right clicking a tool or color, then the tool-config is temporary and after one use we switch back to the previous tool
 - [ ] animation loop toggle
 - [ ] interchangeable panes: move panes between top & right panels
 - [ ] wide double buttons for pairs: undo/redo, rotate, mirror

@@ -111,6 +111,26 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
+        testWidgets('custom value width', (tester) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: NumberStepper(
+                  value: 1000,
+                  minimum: 0,
+                  maximum: 1000,
+                  decreaseTooltip: 'Fewer',
+                  increaseTooltip: 'More',
+                  valueWidth: 56,
+                  onChanged: ignoreChange,
+                ),
+              ),
+            ),
+          );
+          final actual = tester.getSize(find.byType(TextField)).width;
+          const expected = 56.0;
+          expect(actual, equals(expected));
+        });
       });
 
       group('editable', () {
@@ -138,6 +158,71 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('enabled', () {
+        testWidgets('default', (tester) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: NumberStepper(
+                  value: 5,
+                  minimum: 0,
+                  maximum: 10,
+                  decreaseTooltip: 'Fewer',
+                  increaseTooltip: 'More',
+                  onChanged: ignoreChange,
+                ),
+              ),
+            ),
+          );
+          final actual = [
+            tester.widget<TextField>(find.byType(TextField)).enabled,
+            for (final tooltip in ['Fewer', 'More'])
+              tester
+                      .widget<PaintIconButton>(
+                        find.ancestor(
+                          of: find.byTooltip(tooltip),
+                          matching: find.byType(PaintIconButton),
+                        ),
+                      )
+                      .onPressed !=
+                  null,
+          ];
+          const expected = [true, true, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('disabled', (tester) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: NumberStepper(
+                  value: 5,
+                  minimum: 0,
+                  maximum: 10,
+                  decreaseTooltip: 'Fewer',
+                  increaseTooltip: 'More',
+                  enabled: false,
+                  onChanged: ignoreChange,
+                ),
+              ),
+            ),
+          );
+          final actual = [
+            tester.widget<TextField>(find.byType(TextField)).enabled,
+            for (final tooltip in ['Fewer', 'More'])
+              tester
+                      .widget<PaintIconButton>(
+                        find.ancestor(
+                          of: find.byTooltip(tooltip),
+                          matching: find.byType(PaintIconButton),
+                        ),
+                      )
+                      .onPressed !=
+                  null,
+          ];
+          const expected = [false, false, false];
+          expect(actual, equals(expected));
+        });
+      });
     });
 
     group('interactions', () {
@@ -161,6 +246,50 @@ void main() {
           await tester.tap(find.byTooltip('More'));
           final actual = changes;
           const expected = [6];
+          expect(actual, equals(expected));
+        });
+        testWidgets('custom increase', (tester) async {
+          final changes = <int>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: NumberStepper(
+                  value: 5,
+                  minimum: 0,
+                  maximum: 10,
+                  decreaseTooltip: 'Fewer',
+                  increaseTooltip: 'More',
+                  increment: (value) => value + 3,
+                  onChanged: changes.add,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('More'));
+          final actual = changes;
+          const expected = [8];
+          expect(actual, equals(expected));
+        });
+        testWidgets('custom decrease', (tester) async {
+          final changes = <int>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: NumberStepper(
+                  value: 5,
+                  minimum: 0,
+                  maximum: 10,
+                  decreaseTooltip: 'Fewer',
+                  increaseTooltip: 'More',
+                  decrement: (value) => value - 3,
+                  onChanged: changes.add,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Fewer'));
+          final actual = changes;
+          const expected = [2];
           expect(actual, equals(expected));
         });
         testWidgets('text only increase', (tester) async {

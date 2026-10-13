@@ -14,6 +14,10 @@ class NumberStepper extends StatefulWidget {
     required this.increaseTooltip,
     required this.onChanged,
     this.editable = true,
+    this.enabled = true,
+    this.valueWidth = defaultValueWidth,
+    this.decrement = _decrement,
+    this.increment = _increment,
   });
 
   final int value;
@@ -23,8 +27,15 @@ class NumberStepper extends StatefulWidget {
   final String increaseTooltip;
   final ValueChanged<int> onChanged;
   final bool editable;
+  final bool enabled;
+  final double valueWidth;
+  final int Function(int value) decrement;
+  final int Function(int value) increment;
 
-  static const valueWidth = 44.0;
+  static const defaultValueWidth = 44.0;
+
+  static int _decrement(int value) => value - 1;
+  static int _increment(int value) => value + 1;
   static const fieldPadding = EdgeInsets.symmetric(horizontal: 4, vertical: 8);
 
   @override
@@ -63,15 +74,16 @@ class _NumberStepperState extends State<NumberStepper> {
         PaintIconButton(
           icon: FontAwesomeIcons.minus,
           tooltip: widget.decreaseTooltip,
-          onPressed: widget.value > widget.minimum
-              ? () => _commit(widget.value - 1)
+          onPressed: widget.enabled && widget.value > widget.minimum
+              ? () => _commit(widget.decrement(widget.value))
               : null,
         ),
         SizedBox(
-          width: NumberStepper.valueWidth,
+          width: widget.valueWidth,
           child: widget.editable
               ? TextField(
                   controller: textController,
+                  enabled: widget.enabled,
                   textAlign: TextAlign.center,
                   decoration: const InputDecoration(
                     contentPadding: NumberStepper.fieldPadding,
@@ -88,8 +100,8 @@ class _NumberStepperState extends State<NumberStepper> {
         PaintIconButton(
           icon: FontAwesomeIcons.plus,
           tooltip: widget.increaseTooltip,
-          onPressed: widget.value < widget.maximum
-              ? () => _commit(widget.value + 1)
+          onPressed: widget.enabled && widget.value < widget.maximum
+              ? () => _commit(widget.increment(widget.value))
               : null,
         ),
       ],

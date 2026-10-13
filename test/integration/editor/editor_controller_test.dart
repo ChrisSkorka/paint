@@ -712,38 +712,6 @@ void main() {
       });
     });
 
-    group('method setEraserSize', () {
-      group('sizes', () {
-        test('larger', () {
-          final editorController = EditorController.forDocument(
-            document: Document.blank(width: 3, height: 3),
-          );
-          var notifications = 0;
-          editorController.addListener(() => notifications++);
-          editorController.setEraserSize(5);
-          final actual = [editorController.eraserSize, notifications];
-          const expected = [5, 1];
-          expect(actual, equals(expected));
-        });
-      });
-    });
-
-    group('method setShapeWidth', () {
-      group('widths', () {
-        test('larger', () {
-          final editorController = EditorController.forDocument(
-            document: Document.blank(width: 3, height: 3),
-          );
-          var notifications = 0;
-          editorController.addListener(() => notifications++);
-          editorController.setShapeWidth(3);
-          final actual = [editorController.shapeWidth, notifications];
-          const expected = [3, 1];
-          expect(actual, equals(expected));
-        });
-      });
-    });
-
     group('method stepToolSize', () {
       group('tools', () {
         test('pen', () {
@@ -751,12 +719,8 @@ void main() {
             document: Document.blank(width: 3, height: 3),
           )..selectTool(ToolKind.pen);
           editorController.stepToolSize(larger: true);
-          final actual = [
-            editorController.penSize,
-            editorController.eraserSize,
-            editorController.shapeWidth,
-          ];
-          const expected = [2, 1, 1];
+          final actual = editorController.penSize;
+          const expected = 2;
           expect(actual, equals(expected));
         });
         test('eraser', () {
@@ -764,12 +728,8 @@ void main() {
             document: Document.blank(width: 3, height: 3),
           )..selectTool(ToolKind.eraser);
           editorController.stepToolSize(larger: true);
-          final actual = [
-            editorController.penSize,
-            editorController.eraserSize,
-            editorController.shapeWidth,
-          ];
-          const expected = [1, 2, 1];
+          final actual = editorController.penSize;
+          const expected = 2;
           expect(actual, equals(expected));
         });
         test('line', () {
@@ -777,12 +737,8 @@ void main() {
             document: Document.blank(width: 3, height: 3),
           )..selectTool(ToolKind.line);
           editorController.stepToolSize(larger: true);
-          final actual = [
-            editorController.penSize,
-            editorController.eraserSize,
-            editorController.shapeWidth,
-          ];
-          const expected = [1, 1, 2];
+          final actual = editorController.penSize;
+          const expected = 2;
           expect(actual, equals(expected));
         });
         test('rectangle', () {
@@ -790,12 +746,8 @@ void main() {
             document: Document.blank(width: 3, height: 3),
           )..selectTool(ToolKind.rectangle);
           editorController.stepToolSize(larger: true);
-          final actual = [
-            editorController.penSize,
-            editorController.eraserSize,
-            editorController.shapeWidth,
-          ];
-          const expected = [1, 1, 2];
+          final actual = editorController.penSize;
+          const expected = 2;
           expect(actual, equals(expected));
         });
         test('circle', () {
@@ -803,12 +755,8 @@ void main() {
             document: Document.blank(width: 3, height: 3),
           )..selectTool(ToolKind.circle);
           editorController.stepToolSize(larger: true);
-          final actual = [
-            editorController.penSize,
-            editorController.eraserSize,
-            editorController.shapeWidth,
-          ];
-          const expected = [1, 1, 2];
+          final actual = editorController.penSize;
+          const expected = 2;
           expect(actual, equals(expected));
         });
         test('arrow', () {
@@ -816,12 +764,8 @@ void main() {
             document: Document.blank(width: 3, height: 3),
           )..selectTool(ToolKind.arrow);
           editorController.stepToolSize(larger: true);
-          final actual = [
-            editorController.penSize,
-            editorController.eraserSize,
-            editorController.shapeWidth,
-          ];
-          const expected = [1, 1, 2];
+          final actual = editorController.penSize;
+          const expected = 2;
           expect(actual, equals(expected));
         });
         test('fill', () {
@@ -829,12 +773,8 @@ void main() {
             document: Document.blank(width: 3, height: 3),
           )..selectTool(ToolKind.bucketFill);
           editorController.stepToolSize(larger: true);
-          final actual = [
-            editorController.penSize,
-            editorController.eraserSize,
-            editorController.shapeWidth,
-          ];
-          const expected = [1, 1, 1];
+          final actual = editorController.penSize;
+          const expected = 1;
           expect(actual, equals(expected));
         });
         test('color picker', () {
@@ -842,12 +782,8 @@ void main() {
             document: Document.blank(width: 3, height: 3),
           )..selectTool(ToolKind.colorPicker);
           editorController.stepToolSize(larger: true);
-          final actual = [
-            editorController.penSize,
-            editorController.eraserSize,
-            editorController.shapeWidth,
-          ];
-          const expected = [1, 1, 1];
+          final actual = editorController.penSize;
+          const expected = 1;
           expect(actual, equals(expected));
         });
         test('select', () {
@@ -855,12 +791,8 @@ void main() {
             document: Document.blank(width: 3, height: 3),
           )..selectTool(ToolKind.select);
           editorController.stepToolSize(larger: true);
-          final actual = [
-            editorController.penSize,
-            editorController.eraserSize,
-            editorController.shapeWidth,
-          ];
-          const expected = [1, 1, 1];
+          final actual = editorController.penSize;
+          const expected = 1;
           expect(actual, equals(expected));
         });
       });
@@ -888,6 +820,35 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('steps', () {
+        test('larger in band', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..setPenSize(50);
+          editorController.stepToolSize(larger: true);
+          final actual = editorController.penSize;
+          const expected = 55;
+          expect(actual, equals(expected));
+        });
+        test('smaller across band', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..setPenSize(50);
+          editorController.stepToolSize(larger: false);
+          final actual = editorController.penSize;
+          const expected = 49;
+          expect(actual, equals(expected));
+        });
+        test('larger off step', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..setPenSize(53);
+          editorController.stepToolSize(larger: true);
+          final actual = editorController.penSize;
+          const expected = 55;
+          expect(actual, equals(expected));
+        });
+      });
       group('limits', () {
         test('minimum', () {
           final editorController = EditorController.forDocument(
@@ -901,10 +862,10 @@ void main() {
         test('maximum', () {
           final editorController = EditorController.forDocument(
             document: Document.blank(width: 3, height: 3),
-          )..setPenSize(64);
+          )..setPenSize(1000);
           editorController.stepToolSize(larger: true);
           final actual = editorController.penSize;
-          const expected = 64;
+          const expected = 1000;
           expect(actual, equals(expected));
         });
       });
@@ -1044,7 +1005,24 @@ void main() {
           );
           editorController.selectTool(ToolKind.eraser);
           final actual = editorController.toolPreset;
-          const expected = ToolPreset(kind: ToolKind.eraser, size: 1);
+          const expected = ToolPreset(
+            kind: ToolKind.eraser,
+            size: 1,
+            tip: BrushTip.square,
+          );
+          expect(actual, equals(expected));
+        });
+        test('circle', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.selectTool(ToolKind.circle);
+          final actual = editorController.toolPreset;
+          const expected = ToolPreset(
+            kind: ToolKind.circle,
+            color: PixelColor.black,
+            size: 1,
+          );
           expect(actual, equals(expected));
         });
         test('select', () {
@@ -1133,9 +1111,15 @@ void main() {
           final actual = [
             editorController.toolKind,
             editorController.primaryColor,
-            editorController.eraserSize,
+            editorController.penSize,
+            editorController.penTip,
           ];
-          const expected = [ToolKind.eraser, PixelColor.black, 4];
+          const expected = [
+            ToolKind.eraser,
+            PixelColor.black,
+            4,
+            BrushTip.square,
+          ];
           expect(actual, equals(expected));
         });
         test('fill', () {
@@ -1169,14 +1153,10 @@ void main() {
             editorController.toolKind,
             editorController.primaryColor,
             editorController.penSize,
-            editorController.eraserSize,
-            editorController.shapeWidth,
           ];
           const expected = [
             ToolKind.bucketFill,
             PixelColor(argb: 0xFF00FF00),
-            1,
-            1,
             1,
           ];
           expect(actual, equals(expected));
@@ -1211,7 +1191,7 @@ void main() {
           final actual = [
             editorController.toolKind,
             editorController.primaryColor,
-            editorController.shapeWidth,
+            editorController.penSize,
           ];
           const expected = [ToolKind.circle, PixelColor(argb: 0xFF0000FF), 5];
           expect(actual, equals(expected));
@@ -4693,7 +4673,7 @@ void main() {
             document: document,
           );
           editorController.selectTool(ToolKind.eraser);
-          editorController.setEraserSize(2);
+          editorController.setPenSize(2);
           editorController.pointerDown(
             point: const PixelPoint(x: 1, y: 0),
             button: PointerButton.primary,
@@ -4915,7 +4895,7 @@ void main() {
           );
           final actual = editorController.toolPresets;
           const expected = [
-            ToolPreset(kind: ToolKind.eraser, size: 1),
+            ToolPreset(kind: ToolKind.eraser, size: 1, tip: BrushTip.square),
             ToolPreset(
               kind: ToolKind.pen,
               color: PixelColor.black,
@@ -4953,7 +4933,7 @@ void main() {
               size: 1,
               tip: BrushTip.square,
             ),
-            ToolPreset(kind: ToolKind.eraser, size: 1),
+            ToolPreset(kind: ToolKind.eraser, size: 1, tip: BrushTip.square),
           ];
           expect(actual, equals(expected));
         });
@@ -4983,13 +4963,15 @@ void main() {
             document: Document.blank(width: 2, height: 1),
           );
           editorController.selectTool(ToolKind.eraser);
-          editorController.setEraserSize(4);
+          editorController.setPenSize(4);
           editorController.pointerDown(
             point: const PixelPoint(x: 0, y: 0),
             button: PointerButton.primary,
           );
           final actual = editorController.toolPresets;
-          const expected = [ToolPreset(kind: ToolKind.eraser, size: 4)];
+          const expected = [
+            ToolPreset(kind: ToolKind.eraser, size: 4, tip: BrushTip.square),
+          ];
           expect(actual, equals(expected));
         });
         test('bucket fill', () {
@@ -5012,7 +4994,7 @@ void main() {
             document: Document.blank(width: 2, height: 1),
           );
           editorController.selectTool(ToolKind.rectangle);
-          editorController.setShapeWidth(5);
+          editorController.setPenSize(5);
           editorController.pointerDown(
             point: const PixelPoint(x: 0, y: 0),
             button: PointerButton.primary,
@@ -5023,6 +5005,7 @@ void main() {
               kind: ToolKind.rectangle,
               color: PixelColor.black,
               size: 5,
+              tip: BrushTip.square,
             ),
           ];
           expect(actual, equals(expected));

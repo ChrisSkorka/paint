@@ -7,13 +7,14 @@ import 'pen.dart';
 import 'tool.dart';
 
 class Eraser implements Tool {
-  const Eraser({required this.size});
+  const Eraser({required this.size, required this.tip});
 
   static const pointerColor = PixelColor(argb: 0x88888888);
 
   final int size;
+  final BrushTip tip;
 
-  Pen get _pen => Pen(size: size, tip: BrushTip.square);
+  Pen get _pen => Pen(size: size, tip: tip);
 
   @override
   PixelRectangle start({

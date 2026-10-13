@@ -107,7 +107,7 @@ void main() {
         ),
       ],
       recent: [
-        ToolPreset(kind: ToolKind.eraser, size: 2),
+        ToolPreset(kind: ToolKind.eraser, size: 2, tip: BrushTip.circle),
         ToolPreset(
           kind: ToolKind.bucketFill,
           color: PixelColor(argb: blue),
@@ -314,7 +314,8 @@ void main() {
               '  <paint:tools>\n'
               '    <paint:tool kind="pen" color="#ff0000ff" size="4" '
               'tip="circle" locked="true"/>\n'
-              '    <paint:tool kind="eraser" size="2" locked="false"/>\n'
+              '    <paint:tool kind="eraser" size="2" tip="circle" '
+              'locked="false"/>\n'
               '    <paint:tool kind="bucketFill" color="#0000ffff" '
               'locked="false"/>\n'
               '  </paint:tools>\n'
@@ -774,13 +775,21 @@ void main() {
             '</paint:tools>',
           );
           const expected = ToolPresets(
-            locked: [ToolPreset(kind: ToolKind.eraser, size: 2)],
+            locked: [
+              ToolPreset(kind: ToolKind.eraser, size: 2, tip: BrushTip.square),
+            ],
             recent: [
-              ToolPreset(kind: ToolKind.line, color: PixelColor.black, size: 1),
+              ToolPreset(
+                kind: ToolKind.line,
+                color: PixelColor.black,
+                size: 1,
+                tip: BrushTip.square,
+              ),
               ToolPreset(
                 kind: ToolKind.arrow,
                 color: PixelColor.black,
                 size: 3,
+                tip: BrushTip.square,
               ),
             ],
           );
@@ -822,21 +831,35 @@ void main() {
         });
         test('size too large', () {
           final actual = decodedPresets(
-            '<paint:tools><paint:tool kind="eraser" size="500"/></paint:tools>',
+            '<paint:tools><paint:tool kind="eraser" size="5000"/></paint:tools>',
           );
           const expected = ToolPresets(
-            recent: [ToolPreset(kind: ToolKind.eraser, size: 64)],
+            recent: [
+              ToolPreset(
+                kind: ToolKind.eraser,
+                size: 1000,
+                tip: BrushTip.square,
+              ),
+            ],
           );
           expect(actual, equals(expected));
         });
         test('irrelevant attributes', () {
           final actual = decodedPresets(
             '<paint:tools>'
-            '<paint:tool kind="eraser" color="#ff0000ff" size="2" tip="circle"/>'
+            '<paint:tool kind="eraser" color="#ff0000ff" size="2"/>'
+            '<paint:tool kind="circle" size="2" tip="circle"/>'
             '</paint:tools>',
           );
           const expected = ToolPresets(
-            recent: [ToolPreset(kind: ToolKind.eraser, size: 2)],
+            recent: [
+              ToolPreset(kind: ToolKind.eraser, size: 2, tip: BrushTip.square),
+              ToolPreset(
+                kind: ToolKind.circle,
+                color: PixelColor.black,
+                size: 2,
+              ),
+            ],
           );
           expect(actual, equals(expected));
         });
@@ -851,7 +874,9 @@ void main() {
             '</paint:tools>',
           );
           const expected = ToolPresets(
-            recent: [ToolPreset(kind: ToolKind.eraser, size: 2)],
+            recent: [
+              ToolPreset(kind: ToolKind.eraser, size: 2, tip: BrushTip.square),
+            ],
           );
           expect(actual, equals(expected));
         });
@@ -865,8 +890,12 @@ void main() {
             '</paint:tools>',
           );
           const expected = ToolPresets(
-            locked: [ToolPreset(kind: ToolKind.eraser, size: 2)],
-            recent: [ToolPreset(kind: ToolKind.eraser, size: 3)],
+            locked: [
+              ToolPreset(kind: ToolKind.eraser, size: 2, tip: BrushTip.square),
+            ],
+            recent: [
+              ToolPreset(kind: ToolKind.eraser, size: 3, tip: BrushTip.square),
+            ],
           );
           expect(actual, equals(expected));
         });
@@ -879,7 +908,11 @@ void main() {
           final expected = ToolPresets(
             recent: [
               for (var size = 1; size <= 9; size++)
-                ToolPreset(kind: ToolKind.eraser, size: size),
+                ToolPreset(
+                  kind: ToolKind.eraser,
+                  size: size,
+                  tip: BrushTip.square,
+                ),
             ],
           );
           expect(actual, equals(expected));

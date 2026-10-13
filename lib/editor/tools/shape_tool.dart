@@ -2,6 +2,8 @@ import '../canvas/layer.dart';
 import '../canvas/pixel_color.dart';
 import '../canvas/pixel_point.dart';
 import '../canvas/pixel_rectangle.dart';
+import 'brush_tip.dart';
+import 'pen.dart';
 import 'shape.dart';
 import 'tool.dart';
 
@@ -9,11 +11,13 @@ class ShapeTool implements Tool {
   const ShapeTool({
     required this.shape,
     required this.width,
+    required this.tip,
     required this.origin,
   });
 
   final Shape shape;
   final int width;
+  final BrushTip tip;
   final PixelPoint? origin;
 
   @override
@@ -50,6 +54,12 @@ class ShapeTool implements Tool {
     required PixelPoint point,
     required PixelColor color,
   }) {
+    if (origin == null) {
+      return Pen(
+        size: width,
+        tip: tip,
+      ).drawPointer(layer: layer, point: point, color: color);
+    }
     return _draw(layer: layer, point: point, color: color);
   }
 
@@ -63,6 +73,7 @@ class ShapeTool implements Tool {
       from: origin ?? point,
       to: point,
       width: width,
+      tip: tip,
       color: color,
     );
   }

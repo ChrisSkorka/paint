@@ -9,27 +9,27 @@ import 'package:paint/widgets/components/frame_list.dart';
 import 'package:paint/widgets/components/pixel_canvas.dart';
 import 'package:paint/widgets/components/history_list.dart';
 import 'package:paint/widgets/components/layer_list.dart';
-import 'package:paint/widgets/components/numeric_value_range.dart';
+import 'package:paint/widgets/components/number_stepper.dart';
 import 'package:paint/widgets/components/paint_icon_button.dart';
-import 'package:paint/widgets/components/paint_split_button.dart';
+import 'package:paint/widgets/components/ribbon_section.dart';
 import 'package:paint/widgets/components/swatch_grid.dart';
 import 'package:paint/widgets/components/timeline.dart';
 import 'package:paint/widgets/components/tool_preset_list.dart';
 
 List<bool> selectedTools(WidgetTester tester) => [
   tester
-      .widget<PaintSplitButton>(
+      .widget<PaintIconButton>(
         find.ancestor(
           of: find.byTooltip('Pen (P)'),
-          matching: find.byType(PaintSplitButton),
+          matching: find.byType(PaintIconButton),
         ),
       )
       .selected,
   tester
-      .widget<PaintSplitButton>(
+      .widget<PaintIconButton>(
         find.ancestor(
           of: find.byTooltip('Eraser (E)'),
-          matching: find.byType(PaintSplitButton),
+          matching: find.byType(PaintIconButton),
         ),
       )
       .selected,
@@ -56,9 +56,9 @@ List<Color> wellColors(WidgetTester tester) => tester
     .map((colorWell) => colorWell.color)
     .toList();
 
-Finder sizeRange() => find.ancestor(
-  of: find.text('Size:'),
-  matching: find.byType(NumericValueRange),
+Finder sizeStepper() => find.ancestor(
+  of: find.byTooltip('Increase size'),
+  matching: find.byType(NumberStepper),
 );
 
 List<bool> selectedTips(WidgetTester tester) => [
@@ -117,19 +117,37 @@ List<bool> selectedShapes(WidgetTester tester) => [
     'Arrow (A)',
   ])
     tester
-        .widget<PaintSplitButton>(
+        .widget<PaintIconButton>(
           find.ancestor(
             of: find.byTooltip(tooltip),
-            matching: find.byType(PaintSplitButton),
+            matching: find.byType(PaintIconButton),
           ),
         )
         .selected,
 ];
 
-Finder widthRange() => find.ancestor(
-  of: find.text('Width:'),
-  matching: find.byType(NumericValueRange),
+Finder sizeSlider() => find.descendant(
+  of: find.ancestor(
+    of: find.byTooltip('Increase size'),
+    matching: find.byType(RibbonSection),
+  ),
+  matching: find.byType(Slider),
 );
+
+List<bool> penSettingsEnabled(WidgetTester tester) => [
+  tester.widget<NumberStepper>(sizeStepper()).enabled,
+  tester.widget<Slider>(sizeSlider()).onChanged != null,
+  for (final tooltip in const ['Square tip', 'Circle tip'])
+    tester
+            .widget<PaintIconButton>(
+              find.ancestor(
+                of: find.byTooltip(tooltip),
+                matching: find.byType(PaintIconButton),
+              ),
+            )
+            .onPressed !=
+        null,
+];
 
 bool selectToolSelected(WidgetTester tester) => tester
     .widget<PaintIconButton>(

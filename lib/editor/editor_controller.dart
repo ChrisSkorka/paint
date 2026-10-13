@@ -29,6 +29,7 @@ import 'tools/shape_tool.dart';
 import 'tools/tool.dart';
 import 'tools/tool_kind.dart';
 import 'tools/tool_preset.dart';
+import 'tools/tool_size.dart';
 
 class EditorController extends ChangeNotifier {
   EditorController({
@@ -56,8 +57,6 @@ class EditorController extends ChangeNotifier {
   var _drawingToolKind = ToolKind.pen;
   var _penSize = 1;
   var _penTip = BrushTip.square;
-  var _eraserSize = 1;
-  var _shapeWidth = 1;
   var _zoom = defaultZoom;
   var _primaryColor = PixelColor.black;
   var _secondaryColor = PixelColor.white;
@@ -97,8 +96,6 @@ class EditorController extends ChangeNotifier {
   ToolKind get toolKind => _toolKind;
   int get penSize => _penSize;
   BrushTip get penTip => _penTip;
-  int get eraserSize => _eraserSize;
-  int get shapeWidth => _shapeWidth;
   int get zoom => _zoom;
   PixelColor get primaryColor => _primaryColor;
   PixelColor get secondaryColor => _secondaryColor;
@@ -202,7 +199,7 @@ class EditorController extends ChangeNotifier {
 
   Tool? get _tool => switch (_toolKind) {
     ToolKind.pen => Pen(size: _penSize, tip: _penTip),
-    ToolKind.eraser => Eraser(size: _eraserSize),
+    ToolKind.eraser => Eraser(size: _penSize, tip: _penTip),
     ToolKind.bucketFill => const BucketFill(),
     ToolKind.line => _shapeTool(Shape.line),
     ToolKind.rectangle => _shapeTool(Shape.rectangle),
@@ -211,19 +208,19 @@ class EditorController extends ChangeNotifier {
     ToolKind.colorPicker || ToolKind.select => null,
   };
 
-  ShapeTool _shapeTool(Shape shape) =>
-      ShapeTool(shape: shape, width: _shapeWidth, origin: _strokeOrigin);
+  ShapeTool _shapeTool(Shape shape) => ShapeTool(
+    shape: shape,
+    width: _penSize,
+    tip: _toolKind.hasTip ? _penTip : BrushTip.circle,
+    origin: _strokeOrigin,
+  );
 
   ToolPreset? _presetWith({required PixelColor color}) {
     if (!_toolKind.presettable) return null;
     return ToolPreset.configured(
       kind: _toolKind,
       color: color,
-      size: switch (_toolKind) {
-        ToolKind.pen => _penSize,
-        ToolKind.eraser => _eraserSize,
-        _ => _shapeWidth,
-      },
+      size: _penSize,
       tip: _penTip,
     );
   }
@@ -234,16 +231,7 @@ class EditorController extends ChangeNotifier {
     final preset = presets[index];
     if (preset.color case final color?) _primaryColor = color;
     if (preset.tip case final tip?) _penTip = tip;
-    if (preset.size case final size?) {
-      switch (preset.kind) {
-        case ToolKind.pen:
-          _penSize = size;
-        case ToolKind.eraser:
-          _eraserSize = size;
-        default:
-          _shapeWidth = size;
-      }
-    }
+    if (preset.size case final size?) _penSize = size;
     selectTool(preset.kind);
   }
 
@@ -272,32 +260,9 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setEraserSize(int size) {
-    _eraserSize = size;
-    notifyListeners();
-  }
-
-  void setShapeWidth(int width) {
-    _shapeWidth = width;
-    notifyListeners();
-  }
-
   void stepToolSize({required bool larger}) {
-    int step(int size) =>
-        (size + (larger ? 1 : -1)).clamp(minimumToolSize, maximumToolSize);
-    switch (_toolKind) {
-      case ToolKind.pen:
-        setPenSize(step(_penSize));
-      case ToolKind.eraser:
-        setEraserSize(step(_eraserSize));
-      case ToolKind.line ||
-          ToolKind.rectangle ||
-          ToolKind.circle ||
-          ToolKind.arrow:
-        setShapeWidth(step(_shapeWidth));
-      case ToolKind.bucketFill || ToolKind.colorPicker || ToolKind.select:
-        break;
-    }
+    if (!_toolKind.hasSize) return;
+    setPenSize(larger ? largerToolSize(_penSize) : smallerToolSize(_penSize));
   }
 
   void holdColorPicker({required bool held}) {

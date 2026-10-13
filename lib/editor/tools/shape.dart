@@ -18,9 +18,12 @@ enum Shape {
     required PixelPoint from,
     required PixelPoint to,
     required int width,
+    required BrushTip tip,
     required PixelColor color,
   }) {
-    final box = PixelRectangle.spanning(from: from, to: to);
+    final box = BrushTip.square
+        .area(center: from, size: width)
+        .union(BrushTip.square.area(center: to, size: width));
     switch (this) {
       case Shape.line:
         return _drawLine(
@@ -28,6 +31,7 @@ enum Shape {
           from: from,
           to: to,
           width: width,
+          tip: tip,
           color: color,
         );
       case Shape.arrow:
@@ -35,6 +39,14 @@ enum Shape {
           layer: layer,
           from: from,
           to: to,
+          width: width,
+          tip: tip,
+          color: color,
+        );
+      case Shape.rectangle when tip == BrushTip.circle:
+        return _drawRoundedRectangle(
+          layer: layer,
+          box: box,
           width: width,
           color: color,
         );
@@ -51,11 +63,12 @@ enum Shape {
     required PixelPoint from,
     required PixelPoint to,
     required int width,
+    required BrushTip tip,
     required PixelColor color,
   }) {
     return Pen(
       size: width,
-      tip: BrushTip.square,
+      tip: tip,
     ).stroke(layer: layer, previous: from, point: to, color: color);
   }
 
@@ -64,6 +77,7 @@ enum Shape {
     required PixelPoint from,
     required PixelPoint to,
     required int width,
+    required BrushTip tip,
     required PixelColor color,
   }) {
     final shaft = _drawLine(
@@ -71,6 +85,7 @@ enum Shape {
       from: from,
       to: to,
       width: width,
+      tip: tip,
       color: color,
     );
     final backX = (from.x - to.x).toDouble();
@@ -95,6 +110,7 @@ enum Shape {
             from: to,
             to: headEnd,
             width: width,
+            tip: tip,
             color: color,
           ),
         )
@@ -136,6 +152,34 @@ enum Shape {
     for (final band in bands) {
       layer.fillRectangle(rectangle: band, color: color);
     }
+  }
+
+  PixelRectangle _drawRoundedRectangle({
+    required Layer layer,
+    required PixelRectangle box,
+    required int width,
+    required PixelColor color,
+  }) {
+    final left = box.left + width ~/ 2;
+    final top = box.top + width ~/ 2;
+    final right = box.right - width + width ~/ 2;
+    final bottom = box.bottom - width + width ~/ 2;
+    final corners = [
+      PixelPoint(x: left, y: top),
+      PixelPoint(x: right, y: top),
+      PixelPoint(x: right, y: bottom),
+      PixelPoint(x: left, y: bottom),
+    ];
+    final pen = Pen(size: width, tip: BrushTip.circle);
+    return [
+      for (var index = 0; index < corners.length; index++)
+        pen.stroke(
+          layer: layer,
+          previous: corners[index],
+          point: corners[(index + 1) % corners.length],
+          color: color,
+        ),
+    ].reduce((area, side) => area.union(side));
   }
 
   void _drawEllipse({

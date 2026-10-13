@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
+import 'package:paint/editor/tools/brush_tip.dart';
 import 'package:paint/editor/tools/shape.dart';
 
 import '../../../support/layer_probes.dart';
@@ -17,6 +18,7 @@ void main() {
     required PixelPoint from,
     required PixelPoint to,
     required int width,
+    required BrushTip tip,
   }) {
     final layer = layerFromRows([
       for (var y = 0; y < layerHeight; y++)
@@ -27,6 +29,7 @@ void main() {
       from: from,
       to: to,
       width: width,
+      tip: tip,
       color: PixelColor.black,
     );
     return [area, pixelRows(layer)];
@@ -43,6 +46,7 @@ void main() {
             from: const PixelPoint(x: 0, y: 0),
             to: const PixelPoint(x: 2, y: 0),
             width: 1,
+            tip: BrushTip.square,
           );
           final expected = [
             const PixelRectangle(left: 0, top: 0, width: 3, height: 1),
@@ -60,6 +64,7 @@ void main() {
             from: const PixelPoint(x: 2, y: 0),
             to: const PixelPoint(x: 0, y: 2),
             width: 1,
+            tip: BrushTip.square,
           );
           final expected = [
             const PixelRectangle(left: 0, top: 0, width: 3, height: 3),
@@ -79,6 +84,7 @@ void main() {
             from: const PixelPoint(x: 1, y: 1),
             to: const PixelPoint(x: 2, y: 1),
             width: 2,
+            tip: BrushTip.square,
           );
           final expected = [
             const PixelRectangle(left: 0, top: 0, width: 3, height: 2),
@@ -86,6 +92,45 @@ void main() {
               [black, black, black, transparent],
               [black, black, black, transparent],
               [transparent, transparent, transparent, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('round tip', () {
+          final actual = drawOnBlank(
+            shape: Shape.line,
+            layerWidth: 8,
+            layerHeight: 4,
+            from: const PixelPoint(x: 2, y: 2),
+            to: const PixelPoint(x: 5, y: 2),
+            width: 4,
+            tip: BrushTip.circle,
+          );
+          final expected = [
+            const PixelRectangle(left: 0, top: 0, width: 7, height: 4),
+            [
+              [
+                transparent,
+                black,
+                black,
+                black,
+                black,
+                black,
+                transparent,
+                transparent,
+              ],
+              [black, black, black, black, black, black, black, transparent],
+              [black, black, black, black, black, black, black, transparent],
+              [
+                transparent,
+                black,
+                black,
+                black,
+                black,
+                black,
+                transparent,
+                transparent,
+              ],
             ],
           ];
           expect(actual, equals(expected));
@@ -101,6 +146,7 @@ void main() {
             from: const PixelPoint(x: 0, y: 0),
             to: const PixelPoint(x: 3, y: 3),
             width: 1,
+            tip: BrushTip.square,
           );
           final expected = [
             const PixelRectangle(left: 0, top: 0, width: 4, height: 4),
@@ -121,6 +167,7 @@ void main() {
             from: const PixelPoint(x: 3, y: 2),
             to: const PixelPoint(x: 1, y: 0),
             width: 1,
+            tip: BrushTip.square,
           );
           final expected = [
             const PixelRectangle(left: 1, top: 0, width: 3, height: 3),
@@ -137,9 +184,10 @@ void main() {
             shape: Shape.rectangle,
             layerWidth: 5,
             layerHeight: 5,
-            from: const PixelPoint(x: 0, y: 0),
+            from: const PixelPoint(x: 1, y: 1),
             to: const PixelPoint(x: 4, y: 4),
             width: 2,
+            tip: BrushTip.square,
           );
           final expected = [
             const PixelRectangle(left: 0, top: 0, width: 5, height: 5),
@@ -156,18 +204,21 @@ void main() {
         test('wider than box', () {
           final actual = drawOnBlank(
             shape: Shape.rectangle,
-            layerWidth: 4,
-            layerHeight: 3,
-            from: const PixelPoint(x: 0, y: 0),
-            to: const PixelPoint(x: 1, y: 1),
+            layerWidth: 5,
+            layerHeight: 5,
+            from: const PixelPoint(x: 1, y: 1),
+            to: const PixelPoint(x: 2, y: 2),
             width: 3,
+            tip: BrushTip.square,
           );
           final expected = [
-            const PixelRectangle(left: 0, top: 0, width: 2, height: 2),
+            const PixelRectangle(left: 0, top: 0, width: 4, height: 4),
             [
-              [black, black, transparent, transparent],
-              [black, black, transparent, transparent],
-              [transparent, transparent, transparent, transparent],
+              [black, black, black, black, transparent],
+              [black, black, black, black, transparent],
+              [black, black, black, black, transparent],
+              [black, black, black, black, transparent],
+              [transparent, transparent, transparent, transparent, transparent],
             ],
           ];
           expect(actual, equals(expected));
@@ -180,12 +231,99 @@ void main() {
             from: const PixelPoint(x: 1, y: 1),
             to: const PixelPoint(x: 3, y: 3),
             width: 1,
+            tip: BrushTip.square,
           );
           final expected = [
             const PixelRectangle(left: 1, top: 1, width: 1, height: 1),
             [
               [transparent, transparent],
               [transparent, black],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('round tip', () {
+          final actual = drawOnBlank(
+            shape: Shape.rectangle,
+            layerWidth: 9,
+            layerHeight: 9,
+            from: const PixelPoint(x: 2, y: 2),
+            to: const PixelPoint(x: 7, y: 7),
+            width: 4,
+            tip: BrushTip.circle,
+          );
+          final expected = [
+            const PixelRectangle(left: 0, top: 0, width: 9, height: 9),
+            [
+              [
+                transparent,
+                black,
+                black,
+                black,
+                black,
+                black,
+                black,
+                black,
+                transparent,
+              ],
+              [black, black, black, black, black, black, black, black, black],
+              [black, black, black, black, black, black, black, black, black],
+              [black, black, black, black, black, black, black, black, black],
+              [
+                black,
+                black,
+                black,
+                black,
+                transparent,
+                black,
+                black,
+                black,
+                black,
+              ],
+              [black, black, black, black, black, black, black, black, black],
+              [black, black, black, black, black, black, black, black, black],
+              [black, black, black, black, black, black, black, black, black],
+              [
+                transparent,
+                black,
+                black,
+                black,
+                black,
+                black,
+                black,
+                black,
+                transparent,
+              ],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('round tip wider than box', () {
+          final actual = drawOnBlank(
+            shape: Shape.rectangle,
+            layerWidth: 6,
+            layerHeight: 6,
+            from: const PixelPoint(x: 2, y: 2),
+            to: const PixelPoint(x: 3, y: 3),
+            width: 4,
+            tip: BrushTip.circle,
+          );
+          final expected = [
+            const PixelRectangle(left: 0, top: 0, width: 5, height: 5),
+            [
+              [transparent, black, black, black, transparent, transparent],
+              [black, black, black, black, black, transparent],
+              [black, black, black, black, black, transparent],
+              [black, black, black, black, black, transparent],
+              [transparent, black, black, black, transparent, transparent],
+              [
+                transparent,
+                transparent,
+                transparent,
+                transparent,
+                transparent,
+                transparent,
+              ],
             ],
           ];
           expect(actual, equals(expected));
@@ -201,6 +339,7 @@ void main() {
             from: const PixelPoint(x: 0, y: 0),
             to: const PixelPoint(x: 4, y: 4),
             width: 1,
+            tip: BrushTip.square,
           );
           final expected = [
             const PixelRectangle(left: 0, top: 0, width: 5, height: 5),
@@ -222,6 +361,7 @@ void main() {
             from: const PixelPoint(x: 0, y: 0),
             to: const PixelPoint(x: 11, y: 2),
             width: 1,
+            tip: BrushTip.square,
           );
           final expected = [
             const PixelRectangle(left: 0, top: 0, width: 12, height: 3),
@@ -280,6 +420,7 @@ void main() {
             from: const PixelPoint(x: 0, y: 0),
             to: const PixelPoint(x: 4, y: 0),
             width: 1,
+            tip: BrushTip.square,
           );
           final expected = [
             const PixelRectangle(left: 0, top: 0, width: 5, height: 1),
@@ -297,6 +438,7 @@ void main() {
             from: const PixelPoint(x: 0, y: 0),
             to: const PixelPoint(x: 4, y: 4),
             width: 1,
+            tip: BrushTip.square,
           );
           final expected = [
             const PixelRectangle(left: 0, top: 0, width: 3, height: 3),
@@ -304,6 +446,27 @@ void main() {
               [transparent, black, black],
               [black, transparent, transparent],
               [black, transparent, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('round tip', () {
+          final actual = drawOnBlank(
+            shape: Shape.ellipse,
+            layerWidth: 4,
+            layerHeight: 4,
+            from: const PixelPoint(x: 0, y: 0),
+            to: const PixelPoint(x: 3, y: 3),
+            width: 1,
+            tip: BrushTip.circle,
+          );
+          final expected = [
+            const PixelRectangle(left: 0, top: 0, width: 4, height: 4),
+            [
+              [transparent, black, black, transparent],
+              [black, transparent, transparent, black],
+              [black, transparent, transparent, black],
+              [transparent, black, black, transparent],
             ],
           ];
           expect(actual, equals(expected));
@@ -318,6 +481,7 @@ void main() {
             from: const PixelPoint(x: 0, y: 3),
             to: const PixelPoint(x: 6, y: 3),
             width: 1,
+            tip: BrushTip.square,
           );
           final expected = [
             const PixelRectangle(left: 0, top: 1, width: 7, height: 5),
@@ -389,6 +553,7 @@ void main() {
             from: const PixelPoint(x: 0, y: 0),
             to: const PixelPoint(x: 4, y: 4),
             width: 1,
+            tip: BrushTip.square,
           );
           final expected = [
             const PixelRectangle(left: 0, top: 0, width: 5, height: 5),
@@ -410,6 +575,7 @@ void main() {
             from: const PixelPoint(x: 1, y: 1),
             to: const PixelPoint(x: 1, y: 1),
             width: 1,
+            tip: BrushTip.square,
           );
           final expected = [
             const PixelRectangle(left: 1, top: 1, width: 1, height: 1),

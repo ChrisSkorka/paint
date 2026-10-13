@@ -15,6 +15,7 @@ import 'package:paint/editor/tools/tool_kind.dart';
 import 'package:paint/editor/tools/tool_preset.dart';
 import 'package:paint/editor/tools/tool_presets.dart';
 import 'package:paint/widgets/components/edge_shadow.dart';
+import 'package:paint/widgets/components/number_stepper.dart';
 import 'package:paint/widgets/components/numeric_value_range.dart';
 import 'package:paint/widgets/components/paint_bar.dart';
 import 'package:paint/widgets/components/paint_style.dart';
@@ -22,6 +23,7 @@ import 'package:paint/widgets/components/pixel_canvas.dart';
 import 'package:paint/widgets/components/side_pane.dart';
 import 'package:paint/widgets/components/side_panel.dart';
 import 'package:paint/widgets/components/swatch_grid.dart';
+import 'package:paint/widgets/components/timeline.dart';
 import 'package:paint/widgets/views/editor_view.dart';
 
 import '../../../support/color_dialog_probes.dart';
@@ -147,8 +149,6 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Pen options'));
-          await tester.pumpAndSettle();
           final actual = selectedTips(tester);
           const expected = [true, false];
           expect(actual, equals(expected));
@@ -244,6 +244,153 @@ void main() {
             ],
             [false, false],
           ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('pen settings', () {
+        testWidgets('pen', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final actual = penSettingsEnabled(tester);
+          const expected = [true, true, true, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('eraser', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Eraser (E)'));
+          await tester.pump();
+          final actual = penSettingsEnabled(tester);
+          const expected = [true, true, true, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('line', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Line (L)'));
+          await tester.pump();
+          final actual = penSettingsEnabled(tester);
+          const expected = [true, true, true, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('circle', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Circle (O)'));
+          await tester.pump();
+          final actual = penSettingsEnabled(tester);
+          const expected = [true, true, false, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('fill', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Fill (G)'));
+          await tester.pump();
+          final actual = penSettingsEnabled(tester);
+          const expected = [false, false, false, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('select', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select (M)'));
+          await tester.pump();
+          final actual = penSettingsEnabled(tester);
+          const expected = [false, false, false, false];
+          expect(actual, equals(expected));
+        });
+      });
+      group('pen size', () {
+        testWidgets('field width', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final actual = tester
+              .getSize(
+                find.descendant(
+                  of: sizeStepper(),
+                  matching: find.byType(TextField),
+                ),
+              )
+              .width;
+          const expected = 56.0;
           expect(actual, equals(expected));
         });
       });
@@ -1015,8 +1162,6 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Pen options'));
-          await tester.pumpAndSettle();
           await tester.tap(find.byTooltip('Circle tip'));
           await tester.pump();
           final actual = selectedTips(tester);
@@ -1037,8 +1182,6 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Pen options'));
-          await tester.pumpAndSettle();
           await tester.tap(find.byTooltip('Circle tip'));
           await tester.pump();
           await tester.tap(find.byTooltip('Square tip'));
@@ -1239,16 +1382,9 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Pen options'));
-          await tester.pumpAndSettle();
-          await tester.tap(
-            find.descendant(
-              of: sizeRange(),
-              matching: find.byTooltip('Increase'),
-            ),
-          );
+          await tester.tap(find.byTooltip('Increase size'));
           await tester.pump();
-          final actual = tester.widget<NumericValueRange>(sizeRange()).value;
+          final actual = tester.widget<NumberStepper>(sizeStepper()).value;
           const expected = 2;
           expect(actual, equals(expected));
         });
@@ -1266,20 +1402,15 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Eraser options'));
-          await tester.pumpAndSettle();
-          await tester.tap(
-            find.descendant(
-              of: sizeRange(),
-              matching: find.byTooltip('Increase'),
-            ),
-          );
+          await tester.tap(find.byTooltip('Eraser (E)'));
           await tester.pump();
-          final actual = tester.widget<NumericValueRange>(sizeRange()).value;
+          await tester.tap(find.byTooltip('Increase size'));
+          await tester.pump();
+          final actual = tester.widget<NumberStepper>(sizeStepper()).value;
           const expected = 2;
           expect(actual, equals(expected));
         });
-        testWidgets('shape width', (tester) async {
+        testWidgets('shape size', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
             MaterialApp(
@@ -1293,17 +1424,80 @@ void main() {
               ),
             ),
           );
-          await tester.tap(find.byTooltip('Rectangle options'));
-          await tester.pumpAndSettle();
-          await tester.tap(
-            find.descendant(
-              of: widthRange(),
-              matching: find.byTooltip('Increase'),
+          await tester.tap(find.byTooltip('Rectangle (R)'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Increase size'));
+          await tester.pump();
+          final actual = tester.widget<NumberStepper>(sizeStepper()).value;
+          const expected = 2;
+          expect(actual, equals(expected));
+        });
+        testWidgets('slider', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
             ),
           );
+          await tester.drag(sizeSlider(), const Offset(200, 0));
           await tester.pump();
-          final actual = tester.widget<NumericValueRange>(widthRange()).value;
-          const expected = 2;
+          final actual = tester.widget<NumberStepper>(sizeStepper()).value;
+          const expected = 1000;
+          expect(actual, equals(expected));
+        });
+        testWidgets('stepper moves slider', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Increase size'));
+          await tester.pump();
+          final actual = tester.widget<Slider>(sizeSlider()).value;
+          const expected = 0.10034333188799373;
+          expect(actual, equals(expected));
+        });
+        testWidgets('shared between tools', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Increase size'));
+          await tester.tap(find.byTooltip('Circle tip'));
+          await tester.tap(find.byTooltip('Line (L)'));
+          await tester.pump();
+          final actual = [
+            tester.widget<NumberStepper>(sizeStepper()).value,
+            selectedTips(tester),
+          ];
+          const expected = [
+            2,
+            [false, true],
+          ];
           expect(actual, equals(expected));
         });
       });
@@ -2553,7 +2747,13 @@ void main() {
               ),
             ),
           );
-          await tester.drag(find.byType(Slider).first, const Offset(2000, 0));
+          await tester.drag(
+            find.descendant(
+              of: find.byType(Timeline),
+              matching: find.byType(Slider),
+            ),
+            const Offset(2000, 0),
+          );
           await tester.pump();
           final actual = timelineState(tester);
           const expected = [
@@ -4240,9 +4440,7 @@ void main() {
           await pressShortcut(tester, key: LogicalKeyboardKey.bracketRight);
           await pressShortcut(tester, key: LogicalKeyboardKey.bracketRight);
           await pressShortcut(tester, key: LogicalKeyboardKey.bracketLeft);
-          await tester.tap(find.byTooltip('Pen options'));
-          await tester.pumpAndSettle();
-          final actual = tester.widget<NumericValueRange>(sizeRange()).value;
+          final actual = tester.widget<NumberStepper>(sizeStepper()).value;
           const expected = 2;
           expect(actual, equals(expected));
         });

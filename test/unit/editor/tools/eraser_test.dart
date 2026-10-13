@@ -3,6 +3,7 @@ import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
+import 'package:paint/editor/tools/brush_tip.dart';
 import 'package:paint/editor/tools/eraser.dart';
 
 import '../../../support/layer_probes.dart';
@@ -16,7 +17,7 @@ void main() {
     group('method start', () {
       group('sizes', () {
         test('two', () {
-          const eraser = Eraser(size: 2);
+          const eraser = Eraser(size: 2, tip: BrushTip.square);
           final layer = Layer.filled(
             width: 3,
             height: 3,
@@ -39,12 +40,38 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('tips', () {
+        test('circle', () {
+          const eraser = Eraser(size: 4, tip: BrushTip.circle);
+          final layer = Layer.filled(
+            width: 4,
+            height: 4,
+            color: PixelColor.black,
+          );
+          final area = eraser.start(
+            layer: layer,
+            point: const PixelPoint(x: 2, y: 2),
+            color: PixelColor.white,
+          );
+          final actual = [area, pixelRows(layer)];
+          final expected = [
+            const PixelRectangle(left: 0, top: 0, width: 4, height: 4),
+            [
+              [black, transparent, transparent, black],
+              [transparent, transparent, transparent, transparent],
+              [transparent, transparent, transparent, transparent],
+              [black, transparent, transparent, black],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
     });
 
     group('method stroke', () {
       group('lines', () {
         test('gap between points', () {
-          const eraser = Eraser(size: 1);
+          const eraser = Eraser(size: 1, tip: BrushTip.square);
           final layer = Layer.filled(
             width: 4,
             height: 1,
@@ -71,7 +98,7 @@ void main() {
     group('method end', () {
       group('points', () {
         test('inside', () {
-          const eraser = Eraser(size: 1);
+          const eraser = Eraser(size: 1, tip: BrushTip.square);
           final layer = Layer.filled(
             width: 2,
             height: 1,
@@ -97,7 +124,7 @@ void main() {
     group('method drawPointer', () {
       group('colors', () {
         test('pointer color', () {
-          const eraser = Eraser(size: 1);
+          const eraser = Eraser(size: 1, tip: BrushTip.square);
           final layer = Layer.filled(
             width: 2,
             height: 1,

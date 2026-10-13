@@ -15,12 +15,12 @@ class ToolPreset {
       kind: kind,
       color: kind.usesColor ? color : null,
       size: kind.hasSize ? size.clamp(minimumSize, maximumSize) : null,
-      tip: kind == ToolKind.pen ? tip : null,
+      tip: kind.hasTip ? tip : null,
     );
   }
 
   static const minimumSize = 1;
-  static const maximumSize = 64;
+  static const maximumSize = 1000;
 
   final ToolKind kind;
   final PixelColor? color;

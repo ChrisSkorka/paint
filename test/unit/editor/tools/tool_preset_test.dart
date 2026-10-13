@@ -32,7 +32,11 @@ void main() {
             size: 3,
             tip: BrushTip.circle,
           );
-          const expected = ToolPreset(kind: ToolKind.eraser, size: 3);
+          const expected = ToolPreset(
+            kind: ToolKind.eraser,
+            size: 3,
+            tip: BrushTip.circle,
+          );
           expect(actual, equals(expected));
         });
         test('fill', () {
@@ -56,6 +60,21 @@ void main() {
             kind: ToolKind.rectangle,
             color: red,
             size: 3,
+            tip: BrushTip.circle,
+          );
+          expect(actual, equals(expected));
+        });
+        test('circle shape', () {
+          final actual = ToolPreset.configured(
+            kind: ToolKind.circle,
+            color: red,
+            size: 3,
+            tip: BrushTip.circle,
+          );
+          const expected = ToolPreset(
+            kind: ToolKind.circle,
+            color: red,
+            size: 3,
           );
           expect(actual, equals(expected));
         });
@@ -68,17 +87,25 @@ void main() {
             size: 0,
             tip: BrushTip.square,
           );
-          const expected = ToolPreset(kind: ToolKind.eraser, size: 1);
+          const expected = ToolPreset(
+            kind: ToolKind.eraser,
+            size: 1,
+            tip: BrushTip.square,
+          );
           expect(actual, equals(expected));
         });
         test('above maximum', () {
           final actual = ToolPreset.configured(
             kind: ToolKind.eraser,
             color: red,
-            size: 65,
+            size: 1001,
             tip: BrushTip.square,
           );
-          const expected = ToolPreset(kind: ToolKind.eraser, size: 64);
+          const expected = ToolPreset(
+            kind: ToolKind.eraser,
+            size: 1000,
+            tip: BrushTip.square,
+          );
           expect(actual, equals(expected));
         });
       });

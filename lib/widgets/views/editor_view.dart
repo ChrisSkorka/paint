@@ -23,14 +23,17 @@ import '../../editor/pointer_button.dart';
 import '../../editor/tools/brush_tip.dart';
 import '../../editor/tools/color_palettes.dart';
 import '../../editor/tools/tool_kind.dart';
+import '../../editor/tools/tool_size.dart';
 import '../components/canvas_margin.dart';
 import '../components/color_dialog.dart';
 import '../components/edge_shadow.dart';
+import '../components/exponential_scale.dart';
 import '../components/frame_list.dart';
 import '../components/history_list.dart';
 import '../components/horizontal_scroll_view.dart';
 import '../components/layer_list.dart';
 import '../components/pixel_canvas.dart';
+import '../components/number_stepper.dart';
 import '../components/numeric_value_range.dart';
 import '../components/paint_bar.dart';
 import '../components/paint_icon_button.dart';
@@ -44,6 +47,7 @@ import '../components/swatch_grid.dart';
 import '../components/timeline.dart';
 import '../components/tool_icons.dart';
 import '../components/tool_preset_list.dart';
+import '../components/zero_intrinsic_width.dart';
 
 class EditorView extends StatefulWidget {
   const EditorView({
@@ -64,6 +68,7 @@ class EditorView extends StatefulWidget {
   final ValueChanged<bool>? onUnsavedChanged;
 
   static const canvasEdge = 15.0;
+  static const penSizeWidth = 56.0;
 
   @override
   State<EditorView> createState() => _EditorViewState();
@@ -176,50 +181,14 @@ class _EditorViewState extends State<EditorView> {
     for (final row in palette) [for (final color in row) Color(color.argb)],
   ];
 
-  Widget _sizeDropdown({
-    String label = 'Size:',
-    required int value,
-    required ValueChanged<int> onChanged,
-  }) {
-    return NumericValueRange(
-      label: label,
-      value: value,
-      minimum: EditorController.minimumToolSize,
-      maximum: EditorController.maximumToolSize,
-      onChanged: onChanged,
-    );
-  }
-
-  Widget _penDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sizeDropdown(
-          value: controller.penSize,
-          onChanged: controller.setPenSize,
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Row(
-            spacing: 4,
-            children: [
-              const Text('Tip:'),
-              PaintIconButton(
-                icon: tipIcon(tip: BrushTip.square),
-                tooltip: 'Square tip',
-                selected: controller.penTip == BrushTip.square,
-                onPressed: () => controller.setPenTip(BrushTip.square),
-              ),
-              PaintIconButton(
-                icon: tipIcon(tip: BrushTip.circle),
-                tooltip: 'Circle tip',
-                selected: controller.penTip == BrushTip.circle,
-                onPressed: () => controller.setPenTip(BrushTip.circle),
-              ),
-            ],
-          ),
-        ),
-      ],
+  Widget _tipButton({required BrushTip tip, required String tooltip}) {
+    return PaintIconButton(
+      icon: tipIcon(tip: tip),
+      tooltip: tooltip,
+      selected: controller.penTip == tip,
+      onPressed: controller.toolKind.hasTip
+          ? () => controller.setPenTip(tip)
+          : null,
     );
   }
 
@@ -227,18 +196,13 @@ class _EditorViewState extends State<EditorView> {
     required ToolKind toolKind,
     required EditorShortcut shortcut,
   }) {
-    return PaintSplitButton(
+    return PaintIconButton(
       icon: toolIcon(kind: toolKind),
       tooltip: toolKind.label,
       shortcut: shortcut.keys,
       color: PaintStyle.shapeColor,
       selected: controller.toolKind == toolKind,
       onPressed: () => controller.selectTool(toolKind),
-      dropdown: _sizeDropdown(
-        label: 'Width:',
-        value: controller.shapeWidth,
-        onChanged: controller.setShapeWidth,
-      ),
     );
   }
 
@@ -825,11 +789,71 @@ class _EditorViewState extends State<EditorView> {
                       ],
                     ),
                     RibbonSection(
+                      title: 'Pen',
+                      columns: [
+                        IntrinsicWidth(
+                          child: RibbonColumn(
+                            children: [
+                              NumberStepper(
+                                value: controller.penSize,
+                                minimum: EditorController.minimumToolSize,
+                                maximum: EditorController.maximumToolSize,
+                                decreaseTooltip: 'Decrease size',
+                                increaseTooltip: 'Increase size',
+                                enabled: controller.toolKind.hasSize,
+                                valueWidth: EditorView.penSizeWidth,
+                                decrement: smallerToolSize,
+                                increment: largerToolSize,
+                                onChanged: controller.setPenSize,
+                              ),
+                              ZeroIntrinsicWidth(
+                                child: SliderTheme(
+                                  data: PaintStyle.sliderTheme,
+                                  child: Slider(
+                                    value: exponentialPosition(
+                                      value: controller.penSize,
+                                      minimum: EditorController.minimumToolSize,
+                                      maximum: EditorController.maximumToolSize,
+                                    ),
+                                    onChanged: controller.toolKind.hasSize
+                                        ? (position) => controller.setPenSize(
+                                            roundToolSize(
+                                              exponentialValue(
+                                                position: position,
+                                                minimum: EditorController
+                                                    .minimumToolSize,
+                                                maximum: EditorController
+                                                    .maximumToolSize,
+                                              ),
+                                            ),
+                                          )
+                                        : null,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        RibbonColumn(
+                          children: [
+                            _tipButton(
+                              tip: BrushTip.square,
+                              tooltip: 'Square tip',
+                            ),
+                            _tipButton(
+                              tip: BrushTip.circle,
+                              tooltip: 'Circle tip',
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    RibbonSection(
                       title: 'Tools',
                       columns: [
                         RibbonColumn(
                           children: [
-                            PaintSplitButton(
+                            PaintIconButton(
                               icon: toolIcon(kind: ToolKind.pen),
                               tooltip: 'Pen',
                               shortcut: EditorShortcut.pen.keys,
@@ -837,9 +861,8 @@ class _EditorViewState extends State<EditorView> {
                               selected: controller.toolKind == ToolKind.pen,
                               onPressed: () =>
                                   controller.selectTool(ToolKind.pen),
-                              dropdown: _penDropdown(),
                             ),
-                            PaintSplitButton(
+                            PaintIconButton(
                               icon: toolIcon(kind: ToolKind.eraser),
                               tooltip: 'Eraser',
                               shortcut: EditorShortcut.eraser.keys,
@@ -847,10 +870,6 @@ class _EditorViewState extends State<EditorView> {
                               selected: controller.toolKind == ToolKind.eraser,
                               onPressed: () =>
                                   controller.selectTool(ToolKind.eraser),
-                              dropdown: _sizeDropdown(
-                                value: controller.eraserSize,
-                                onChanged: controller.setEraserSize,
-                              ),
                             ),
                           ],
                         ),
