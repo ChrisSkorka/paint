@@ -390,6 +390,10 @@ class _EditorViewState extends State<EditorView> {
         event.logicalKey == LogicalKeyboardKey.shiftRight) {
       controller.holdShapeConstraint(held: event is! KeyUpEvent);
     }
+    if (event.logicalKey == LogicalKeyboardKey.controlLeft ||
+        event.logicalKey == LogicalKeyboardKey.controlRight) {
+      controller.holdShapeCentered(held: event is! KeyUpEvent);
+    }
     final shortcut = EditorShortcut.matching(event);
     if (shortcut == null || shortcut.group == ShortcutGroup.tabs) {
       return KeyEventResult.ignored;

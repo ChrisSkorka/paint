@@ -14,6 +14,7 @@ class ShapeTool implements Tool {
     required this.tip,
     required this.origin,
     required this.constrained,
+    required this.centered,
   });
 
   final Shape shape;
@@ -21,6 +22,7 @@ class ShapeTool implements Tool {
   final BrushTip tip;
   final PixelPoint? origin;
   final bool constrained;
+  final bool centered;
 
   @override
   PixelRectangle start({
@@ -70,11 +72,15 @@ class ShapeTool implements Tool {
     required PixelPoint point,
     required PixelColor color,
   }) {
-    final from = origin ?? point;
+    final start = origin ?? point;
+    final to = constrained ? shape.constrain(from: start, to: point) : point;
+    final from = centered
+        ? PixelPoint(x: 2 * start.x - to.x, y: 2 * start.y - to.y)
+        : start;
     return shape.draw(
       layer: layer,
       from: from,
-      to: constrained ? shape.constrain(from: from, to: point) : point,
+      to: to,
       width: width,
       tip: tip,
       color: color,

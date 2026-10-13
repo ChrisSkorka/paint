@@ -1137,6 +1137,86 @@ void main() {
       });
     });
 
+    group('method holdShapeCentered', () {
+      group('held', () {
+        test('hover', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.rectangle);
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 1));
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.holdShapeCentered(held: true);
+          final actual = notifications;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+        test('during stroke', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.rectangle);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 1),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 2));
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.holdShapeCentered(held: true);
+          final actual = [
+            pixelRows(editorController.pointerLayer),
+            notifications,
+          ];
+          const expected = [
+            [
+              [black, black, black],
+              [black, transparent, black],
+              [black, black, black],
+            ],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('press twice', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.rectangle);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 1),
+            button: PointerButton.primary,
+          );
+          editorController.holdShapeCentered(held: true);
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.holdShapeCentered(held: true);
+          final actual = notifications;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+      });
+      group('released', () {
+        test('during stroke', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..selectTool(ToolKind.rectangle);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 1),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 2));
+          editorController.holdShapeCentered(held: true);
+          editorController.holdShapeCentered(held: false);
+          final actual = pixelRows(editorController.pointerLayer);
+          const expected = [
+            [transparent, transparent, transparent],
+            [transparent, black, black],
+            [transparent, black, black],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method applyToolPreset', () {
       group('kinds', () {
         test('pen', () {

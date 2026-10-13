@@ -320,7 +320,7 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 ### phase 7.2: shape tools
 
 - [x] shape tool: constraint to square/circle & 45,90,... deg lines when shift is pressed
-- [ ] shape tool: center around starting point when ctrl is pressed
+- [x] shape tool: center around starting point when ctrl is pressed
 - [ ] rectangle & circle tool have a outline & fill toggle button
   - outline & fill toggle button are in shapes new 3rd column
   - outline uses primary color
