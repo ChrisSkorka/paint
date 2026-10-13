@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../editor/canvas/pixel_color.dart';
-import 'numeric_value_range.dart';
 import 'paint_icon_button.dart';
 import 'paint_style.dart';
 import 'swatch_grid.dart';
@@ -28,7 +28,10 @@ class ColorDialog extends StatefulWidget {
 }
 
 class _ColorDialogState extends State<ColorDialog> {
+  static const pickerWidth = 256.0;
+
   late var color = widget.initialColor;
+  late var hsvColor = HSVColor.fromColor(Color(color.argb));
   late final hexController = TextEditingController(text: color.hex);
 
   @override
@@ -37,21 +40,21 @@ class _ColorDialogState extends State<ColorDialog> {
     super.dispose();
   }
 
-  void _update({int? red, int? green, int? blue, int? alpha}) {
+  void _pick(HSVColor picked) {
     setState(() {
-      color = PixelColor.fromChannels(
-        red: red ?? color.red,
-        green: green ?? color.green,
-        blue: blue ?? color.blue,
-        alpha: alpha ?? color.alpha,
-      );
+      hsvColor = picked;
+      color = PixelColor(argb: picked.toColor().toARGB32());
       hexController.text = color.hex;
     });
   }
 
   void _typeHex(String text) {
     final parsed = PixelColor.tryParseHex(text);
-    if (parsed != null) setState(() => color = parsed);
+    if (parsed == null) return;
+    setState(() {
+      color = parsed;
+      hsvColor = HSVColor.fromColor(Color(parsed.argb));
+    });
   }
 
   void _submitHex(String text) {
@@ -59,17 +62,19 @@ class _ColorDialogState extends State<ColorDialog> {
     hexController.text = color.hex;
   }
 
-  Widget _channel({
-    required String label,
-    required int value,
-    required ValueChanged<int> onChanged,
-  }) {
-    return NumericValueRange(
-      label: label,
-      value: value,
-      minimum: 0,
-      maximum: 255,
-      onChanged: onChanged,
+  Widget _slider({required String tooltip, required TrackType trackType}) {
+    return Tooltip(
+      message: tooltip,
+      child: SizedBox(
+        width: pickerWidth + 30,
+        height: 36,
+        child: ColorPickerSlider(
+          trackType,
+          hsvColor,
+          _pick,
+          displayThumbColor: true,
+        ),
+      ),
     );
   }
 
@@ -86,7 +91,7 @@ class _ColorDialogState extends State<ColorDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.end,
-          spacing: 12,
+          spacing: 8,
           children: [
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -118,6 +123,26 @@ class _ColorDialogState extends State<ColorDialog> {
                 ),
               ],
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              child: DecoratedBox(
+                position: DecorationPosition.foreground,
+                decoration: BoxDecoration(
+                  border: Border.all(color: PaintStyle.dialogBorder),
+                ),
+                child: SizedBox(
+                  width: pickerWidth,
+                  height: pickerWidth * 3 / 4,
+                  child: ColorPickerArea(
+                    hsvColor,
+                    _pick,
+                    PaletteType.hsvWithHue,
+                  ),
+                ),
+              ),
+            ),
+            _slider(tooltip: 'Hue', trackType: TrackType.hue),
+            _slider(tooltip: 'Alpha', trackType: TrackType.alpha),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -136,26 +161,6 @@ class _ColorDialogState extends State<ColorDialog> {
                   ),
                 ),
               ],
-            ),
-            _channel(
-              label: 'Red:',
-              value: color.red,
-              onChanged: (red) => _update(red: red),
-            ),
-            _channel(
-              label: 'Green:',
-              value: color.green,
-              onChanged: (green) => _update(green: green),
-            ),
-            _channel(
-              label: 'Blue:',
-              value: color.blue,
-              onChanged: (blue) => _update(blue: blue),
-            ),
-            _channel(
-              label: 'Alpha:',
-              value: color.alpha,
-              onChanged: (alpha) => _update(alpha: alpha),
             ),
             Row(
               mainAxisSize: MainAxisSize.min,

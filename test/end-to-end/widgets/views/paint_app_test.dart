@@ -344,9 +344,7 @@ void main() {
           await tester.pumpAndSettle();
           await tester.tap(find.byTooltip('Edit colors'));
           await tester.pumpAndSettle();
-          await tester.enterText(channelField('Red:'), '255');
-          await tester.pump();
-          await tester.enterText(channelField('Alpha:'), '128');
+          await tester.enterText(hexField(), '#FF000080');
           await tester.pump();
           await tester.tap(find.byTooltip('OK'));
           await tester.pumpAndSettle();

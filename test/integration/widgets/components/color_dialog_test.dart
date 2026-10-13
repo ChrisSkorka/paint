@@ -10,15 +10,15 @@ void main() {
   group('class ColorDialog', () {
     group('render', () {
       group('initial color', () {
-        testWidgets('channels', (tester) async {
+        testWidgets('picker', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
             const MaterialApp(
               home: ColorDialog(initialColor: PixelColor(argb: 0x80112233)),
             ),
           );
-          final actual = channelValues(tester);
-          const expected = [0x11, 0x22, 0x33, 0x80];
+          final actual = pickerColor(tester);
+          final expected = HSVColor.fromColor(const Color(0x80112233));
           expect(actual, equals(expected));
         });
         testWidgets('previews', (tester) async {
@@ -47,86 +47,100 @@ void main() {
     });
 
     group('interactions', () {
-      group('channels', () {
-        testWidgets('red', (tester) async {
+      group('picker', () {
+        testWidgets('area brightest saturated', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
             const MaterialApp(
               home: ColorDialog(initialColor: PixelColor(argb: 0x80112233)),
             ),
           );
-          await tester.enterText(channelField('Red:'), '255');
+          await tester.drag(colorArea(), const Offset(1000, -1000));
           await tester.pump();
-          final actual = [channelValues(tester), previewColors(tester)];
+          final actual = [hexText(tester), previewColors(tester)];
           const expected = [
-            [0xFF, 0x22, 0x33, 0x80],
-            [Color(0x80112233), Color(0x80FF2233)],
+            '#0080FF80',
+            [Color(0x80112233), Color(0x800080FF)],
           ];
           expect(actual, equals(expected));
         });
-        testWidgets('green', (tester) async {
+        testWidgets('area white', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
             const MaterialApp(
               home: ColorDialog(initialColor: PixelColor(argb: 0x80112233)),
             ),
           );
-          await tester.enterText(channelField('Green:'), '255');
+          await tester.drag(colorArea(), const Offset(-1000, -1000));
           await tester.pump();
-          final actual = [channelValues(tester), previewColors(tester)];
+          final actual = [hexText(tester), previewColors(tester)];
           const expected = [
-            [0x11, 0xFF, 0x33, 0x80],
-            [Color(0x80112233), Color(0x8011FF33)],
+            '#FFFFFF80',
+            [Color(0x80112233), Color(0x80FFFFFF)],
           ];
           expect(actual, equals(expected));
         });
-        testWidgets('blue', (tester) async {
+        testWidgets('area black', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
             const MaterialApp(
               home: ColorDialog(initialColor: PixelColor(argb: 0x80112233)),
             ),
           );
-          await tester.enterText(channelField('Blue:'), '255');
+          await tester.drag(colorArea(), const Offset(-1000, 1000));
           await tester.pump();
-          final actual = [channelValues(tester), previewColors(tester)];
+          final actual = [hexText(tester), previewColors(tester)];
           const expected = [
-            [0x11, 0x22, 0xFF, 0x80],
-            [Color(0x80112233), Color(0x801122FF)],
+            '#00000080',
+            [Color(0x80112233), Color(0x80000000)],
           ];
           expect(actual, equals(expected));
         });
-        testWidgets('alpha', (tester) async {
+        testWidgets('hue', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
             const MaterialApp(
               home: ColorDialog(initialColor: PixelColor(argb: 0x80112233)),
             ),
           );
-          await tester.enterText(channelField('Alpha:'), '0');
+          await tester.drag(colorSlider('Hue'), const Offset(-1000, 0));
           await tester.pump();
-          final actual = [channelValues(tester), previewColors(tester)];
+          final actual = [hexText(tester), previewColors(tester)];
           const expected = [
-            [0x11, 0x22, 0x33, 0x00],
+            '#33111180',
+            [Color(0x80112233), Color(0x80331111)],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('alpha opaque', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            const MaterialApp(
+              home: ColorDialog(initialColor: PixelColor(argb: 0x80112233)),
+            ),
+          );
+          await tester.drag(colorSlider('Alpha'), const Offset(1000, 0));
+          await tester.pump();
+          final actual = [hexText(tester), previewColors(tester)];
+          const expected = [
+            '#112233FF',
+            [Color(0x80112233), Color(0xFF112233)],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('alpha transparent', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            const MaterialApp(
+              home: ColorDialog(initialColor: PixelColor(argb: 0x80112233)),
+            ),
+          );
+          await tester.drag(colorSlider('Alpha'), const Offset(-1000, 0));
+          await tester.pump();
+          final actual = [hexText(tester), previewColors(tester)];
+          const expected = [
+            '#11223300',
             [Color(0x80112233), Color(0x00112233)],
-          ];
-          expect(actual, equals(expected));
-        });
-        testWidgets('several', (tester) async {
-          useDesktopView(tester);
-          await tester.pumpWidget(
-            const MaterialApp(
-              home: ColorDialog(initialColor: PixelColor(argb: 0x80112233)),
-            ),
-          );
-          await tester.enterText(channelField('Red:'), '0');
-          await tester.pump();
-          await tester.enterText(channelField('Alpha:'), '255');
-          await tester.pump();
-          final actual = [channelValues(tester), previewColors(tester)];
-          const expected = [
-            [0x00, 0x22, 0x33, 0xFF],
-            [Color(0x80112233), Color(0xFF002233)],
           ];
           expect(actual, equals(expected));
         });
@@ -143,12 +157,12 @@ void main() {
           await tester.pump();
           final actual = [
             hexText(tester),
-            channelValues(tester),
+            pickerColor(tester),
             previewColors(tester),
           ];
-          const expected = [
+          final expected = [
             '#AABBCC',
-            [0xAA, 0xBB, 0xCC, 0xFF],
+            HSVColor.fromColor(const Color(0xFFAABBCC)),
             [Color(0x80112233), Color(0xFFAABBCC)],
           ];
           expect(actual, equals(expected));
@@ -164,12 +178,12 @@ void main() {
           await tester.pump();
           final actual = [
             hexText(tester),
-            channelValues(tester),
+            pickerColor(tester),
             previewColors(tester),
           ];
-          const expected = [
+          final expected = [
             '#AABBCC40',
-            [0xAA, 0xBB, 0xCC, 0x40],
+            HSVColor.fromColor(const Color(0x40AABBCC)),
             [Color(0x80112233), Color(0x40AABBCC)],
           ];
           expect(actual, equals(expected));
@@ -185,12 +199,12 @@ void main() {
           await tester.pump();
           final actual = [
             hexText(tester),
-            channelValues(tester),
+            pickerColor(tester),
             previewColors(tester),
           ];
-          const expected = [
+          final expected = [
             'aabbcc',
-            [0xAA, 0xBB, 0xCC, 0xFF],
+            HSVColor.fromColor(const Color(0xFFAABBCC)),
             [Color(0x80112233), Color(0xFFAABBCC)],
           ];
           expect(actual, equals(expected));
@@ -206,12 +220,12 @@ void main() {
           await tester.pump();
           final actual = [
             hexText(tester),
-            channelValues(tester),
+            pickerColor(tester),
             previewColors(tester),
           ];
-          const expected = [
+          final expected = [
             '#AABB',
-            [0x11, 0x22, 0x33, 0x80],
+            HSVColor.fromColor(const Color(0x80112233)),
             [Color(0x80112233), Color(0x80112233)],
           ];
           expect(actual, equals(expected));
@@ -227,12 +241,12 @@ void main() {
           await tester.pump();
           final actual = [
             hexText(tester),
-            channelValues(tester),
+            pickerColor(tester),
             previewColors(tester),
           ];
-          const expected = [
+          final expected = [
             '#AABBCC',
-            [0xAA, 0xBB, 0xCC, 0xFF],
+            HSVColor.fromColor(const Color(0xFFAABBCC)),
             [Color(0x80112233), Color(0xFFAABBCC)],
           ];
           expect(actual, equals(expected));
@@ -250,12 +264,12 @@ void main() {
           await tester.pump();
           final actual = [
             hexText(tester),
-            channelValues(tester),
+            pickerColor(tester),
             previewColors(tester),
           ];
-          const expected = [
+          final expected = [
             '#AABBCCFF',
-            [0xAA, 0xBB, 0xCC, 0xFF],
+            HSVColor.fromColor(const Color(0xFFAABBCC)),
             [Color(0x80112233), Color(0xFFAABBCC)],
           ];
           expect(actual, equals(expected));
@@ -273,34 +287,13 @@ void main() {
           await tester.pump();
           final actual = [
             hexText(tester),
-            channelValues(tester),
+            pickerColor(tester),
             previewColors(tester),
           ];
-          const expected = [
+          final expected = [
             '#11223380',
-            [0x11, 0x22, 0x33, 0x80],
+            HSVColor.fromColor(const Color(0x80112233)),
             [Color(0x80112233), Color(0x80112233)],
-          ];
-          expect(actual, equals(expected));
-        });
-        testWidgets('channel change', (tester) async {
-          useDesktopView(tester);
-          await tester.pumpWidget(
-            const MaterialApp(
-              home: ColorDialog(initialColor: PixelColor(argb: 0x80112233)),
-            ),
-          );
-          await tester.enterText(channelField('Red:'), '255');
-          await tester.pump();
-          final actual = [
-            hexText(tester),
-            channelValues(tester),
-            previewColors(tester),
-          ];
-          const expected = [
-            '#FF223380',
-            [0xFF, 0x22, 0x33, 0x80],
-            [Color(0x80112233), Color(0x80FF2233)],
           ];
           expect(actual, equals(expected));
         });
@@ -357,7 +350,7 @@ void main() {
           );
           await tester.tap(find.text('open'));
           await tester.pumpAndSettle();
-          await tester.enterText(channelField('Blue:'), '255');
+          await tester.enterText(hexField(), '#1122FF80');
           await tester.pump();
           await tester.tap(find.byTooltip('OK'));
           await tester.pumpAndSettle();
@@ -385,7 +378,7 @@ void main() {
           );
           await tester.tap(find.text('open'));
           await tester.pumpAndSettle();
-          await tester.enterText(channelField('Blue:'), '255');
+          await tester.enterText(hexField(), '#1122FF80');
           await tester.pump();
           await tester.tap(find.byTooltip('Cancel'));
           await tester.pumpAndSettle();

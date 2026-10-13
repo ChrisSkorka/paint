@@ -2015,7 +2015,7 @@ void main() {
           );
           await tester.tap(find.byTooltip('Edit colors'));
           await tester.pumpAndSettle();
-          await tester.enterText(channelField('Red:'), '255');
+          await tester.enterText(hexField(), '#FF0000');
           await tester.pump();
           await tester.tap(find.byTooltip('OK'));
           await tester.pumpAndSettle();
@@ -2041,7 +2041,7 @@ void main() {
           await tester.pump();
           await tester.tap(find.byTooltip('Edit colors'));
           await tester.pumpAndSettle();
-          await tester.enterText(channelField('Red:'), '0');
+          await tester.enterText(hexField(), '#00FFFF');
           await tester.pump();
           await tester.tap(find.byTooltip('OK'));
           await tester.pumpAndSettle();
@@ -2065,7 +2065,7 @@ void main() {
           );
           await tester.tap(find.byTooltip('Edit colors'));
           await tester.pumpAndSettle();
-          await tester.enterText(channelField('Red:'), '255');
+          await tester.enterText(hexField(), '#FF0000');
           await tester.pump();
           await tester.tap(find.byTooltip('Cancel'));
           await tester.pumpAndSettle();

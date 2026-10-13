@@ -1,26 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/widgets/components/color_dialog.dart';
-import 'package:paint/widgets/components/numeric_value_range.dart';
 import 'package:paint/widgets/components/swatch_grid.dart';
 
-Finder channelField(String label) => find.descendant(
-  of: find.ancestor(
-    of: find.text(label),
-    matching: find.byType(NumericValueRange),
-  ),
-  matching: find.byType(TextField),
+Finder colorArea() => find.descendant(
+  of: find.byType(ColorDialog),
+  matching: find.byType(ColorPickerArea),
 );
 
-List<int> channelValues(WidgetTester tester) => tester
-    .widgetList<NumericValueRange>(
-      find.descendant(
-        of: find.byType(ColorDialog),
-        matching: find.byType(NumericValueRange),
-      ),
-    )
-    .map((numericValueRange) => numericValueRange.value)
-    .toList();
+Finder colorSlider(String tooltip) => find.descendant(
+  of: find.byTooltip(tooltip),
+  matching: find.byType(ColorPickerSlider),
+);
+
+HSVColor pickerColor(WidgetTester tester) =>
+    tester.widget<ColorPickerArea>(colorArea()).hsvColor;
 
 List<Color> previewColors(WidgetTester tester) => tester
     .widgetList<ColorPreview>(

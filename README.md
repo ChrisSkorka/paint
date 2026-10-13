@@ -349,19 +349,16 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 7.4: colors
 
-- [ ] higher brightness range in 12x5 picker
-- [ ] color picker: better UI
+- [x] higher brightness range in 12x5 picker
+- [x] color picker: better UI
   - lib: flutter_colorpicker or flutter_color_picker_plus (which ever works better)
   - variant: hue & alpha slider + rectangle value & saturation
   - maintain hex text input
   - maintain org v new color
-- [ ] colors: add no-color option, no-color button below dialog button
-- [ ] transparent colors: blend mode
 
 ### phase 7.5: history
 
 - [ ] history & layer item preview enlarges on hover
-- [ ] history slider
 - [ ] feature to convert history diff into layer?
 - [ ] feature to remove/undo intermediate history item
 
@@ -407,6 +404,9 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] animation loop toggle
 - [ ] interchangeable panes: move panes between top & right panels
 - [ ] wide double buttons for pairs: undo/redo, rotate, mirror
+- [ ] colors: add no-color option, no-color button below dialog button
+- [ ] transparent colors: blend mode
+- [ ] history slider
 
 ### phase y: vector graphics
 
