@@ -4146,6 +4146,96 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
+        testWidgets(
+          'cmd z on macos',
+          (tester) async {
+            useDesktopView(tester);
+            final document = Document.blank(width: 2, height: 2);
+            await tester.pumpWidget(
+              MaterialApp(
+                home: Scaffold(
+                  body: EditorView(
+                    files: StubFileAccess(),
+                    library: stubDocumentLibrary(),
+                    clipboard: StubImageClipboard(),
+                    document: document,
+                  ),
+                ),
+              ),
+            );
+            final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+            await tester.tapAt(topLeft + const Offset(1, 1));
+            await tester.pump();
+            await pressShortcut(
+              tester,
+              key: LogicalKeyboardKey.keyZ,
+              modifiers: [LogicalKeyboardKey.metaLeft],
+            );
+            final actual = historyState(tester);
+            const expected = [
+              ['Start', 'Pen'],
+              0,
+            ];
+            expect(actual, equals(expected));
+          },
+          variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+        );
+        testWidgets(
+          'ctrl z on macos',
+          (tester) async {
+            useDesktopView(tester);
+            final document = Document.blank(width: 2, height: 2);
+            await tester.pumpWidget(
+              MaterialApp(
+                home: Scaffold(
+                  body: EditorView(
+                    files: StubFileAccess(),
+                    library: stubDocumentLibrary(),
+                    clipboard: StubImageClipboard(),
+                    document: document,
+                  ),
+                ),
+              ),
+            );
+            final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+            await tester.tapAt(topLeft + const Offset(1, 1));
+            await tester.pump();
+            await pressShortcut(
+              tester,
+              key: LogicalKeyboardKey.keyZ,
+              modifiers: [LogicalKeyboardKey.controlLeft],
+            );
+            final actual = historyState(tester);
+            const expected = [
+              ['Start', 'Pen'],
+              1,
+            ];
+            expect(actual, equals(expected));
+          },
+          variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+        );
+        testWidgets(
+          'cmd tooltip on macos',
+          (tester) async {
+            useDesktopView(tester);
+            final document = Document.blank(width: 2, height: 2);
+            await tester.pumpWidget(
+              MaterialApp(
+                home: Scaffold(
+                  body: EditorView(
+                    files: StubFileAccess(),
+                    library: stubDocumentLibrary(),
+                    clipboard: StubImageClipboard(),
+                    document: document,
+                  ),
+                ),
+              ),
+            );
+            final actual = find.byTooltip('Save (Cmd+S)');
+            expect(actual, findsOneWidget);
+          },
+          variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+        );
         testWidgets('ctrl y', (tester) async {
           useDesktopView(tester);
           final document = Document.blank(width: 2, height: 2);
@@ -6275,6 +6365,82 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
+        testWidgets(
+          'cmd on macos',
+          (tester) async {
+            useDesktopView(tester);
+            final document = Document.blank(width: 3, height: 3);
+            await tester.pumpWidget(
+              MaterialApp(
+                home: Scaffold(
+                  body: EditorView(
+                    files: StubFileAccess(),
+                    library: stubDocumentLibrary(),
+                    clipboard: StubImageClipboard(),
+                    document: document,
+                  ),
+                ),
+              ),
+            );
+            await tester.tap(find.byTooltip('Rectangle (R)'));
+            await tester.pump();
+            await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+            final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+            final gesture = await tester.startGesture(
+              topLeft + const Offset(5, 5),
+            );
+            await gesture.moveTo(topLeft + const Offset(9, 9));
+            await gesture.up();
+            await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+            await tester.pump();
+            final actual = pixelRows(document.activeLayer);
+            const expected = [
+              [black, black, black],
+              [black, transparent, black],
+              [black, black, black],
+            ];
+            expect(actual, equals(expected));
+          },
+          variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+        );
+        testWidgets(
+          'ctrl on macos',
+          (tester) async {
+            useDesktopView(tester);
+            final document = Document.blank(width: 3, height: 3);
+            await tester.pumpWidget(
+              MaterialApp(
+                home: Scaffold(
+                  body: EditorView(
+                    files: StubFileAccess(),
+                    library: stubDocumentLibrary(),
+                    clipboard: StubImageClipboard(),
+                    document: document,
+                  ),
+                ),
+              ),
+            );
+            await tester.tap(find.byTooltip('Rectangle (R)'));
+            await tester.pump();
+            await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+            final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+            final gesture = await tester.startGesture(
+              topLeft + const Offset(5, 5),
+            );
+            await gesture.moveTo(topLeft + const Offset(9, 9));
+            await gesture.up();
+            await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+            await tester.pump();
+            final actual = pixelRows(document.activeLayer);
+            const expected = [
+              [transparent, transparent, transparent],
+              [transparent, black, black],
+              [transparent, black, black],
+            ];
+            expect(actual, equals(expected));
+          },
+          variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+        );
       });
 
       group('held color picker', () {

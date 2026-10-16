@@ -249,6 +249,10 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [x] shortcuts for animations
 - [x] shortcuts for layers
 - [x] shortcut list on new doc page
+- [x] macos shortcuts
+  - swap ctrl & cmd
+  - show cmd in shortcut hints
+- [ ] ctrl/cmd + scroll zooms in & out
 
 ### phase 6.2: tool history & favorites
 

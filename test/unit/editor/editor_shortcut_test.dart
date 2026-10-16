@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,6 +21,13 @@ void main() {
         test('held key', () {
           final actual = EditorShortcut.holdColorPicker.keys;
           const expected = 'Alt';
+          expect(actual, equals(expected));
+        });
+        test('command on macos', () {
+          debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+          addTearDown(() => debugDefaultTargetPlatformOverride = null);
+          final actual = EditorShortcut.redo.keys;
+          const expected = 'Cmd+Y / Cmd+Shift+Z';
           expect(actual, equals(expected));
         });
         test('keys label', () {
@@ -107,6 +115,69 @@ void main() {
       });
     });
 
+    group('getter platformActivators', () {
+      group('platform', () {
+        test('linux', () {
+          debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+          addTearDown(() => debugDefaultTargetPlatformOverride = null);
+          final actual = EditorShortcut.export.platformActivators;
+          const expected = [
+            SingleActivator(
+              LogicalKeyboardKey.keyE,
+              control: true,
+              shift: true,
+              includeRepeats: false,
+            ),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('macos', () {
+          debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+          addTearDown(() => debugDefaultTargetPlatformOverride = null);
+          final actual = [
+            for (final activator in EditorShortcut.export.platformActivators)
+              [
+                activator.trigger,
+                activator.control,
+                activator.meta,
+                activator.shift,
+                activator.alt,
+                activator.includeRepeats,
+              ],
+          ];
+          final expected = [
+            [LogicalKeyboardKey.keyE, false, true, true, false, false],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter primaryModifierKeys', () {
+      group('platform', () {
+        test('linux', () {
+          debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+          addTearDown(() => debugDefaultTargetPlatformOverride = null);
+          final actual = EditorShortcut.primaryModifierKeys;
+          final expected = {
+            LogicalKeyboardKey.controlLeft,
+            LogicalKeyboardKey.controlRight,
+          };
+          expect(actual, equals(expected));
+        });
+        test('macos', () {
+          debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+          addTearDown(() => debugDefaultTargetPlatformOverride = null);
+          final actual = EditorShortcut.primaryModifierKeys;
+          final expected = {
+            LogicalKeyboardKey.metaLeft,
+            LogicalKeyboardKey.metaRight,
+          };
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method describe', () {
       group('modifiers', () {
         test('none', () {
@@ -121,6 +192,13 @@ void main() {
             const SingleActivator(LogicalKeyboardKey.keyQ, control: true),
           );
           const expected = 'Ctrl+Q';
+          expect(actual, equals(expected));
+        });
+        test('command', () {
+          final actual = EditorShortcut.describe(
+            const SingleActivator(LogicalKeyboardKey.keyQ, meta: true),
+          );
+          const expected = 'Cmd+Q';
           expect(actual, equals(expected));
         });
         test('shift', () {

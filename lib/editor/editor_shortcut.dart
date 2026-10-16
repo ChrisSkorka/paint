@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -386,18 +387,41 @@ enum EditorShortcut {
     LogicalKeyboardKey.pageDown: 'PgDn',
   };
 
-  String get keys => keysLabel ?? activators.map(describe).join(' / ');
+  static bool get usesCommandKey =>
+      defaultTargetPlatform == TargetPlatform.macOS;
+
+  static Set<LogicalKeyboardKey> get primaryModifierKeys => usesCommandKey
+      ? {LogicalKeyboardKey.metaLeft, LogicalKeyboardKey.metaRight}
+      : {LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.controlRight};
+
+  List<SingleActivator> get platformActivators => usesCommandKey
+      ? activators.map(_swapControlAndCommand).toList()
+      : activators;
+
+  static SingleActivator _swapControlAndCommand(SingleActivator activator) =>
+      SingleActivator(
+        activator.trigger,
+        control: activator.meta,
+        meta: activator.control,
+        shift: activator.shift,
+        alt: activator.alt,
+        numLock: activator.numLock,
+        includeRepeats: activator.includeRepeats,
+      );
+
+  String get keys => keysLabel ?? platformActivators.map(describe).join(' / ');
 
   String tooltip(String text) => '$text ($keys)';
 
   static String describe(SingleActivator activator) => [
     if (activator.control) 'Ctrl',
+    if (activator.meta) 'Cmd',
     if (activator.shift) 'Shift',
     if (activator.alt) 'Alt',
     _keyNames[activator.trigger] ?? activator.trigger.keyLabel,
   ].join('+');
 
-  int activatorIndex(KeyEvent event) => activators.indexWhere(
+  int activatorIndex(KeyEvent event) => platformActivators.indexWhere(
     (activator) => activator.accepts(event, HardwareKeyboard.instance),
   );
 

@@ -61,7 +61,7 @@ class ToolPresetList extends StatelessWidget {
             ),
       tooltip: preset.kind.label,
       shortcut: EditorShortcut.describe(
-        EditorShortcut.toolPreset.activators[index],
+        EditorShortcut.toolPreset.platformActivators[index],
       ),
       color: iconColor,
       iconShadows: iconColor.computeLuminance() > shadowLuminance
