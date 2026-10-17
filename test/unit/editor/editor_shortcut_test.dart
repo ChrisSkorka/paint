@@ -86,6 +86,7 @@ void main() {
             '.',
             'Home',
             'End',
+            'Alt+Scroll',
             'Enter',
             'F3',
             'Alt+N',

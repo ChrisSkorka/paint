@@ -7918,6 +7918,187 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('scroll scrub', () {
+        testWidgets('alt scroll down', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+          await scrollWheel(tester, at: center, delta: const Offset(0, 50));
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+          await tester.pump();
+          final actual = timelineState(tester).first;
+          const expected = 2;
+          expect(actual, equals(expected));
+        });
+        testWidgets('alt scroll up', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+          await scrollWheel(tester, at: center, delta: const Offset(0, -50));
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+          await tester.pump();
+          final actual = timelineState(tester).first;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+        testWidgets('loops forward', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 2,
+                  ),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+          await scrollWheel(tester, at: center, delta: const Offset(0, 50));
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+          await tester.pump();
+          final actual = timelineState(tester).first;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+        testWidgets('loops backward', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+          await scrollWheel(tester, at: center, delta: const Offset(0, -50));
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+          await tester.pump();
+          final actual = timelineState(tester).first;
+          const expected = 2;
+          expect(actual, equals(expected));
+        });
+        testWidgets('right alt', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.altRight);
+          await scrollWheel(tester, at: center, delta: const Offset(0, 50));
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.altRight);
+          await tester.pump();
+          final actual = timelineState(tester).first;
+          const expected = 2;
+          expect(actual, equals(expected));
+        });
+        testWidgets('without alt', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await scrollWheel(tester, at: center, delta: const Offset(0, 50));
+          final actual = timelineState(tester).first;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        testWidgets('ctrl scroll', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: animatedDocument(
+                    spriteColors: [black, white, black],
+                    activeFrameIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await scrollWheel(tester, at: center, delta: const Offset(0, 50));
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          final actual = timelineState(tester).first;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+      });
       group('zoom', () {
         testWidgets('increase', (tester) async {
           useDesktopView(tester);

@@ -253,7 +253,7 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - swap ctrl & cmd
   - show cmd in shortcut hints
 - [x] ctrl/cmd + scroll zooms in & out
-- [ ] alt + scroll scrubs through timeline/frames (& loops)
+- [x] alt + scroll scrubs through timeline/frames (& loops)
 
 ### phase 6.2: tool history & favorites
 
@@ -323,7 +323,6 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
     - 50-100: 5
     - 100-500: 10
     - 500+: 50
-
 
 ### phase 7.2: shape tools
 

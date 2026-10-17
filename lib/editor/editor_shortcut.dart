@@ -256,6 +256,12 @@ enum EditorShortcut {
     group: ShortcutGroup.animation,
     activators: [SingleActivator(LogicalKeyboardKey.end)],
   ),
+  scrubFrames(
+    label: 'Scrub frames',
+    group: ShortcutGroup.animation,
+    activators: [],
+    keysLabel: 'Alt+Scroll',
+  ),
   playPause(
     label: 'Play / pause',
     group: ShortcutGroup.animation,

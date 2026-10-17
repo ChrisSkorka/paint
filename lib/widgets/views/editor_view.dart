@@ -432,18 +432,20 @@ class _EditorViewState extends State<EditorView> {
     );
   }
 
-  void _zoomOnScroll(PointerSignalEvent event) {
-    if (event is! PointerScrollEvent ||
-        event.scrollDelta.dy == 0 ||
-        !EditorShortcut.primaryModifierPressed) {
-      return;
+  void _scrollCanvas(PointerSignalEvent event) {
+    if (event is! PointerScrollEvent || event.scrollDelta.dy == 0) return;
+    final forward = event.scrollDelta.dy > 0;
+    if (EditorShortcut.primaryModifierPressed) {
+      GestureBinding.instance.pointerSignalResolver.register(
+        event,
+        (_) => controller.stepZoom(larger: !forward),
+      );
+    } else if (HardwareKeyboard.instance.isAltPressed) {
+      GestureBinding.instance.pointerSignalResolver.register(
+        event,
+        (_) => controller.stepFrame(forward: forward),
+      );
     }
-    GestureBinding.instance.pointerSignalResolver.register(
-      event,
-      (event) => controller.stepZoom(
-        larger: (event as PointerScrollEvent).scrollDelta.dy < 0,
-      ),
-    );
   }
 
   Widget _buildCanvasArea() {
@@ -475,7 +477,7 @@ class _EditorViewState extends State<EditorView> {
                   reverse: horizontal.reverse,
                   child: Listener(
                     behavior: HitTestBehavior.translucent,
-                    onPointerSignal: _zoomOnScroll,
+                    onPointerSignal: _scrollCanvas,
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
                         horizontal.leading,
