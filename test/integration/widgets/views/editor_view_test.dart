@@ -20,6 +20,8 @@ import 'package:paint/widgets/components/edge_shadow.dart';
 import 'package:paint/widgets/components/number_stepper.dart';
 import 'package:paint/widgets/components/numeric_value_range.dart';
 import 'package:paint/widgets/components/paint_bar.dart';
+import 'package:paint/widgets/components/paint_icon_button.dart';
+import 'package:paint/widgets/components/paint_status_button.dart';
 import 'package:paint/widgets/components/paint_style.dart';
 import 'package:paint/widgets/components/pixel_canvas.dart';
 import 'package:paint/widgets/components/side_pane.dart';
@@ -2138,6 +2140,194 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('image size', () {
+        testWidgets('crop without selection', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 3, height: 2),
+                ),
+              ),
+            ),
+          );
+          final actual = tester
+              .widget<PaintIconButton>(
+                find.ancestor(
+                  of: find.byTooltip('Crop to selection'),
+                  matching: find.byType(PaintIconButton),
+                ),
+              )
+              .onPressed;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+        testWidgets('status bar size', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 3, height: 2),
+                ),
+              ),
+            ),
+          );
+          final actual = find
+              .descendant(
+                of: find.byType(PaintStatusButton),
+                matching: find.text('3 × 2'),
+              )
+              .evaluate()
+              .length;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        testWidgets('crop selection', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 3, height: 2);
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 2, y: 1),
+            color: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select (M)'));
+          await tester.pump();
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          final selecting = await tester.startGesture(
+            topLeft + const Offset(5, 1),
+          );
+          await selecting.moveTo(topLeft + const Offset(9, 5));
+          await selecting.up();
+          await tester.pump();
+          await tester.tap(find.byTooltip('Crop to selection'));
+          await tester.pump();
+          final actual = [
+            canvasSize(tester),
+            pixelRows(document.activeLayer),
+            find.byTooltip('Resize image').evaluate().length,
+            texts(tester).contains('2 × 2'),
+          ];
+          const expected = [
+            Size(8, 8),
+            [
+              [transparent, transparent],
+              [transparent, black],
+            ],
+            1,
+            true,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('resize ok', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 1);
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Resize image'));
+          await tester.pumpAndSettle();
+          await tester.enterText(find.byKey(const Key('Width (px)')), '3');
+          await tester.enterText(find.byKey(const Key('Height (px)')), '2');
+          await tester.enterText(find.byKey(const Key('Offset X (px)')), '1');
+          await tester.pump();
+          await tester.tap(find.byTooltip('OK'));
+          await tester.pumpAndSettle();
+          final actual = [canvasSize(tester), pixelRows(document.activeLayer)];
+          const expected = [
+            Size(12, 8),
+            [
+              [transparent, black, transparent],
+              [transparent, transparent, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('resize cancel', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 1);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Resize image'));
+          await tester.pumpAndSettle();
+          await tester.enterText(find.byKey(const Key('Width (px)')), '3');
+          await tester.pump();
+          await tester.tap(find.byTooltip('Cancel'));
+          await tester.pumpAndSettle();
+          final actual = [canvasSize(tester), document.width];
+          const expected = [Size(8, 4), 2];
+          expect(actual, equals(expected));
+        });
+        testWidgets('undo resize', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 1);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Resize image'));
+          await tester.pumpAndSettle();
+          await tester.enterText(find.byKey(const Key('Width (px)')), '3');
+          await tester.pump();
+          await tester.tap(find.byTooltip('OK'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Undo (Ctrl+Z)'));
+          await tester.pump();
+          final actual = [canvasSize(tester), document.width];
+          const expected = [Size(8, 4), 2];
+          expect(actual, equals(expected));
+        });
+      });
+
       group('canvas cursor', () {
         testWidgets('pen', (tester) async {
           useDesktopView(tester);
@@ -3987,6 +4177,41 @@ void main() {
               Layer.filled(width: 2, height: 2, color: PixelColor.transparent),
               null,
             ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('stroke before resize', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(5, 1));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Resize image'));
+          await tester.pumpAndSettle();
+          await tester.enterText(find.byKey(const Key('Width (px)')), '4');
+          await tester.enterText(find.byKey(const Key('Height (px)')), '4');
+          await tester.pump();
+          await tester.tap(find.byTooltip('OK'));
+          await tester.pumpAndSettle();
+          final actual = historyThumbnails(tester)[1];
+          final expected = [
+            Layer.filled(width: 2, height: 2, color: PixelColor.transparent)
+              ..setPixel(
+                point: const PixelPoint(x: 1, y: 0),
+                color: PixelColor.black,
+              ),
+            const Rect.fromLTWH(1, 0, 1, 1),
           ];
           expect(actual, equals(expected));
         });

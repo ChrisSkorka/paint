@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/canvas_layer.dart';
@@ -5180,6 +5181,346 @@ void main() {
       });
     });
 
+    group('method resizeImage', () {
+      group('sizes', () {
+        test('larger', () {
+          final document = Document.fromImage(
+            image: layerFromRows([
+              [red, green],
+            ]),
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.resizeImage(
+            width: 3,
+            height: 2,
+            offset: const PixelPoint(x: 0, y: 0),
+          );
+          final actual = [
+            document.width,
+            document.height,
+            pixelRows(document.activeLayer),
+            editorController.pointerLayer,
+            editorController.history.entries.map((entry) => entry.name),
+            notifications,
+          ];
+          final expected = [
+            3,
+            2,
+            [
+              [red, green, transparent],
+              [transparent, transparent, transparent],
+            ],
+            Layer.filled(width: 3, height: 2, color: PixelColor.transparent),
+            ['Resize image'],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('unchanged', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.resizeImage(
+            width: 2,
+            height: 1,
+            offset: const PixelPoint(x: 0, y: 0),
+          );
+          final actual = [editorController.history.entries, notifications];
+          const expected = [[], 0];
+          expect(actual, equals(expected));
+        });
+      });
+      group('offsets', () {
+        test('same size', () {
+          final document = Document.fromImage(
+            image: layerFromRows([
+              [red, green],
+            ]),
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.resizeImage(
+            width: 2,
+            height: 1,
+            offset: const PixelPoint(x: 1, y: 0),
+          );
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, red],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('layers', () {
+        test('all images', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.resizeImage(
+            width: 2,
+            height: 1,
+            offset: const PixelPoint(x: 1, y: 0),
+          );
+          final actual = [
+            for (final layer in document.layers)
+              [for (final image in layer.images) pixelRows(image)],
+          ];
+          const expected = [
+            [
+              [
+                [transparent, white],
+              ],
+            ],
+            [
+              [
+                [transparent, red],
+              ],
+              [
+                [transparent, green],
+              ],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('selection', () {
+        test('cleared', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          )..selectAll();
+          editorController.resizeImage(
+            width: 3,
+            height: 1,
+            offset: const PixelPoint(x: 0, y: 0),
+          );
+          final actual = editorController.hasSelection;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('undo', () {
+          final document = Document.fromImage(
+            image: layerFromRows([
+              [red, green],
+            ]),
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.resizeImage(
+            width: 1,
+            height: 2,
+            offset: const PixelPoint(x: -1, y: 0),
+          );
+          editorController.undo();
+          final actual = [
+            document.width,
+            document.height,
+            pixelRows(document.activeLayer),
+            editorController.pointerLayer,
+          ];
+          final expected = [
+            2,
+            1,
+            [
+              [red, green],
+            ],
+            Layer.filled(width: 2, height: 1, color: PixelColor.transparent),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('redo', () {
+          final document = Document.fromImage(
+            image: layerFromRows([
+              [red, green],
+            ]),
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.resizeImage(
+            width: 1,
+            height: 2,
+            offset: const PixelPoint(x: -1, y: 0),
+          );
+          editorController.undo();
+          editorController.redo();
+          final actual = [
+            document.width,
+            document.height,
+            pixelRows(document.activeLayer),
+            editorController.pointerLayer,
+          ];
+          final expected = [
+            1,
+            2,
+            [
+              [green],
+              [transparent],
+            ],
+            Layer.filled(width: 1, height: 2, color: PixelColor.transparent),
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('stroke', () {
+        test('in progress', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.resizeImage(
+            width: 3,
+            height: 3,
+            offset: const PixelPoint(x: 0, y: 0),
+          );
+          final actual = [
+            document.width,
+            document.height,
+            editorController.pointerLayer.width,
+          ];
+          const expected = [2, 1, 2];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method cropToSelection', () {
+      group('selection', () {
+        test('none', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.cropToSelection();
+          final actual = [
+            document.width,
+            editorController.history.entries,
+            notifications,
+          ];
+          const expected = [2, [], 0];
+          expect(actual, equals(expected));
+        });
+        test('inside', () {
+          final document = Document.fromImage(
+            image: layerFromRows([
+              [red, green, blue],
+              [white, black, grey],
+            ]),
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          )..selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 0));
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 0));
+          editorController.cropToSelection();
+          final actual = [
+            document.width,
+            document.height,
+            pixelRows(document.activeLayer),
+            editorController.hasSelection,
+            editorController.pointerLayer,
+            editorController.history.entries.map((entry) => entry.name),
+          ];
+          final expected = [
+            2,
+            1,
+            [
+              [green, blue],
+            ],
+            false,
+            Layer.filled(width: 2, height: 1, color: PixelColor.transparent),
+            ['Crop'],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('partly outside', () {
+          final document = Document.fromImage(
+            image: layerFromRows([
+              [red, green, blue],
+              [white, black, grey],
+            ]),
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          )..selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 0));
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 0));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 2, y: 1));
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 1));
+          editorController.cropToSelection();
+          final actual = [
+            document.width,
+            document.height,
+            pixelRows(document.activeLayer),
+          ];
+          const expected = [
+            1,
+            1,
+            [
+              [red],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('fully outside', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          )..selectAll();
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 5, y: 5));
+          editorController.pointerUp(point: const PixelPoint(x: 5, y: 5));
+          editorController.cropToSelection();
+          final actual = [
+            document.width,
+            document.height,
+            editorController.selectionArea,
+          ];
+          const expected = [
+            2,
+            1,
+            PixelRectangle(left: 5, top: 5, width: 2, height: 1),
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method setZoom', () {
       group('levels', () {
         test('larger', () {
@@ -6708,6 +7049,7 @@ void main() {
                   0,
                 ]),
               ),
+              outline: Rect.fromLTWH(1 / 3, 0, 1 / 3, 1),
             ),
           ];
           expect(actual, equals(expected));
@@ -6770,6 +7112,7 @@ void main() {
                   0,
                 ]),
               ),
+              outline: Rect.fromLTWH(0, 0, 3 / 4, 1),
             ),
           ];
           expect(actual, equals(expected));
@@ -6830,6 +7173,7 @@ void main() {
                   0,
                 ]),
               ),
+              outline: Rect.fromLTWH(2 / 3, 0, 1 / 3, 1),
             ),
           ];
           expect(actual, equals(expected));
@@ -6891,6 +7235,7 @@ void main() {
                   255,
                 ]),
               ),
+              outline: Rect.fromLTWH(0, 0, 1, 1),
             ),
           ];
           expect(actual, equals(expected));
@@ -6935,6 +7280,7 @@ void main() {
                 height: 1,
                 rgba: Uint8List.fromList([0, 0, 0, 255, 0, 0, 0, 255]),
               ),
+              outline: Rect.fromLTWH(0, 0, 1, 1),
             ),
           ];
           expect(actual, equals(expected));

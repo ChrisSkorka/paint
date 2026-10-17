@@ -27,6 +27,8 @@ void main() {
           );
           final actual = DocumentStructure.capture(document: document);
           final expected = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground, stubSketch],
             activeLayerIndex: 1,
             frameHolds: const [1],
@@ -47,6 +49,8 @@ void main() {
           );
           final actual = DocumentStructure.capture(document: document);
           final expected = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground],
             activeLayerIndex: 0,
             frameHolds: const [1, 2],
@@ -85,6 +89,8 @@ void main() {
             activeLayerIndex: 0,
           );
           final documentStructure = DocumentStructure(
+            width: 2,
+            height: 3,
             layers: [stubBackground, stubSketch],
             activeLayerIndex: 1,
             frameHolds: const [1, 2],
@@ -94,8 +100,8 @@ void main() {
           documentStructure.restore(document);
           final actual = document;
           final expected = Document(
-            width: 1,
-            height: 1,
+            width: 2,
+            height: 3,
             layers: [stubBackground, stubSketch],
             activeLayerIndex: 1,
             frameHolds: [1, 2],
@@ -114,6 +120,8 @@ void main() {
             activeLayerIndex: 0,
           );
           final documentStructure = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground],
             activeLayerIndex: 0,
             frameHolds: const [1],
@@ -133,6 +141,8 @@ void main() {
       group('equals', () {
         test('same fields', () {
           final documentStructure = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground],
             activeLayerIndex: 0,
             frameHolds: const [1],
@@ -140,6 +150,8 @@ void main() {
             activeFrameIndex: 0,
           );
           final other = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground],
             activeLayerIndex: 0,
             frameHolds: const [1],
@@ -152,8 +164,10 @@ void main() {
         });
       });
       group('not equals', () {
-        test('different layers', () {
+        test('different width', () {
           final documentStructure = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground],
             activeLayerIndex: 0,
             frameHolds: const [1],
@@ -161,6 +175,54 @@ void main() {
             activeFrameIndex: 0,
           );
           final other = DocumentStructure(
+            width: 2,
+            height: 1,
+            layers: [stubBackground],
+            activeLayerIndex: 0,
+            frameHolds: const [1],
+            fps: 10,
+            activeFrameIndex: 0,
+          );
+          final actual = documentStructure == other;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('different height', () {
+          final documentStructure = DocumentStructure(
+            width: 1,
+            height: 1,
+            layers: [stubBackground],
+            activeLayerIndex: 0,
+            frameHolds: const [1],
+            fps: 10,
+            activeFrameIndex: 0,
+          );
+          final other = DocumentStructure(
+            width: 1,
+            height: 2,
+            layers: [stubBackground],
+            activeLayerIndex: 0,
+            frameHolds: const [1],
+            fps: 10,
+            activeFrameIndex: 0,
+          );
+          final actual = documentStructure == other;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('different layers', () {
+          final documentStructure = DocumentStructure(
+            width: 1,
+            height: 1,
+            layers: [stubBackground],
+            activeLayerIndex: 0,
+            frameHolds: const [1],
+            fps: 10,
+            activeFrameIndex: 0,
+          );
+          final other = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubSketch],
             activeLayerIndex: 0,
             frameHolds: const [1],
@@ -173,6 +235,8 @@ void main() {
         });
         test('different active layer', () {
           final documentStructure = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground, stubSketch],
             activeLayerIndex: 0,
             frameHolds: const [1],
@@ -180,6 +244,8 @@ void main() {
             activeFrameIndex: 0,
           );
           final other = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground, stubSketch],
             activeLayerIndex: 1,
             frameHolds: const [1],
@@ -192,6 +258,8 @@ void main() {
         });
         test('different frame holds', () {
           final documentStructure = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground],
             activeLayerIndex: 0,
             frameHolds: const [1],
@@ -199,6 +267,8 @@ void main() {
             activeFrameIndex: 0,
           );
           final other = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground],
             activeLayerIndex: 0,
             frameHolds: const [2],
@@ -211,6 +281,8 @@ void main() {
         });
         test('different fps', () {
           final documentStructure = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground],
             activeLayerIndex: 0,
             frameHolds: const [1],
@@ -218,6 +290,8 @@ void main() {
             activeFrameIndex: 0,
           );
           final other = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground],
             activeLayerIndex: 0,
             frameHolds: const [1],
@@ -230,6 +304,8 @@ void main() {
         });
         test('different active frame', () {
           final documentStructure = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground],
             activeLayerIndex: 0,
             frameHolds: const [1, 1],
@@ -237,6 +313,8 @@ void main() {
             activeFrameIndex: 0,
           );
           final other = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground],
             activeLayerIndex: 0,
             frameHolds: const [1, 1],
@@ -249,6 +327,8 @@ void main() {
         });
         test('different type', () {
           final documentStructure = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground],
             activeLayerIndex: 0,
             frameHolds: const [1],
@@ -267,6 +347,8 @@ void main() {
       group('equals', () {
         test('same fields', () {
           final documentStructure = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground],
             activeLayerIndex: 0,
             frameHolds: const [1],
@@ -274,6 +356,8 @@ void main() {
             activeFrameIndex: 0,
           );
           final other = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground],
             activeLayerIndex: 0,
             frameHolds: const [1],
@@ -288,6 +372,8 @@ void main() {
       group('not equals', () {
         test('different frame holds', () {
           final documentStructure = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground],
             activeLayerIndex: 0,
             frameHolds: const [1],
@@ -295,6 +381,8 @@ void main() {
             activeFrameIndex: 0,
           );
           final other = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground],
             activeLayerIndex: 0,
             frameHolds: const [2],
@@ -312,6 +400,8 @@ void main() {
       group('fields', () {
         test('counts', () {
           final documentStructure = DocumentStructure(
+            width: 1,
+            height: 1,
             layers: [stubBackground, stubSketch],
             activeLayerIndex: 1,
             frameHolds: const [1, 2, 3],
@@ -320,7 +410,7 @@ void main() {
           );
           final actual = documentStructure.toString();
           const expected =
-              'DocumentStructure(layers: 2, active: 1, frames: 3, frame: 2, fps: 10)';
+              'DocumentStructure(1, 1, layers: 2, active: 1, frames: 3, frame: 2, fps: 10)';
           expect(actual, equals(expected));
         });
       });

@@ -8,7 +8,19 @@ class StubCanvas implements Canvas {
   final clippedRectangles = <Rect>[];
   final savedLayers = <(Rect?, int)>[];
   final savedLayerFilters = <ColorFilter?>[];
+  final translations = <Offset>[];
+  final scales = <double>[];
+  var saveCount = 0;
   var restoreCount = 0;
+
+  @override
+  void save() => saveCount++;
+
+  @override
+  void translate(double dx, double dy) => translations.add(Offset(dx, dy));
+
+  @override
+  void scale(double sx, [double? sy]) => scales.add(sx);
 
   @override
   void saveLayer(Rect? bounds, Paint paint) {

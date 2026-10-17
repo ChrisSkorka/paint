@@ -111,6 +111,43 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('padding', () {
+        testWidgets('default', (tester) async {
+          await tester.pumpWidget(
+            const MaterialApp(home: PaintBarSection(child: Text('child'))),
+          );
+          final actual = tester
+              .widget<Container>(
+                find.descendant(
+                  of: find.byType(PaintBarSection),
+                  matching: find.byType(Container),
+                ),
+              )
+              .padding;
+          const expected = EdgeInsets.all(5);
+          expect(actual, equals(expected));
+        });
+        testWidgets('custom', (tester) async {
+          await tester.pumpWidget(
+            const MaterialApp(
+              home: PaintBarSection(
+                padding: EdgeInsets.symmetric(vertical: 4),
+                child: Text('child'),
+              ),
+            ),
+          );
+          final actual = tester
+              .widget<Container>(
+                find.descendant(
+                  of: find.byType(PaintBarSection),
+                  matching: find.byType(Container),
+                ),
+              )
+              .padding;
+          const expected = EdgeInsets.symmetric(vertical: 4);
+          expect(actual, equals(expected));
+        });
+      });
     });
   });
 }

@@ -30,14 +30,21 @@ class PaintBar extends StatelessWidget {
 }
 
 class PaintBarSection extends StatelessWidget {
-  const PaintBarSection({super.key, required this.child});
+  const PaintBarSection({
+    super.key,
+    required this.child,
+    this.padding = defaultPadding,
+  });
+
+  static const defaultPadding = EdgeInsets.all(5);
 
   final Widget child;
+  final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(5),
+      padding: padding,
       decoration: const BoxDecoration(
         border: Border(right: BorderSide(color: PaintStyle.separatorColor)),
       ),

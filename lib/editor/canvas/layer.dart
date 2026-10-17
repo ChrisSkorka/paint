@@ -67,6 +67,21 @@ class Layer {
     return cropped;
   }
 
+  factory Layer.resized({
+    required Layer layer,
+    required int width,
+    required int height,
+    required PixelPoint offset,
+  }) {
+    final resized = Layer.filled(
+      width: width,
+      height: height,
+      color: PixelColor.transparent,
+    );
+    resized.paste(source: layer, at: offset);
+    return resized;
+  }
+
   factory Layer.rotated({required Layer layer, required bool clockwise}) {
     final rotated = Layer.filled(
       width: layer.height,

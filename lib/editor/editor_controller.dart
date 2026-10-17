@@ -717,6 +717,64 @@ class EditorController extends ChangeNotifier {
     );
   }
 
+  void resizeImage({
+    required int width,
+    required int height,
+    required PixelPoint offset,
+  }) {
+    if (width == document.width &&
+        height == document.height &&
+        offset == const PixelPoint(x: 0, y: 0)) {
+      return;
+    }
+    _resize(name: 'Resize image', width: width, height: height, offset: offset);
+  }
+
+  void cropToSelection() {
+    final area = _selection?.area.intersection(document.activeLayer.bounds);
+    if (area == null || area.isEmpty) return;
+    _resize(
+      name: 'Crop',
+      width: area.width,
+      height: area.height,
+      offset: PixelPoint(x: -area.left, y: -area.top),
+    );
+  }
+
+  void _resize({
+    required String name,
+    required int width,
+    required int height,
+    required PixelPoint offset,
+  }) {
+    _changeStructure(
+      name: name,
+      change: () {
+        _selection = null;
+        for (var index = 0; index < document.layers.length; index++) {
+          final layer = document.layers[index];
+          document.layers[index] = layer.copyWith(
+            images: [
+              for (final image in layer.images)
+                Layer.resized(
+                  layer: image,
+                  width: width,
+                  height: height,
+                  offset: offset,
+                ),
+            ],
+          );
+        }
+        document.width = width;
+        document.height = height;
+      },
+    );
+    _fitPointerPreview();
+  }
+
+  void _fitPointerPreview() =>
+      pointerPreview.resize(width: document.width, height: document.height);
+
   void _changeStructure({
     required String name,
     required VoidCallback change,
@@ -776,6 +834,7 @@ class EditorController extends ChangeNotifier {
     _selection = null;
     _structureBeforePreview = null;
     history.jumpTo(position);
+    _fitPointerPreview();
     notifyListeners();
   }
 
@@ -1027,7 +1086,7 @@ class EditorController extends ChangeNotifier {
     required Layer before,
     required PixelRectangle area,
   }) {
-    final entry = PixelHistoryEntry(
+    final entry = PixelHistoryEntry.recorded(
       name: name,
       layerIndex: document.activeLayerIndex,
       frameIndex: document.activeFrameIndex,
@@ -1037,6 +1096,8 @@ class EditorController extends ChangeNotifier {
         layer: document.activeLayer,
         maximumSize: History.thumbnailSize,
       ),
+      canvasWidth: document.width,
+      canvasHeight: document.height,
     );
     if (entry.before != entry.after) history.record(entry);
   }

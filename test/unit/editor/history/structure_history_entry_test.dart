@@ -21,6 +21,8 @@ void main() {
     color: PixelColor.transparent,
   );
   final stubBefore = DocumentStructure(
+    width: 1,
+    height: 1,
     layers: [stubBackground],
     activeLayerIndex: 0,
     frameHolds: const [1],
@@ -28,6 +30,8 @@ void main() {
     activeFrameIndex: 0,
   );
   final stubAfter = DocumentStructure(
+    width: 1,
+    height: 1,
     layers: [stubBackground, stubSketch],
     activeLayerIndex: 1,
     frameHolds: const [1, 2],

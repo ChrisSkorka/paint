@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
@@ -24,4 +25,5 @@ PixelHistoryEntry pixelEntry({
     rgba: Uint8List.fromList([after, after, after, after]),
   ),
   thumbnail: Layer.filled(width: 1, height: 1, color: PixelColor.transparent),
+  outline: Rect.zero,
 );

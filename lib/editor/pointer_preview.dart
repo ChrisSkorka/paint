@@ -7,7 +7,7 @@ import 'canvas/pixel_rectangle.dart';
 import 'tools/tool.dart';
 
 class PointerPreview extends ChangeNotifier {
-  PointerPreview({required this.layer});
+  PointerPreview({required Layer layer}) : _layer = layer;
 
   factory PointerPreview.sized({required int width, required int height}) {
     return PointerPreview(
@@ -21,10 +21,11 @@ class PointerPreview extends ChangeNotifier {
 
   static const _noArea = PixelRectangle(left: 0, top: 0, width: 0, height: 0);
 
-  final Layer layer;
+  Layer _layer;
   var _area = _noArea;
   PixelPoint? _cursor;
 
+  Layer get layer => _layer;
   PixelRectangle get area => _area;
   PixelPoint? get cursor => _cursor;
 
@@ -42,6 +43,18 @@ class PointerPreview extends ChangeNotifier {
 
   void clear() {
     _erase();
+    _area = _noArea;
+    _cursor = null;
+    notifyListeners();
+  }
+
+  void resize({required int width, required int height}) {
+    if (width == _layer.width && height == _layer.height) return;
+    _layer = Layer.filled(
+      width: width,
+      height: height,
+      color: PixelColor.transparent,
+    );
     _area = _noArea;
     _cursor = null;
     notifyListeners();

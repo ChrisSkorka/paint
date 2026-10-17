@@ -67,8 +67,8 @@ class Document {
   static const maximumHolds = 100;
 
   final String name;
-  final int width;
-  final int height;
+  int width;
+  int height;
   final List<DocumentLayer> layers;
   int activeLayerIndex;
   List<int> frameHolds;

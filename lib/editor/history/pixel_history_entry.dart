@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import '../canvas/document.dart';
 import '../canvas/layer.dart';
 import 'history_entry.dart';
@@ -11,7 +13,35 @@ class PixelHistoryEntry implements HistoryEntry {
     required this.before,
     required this.after,
     required this.thumbnail,
+    required this.outline,
   });
+
+  factory PixelHistoryEntry.recorded({
+    required String name,
+    required int layerIndex,
+    required int frameIndex,
+    required LayerSnapshot before,
+    required LayerSnapshot after,
+    required Layer thumbnail,
+    required int canvasWidth,
+    required int canvasHeight,
+  }) {
+    final area = after.area;
+    return PixelHistoryEntry(
+      name: name,
+      layerIndex: layerIndex,
+      frameIndex: frameIndex,
+      before: before,
+      after: after,
+      thumbnail: thumbnail,
+      outline: Rect.fromLTWH(
+        area.left / canvasWidth,
+        area.top / canvasHeight,
+        area.width / canvasWidth,
+        area.height / canvasHeight,
+      ),
+    );
+  }
 
   @override
   final String name;
@@ -21,6 +51,7 @@ class PixelHistoryEntry implements HistoryEntry {
   final LayerSnapshot after;
   @override
   final Layer thumbnail;
+  final Rect outline;
 
   @override
   void undo(Document document) => before.restore(_image(document));
@@ -39,11 +70,19 @@ class PixelHistoryEntry implements HistoryEntry {
       other.frameIndex == frameIndex &&
       other.before == before &&
       other.after == after &&
-      other.thumbnail == thumbnail;
+      other.thumbnail == thumbnail &&
+      other.outline == outline;
 
   @override
-  int get hashCode =>
-      Object.hash(name, layerIndex, frameIndex, before, after, thumbnail);
+  int get hashCode => Object.hash(
+    name,
+    layerIndex,
+    frameIndex,
+    before,
+    after,
+    thumbnail,
+    outline,
+  );
 
   @override
   String toString() =>

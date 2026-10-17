@@ -161,5 +161,77 @@ void main() {
         });
       });
     });
+
+    group('method resize', () {
+      group('sizes', () {
+        test('same size', () {
+          final pointerPreview = PointerPreview.sized(width: 2, height: 1);
+          pointerPreview.draw(
+            tool: StubTool(),
+            point: const PixelPoint(x: 1, y: 0),
+            color: PixelColor.black,
+          );
+          var notifications = 0;
+          pointerPreview.addListener(() => notifications++);
+          pointerPreview.resize(width: 2, height: 1);
+          final actual = [
+            pixelRows(pointerPreview.layer),
+            pointerPreview.area,
+            pointerPreview.cursor,
+            notifications,
+          ];
+          const expected = [
+            [
+              [transparent, black],
+            ],
+            PixelRectangle(left: 1, top: 0, width: 1, height: 1),
+            PixelPoint(x: 1, y: 0),
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('different width', () {
+          final pointerPreview = PointerPreview.sized(width: 2, height: 1);
+          pointerPreview.draw(
+            tool: StubTool(),
+            point: const PixelPoint(x: 1, y: 0),
+            color: PixelColor.black,
+          );
+          var notifications = 0;
+          pointerPreview.addListener(() => notifications++);
+          pointerPreview.resize(width: 1, height: 1);
+          final actual = [
+            pixelRows(pointerPreview.layer),
+            pointerPreview.area,
+            pointerPreview.cursor,
+            notifications,
+          ];
+          const expected = [
+            [
+              [transparent],
+            ],
+            PixelRectangle(left: 0, top: 0, width: 0, height: 0),
+            null,
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('different height', () {
+          final pointerPreview = PointerPreview.sized(width: 1, height: 1);
+          var notifications = 0;
+          pointerPreview.addListener(() => notifications++);
+          pointerPreview.resize(width: 1, height: 2);
+          final actual = [pixelRows(pointerPreview.layer), notifications];
+          const expected = [
+            [
+              [transparent],
+              [transparent],
+            ],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
   });
 }

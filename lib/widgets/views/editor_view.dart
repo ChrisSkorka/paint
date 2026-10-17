@@ -38,12 +38,14 @@ import '../components/history_list.dart';
 import '../components/horizontal_scroll_view.dart';
 import '../components/layer_list.dart';
 import '../components/pixel_canvas.dart';
+import '../components/resize_dialog.dart';
 import '../components/number_stepper.dart';
 import '../components/numeric_value_range.dart';
 import '../components/paint_bar.dart';
 import '../components/paint_icon_button.dart';
 import '../components/paint_scroll_behavior.dart';
 import '../components/paint_split_button.dart';
+import '../components/paint_status_button.dart';
 import '../components/paint_style.dart';
 import '../components/ribbon_section.dart';
 import '../components/side_pane.dart';
@@ -273,14 +275,31 @@ class _EditorViewState extends State<EditorView> {
 
   Rect? _thumbnailOutline(HistoryEntry entry) {
     if (entry is! PixelHistoryEntry) return null;
-    final scaleX = entry.thumbnail.width / widget.document.width;
-    final scaleY = entry.thumbnail.height / widget.document.height;
-    final area = entry.after.area;
-    return Rect.fromLTWH(
-      area.left * scaleX,
-      area.top * scaleY,
-      area.width * scaleX,
-      area.height * scaleY,
+    final outline = entry.outline;
+    final width = entry.thumbnail.width;
+    final height = entry.thumbnail.height;
+    return Rect.fromLTRB(
+      outline.left * width,
+      outline.top * height,
+      outline.right * width,
+      outline.bottom * height,
+    );
+  }
+
+  Future<void> _resizeImage() async {
+    unawaited(controller.commitText());
+    final resize = await showResizeDialog(
+      context: context,
+      image: widget.document.flatten(
+        background: PixelColor.transparent,
+        frame: widget.document.activeFrameIndex,
+      ),
+    );
+    if (resize == null) return;
+    controller.resizeImage(
+      width: resize.width,
+      height: resize.height,
+      offset: resize.offset,
     );
   }
 
@@ -1103,6 +1122,18 @@ class _EditorViewState extends State<EditorView> {
                             ),
                           ],
                         ),
+                        RibbonColumn(
+                          children: [
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.cropSimple,
+                              tooltip: 'Crop to selection',
+                              onPressed: _whenSelected(
+                                controller.cropToSelection,
+                              ),
+                            ),
+                            const SizedBox(),
+                          ],
+                        ),
                       ],
                     ),
                     RibbonSection(
@@ -1370,11 +1401,18 @@ class _EditorViewState extends State<EditorView> {
     required Widget child,
   }) {
     return PaintBarSection(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        spacing: 6,
-        children: [FaIcon(icon, size: 14), child],
-      ),
+      child: _buildStatusContent(icon: icon, child: child),
+    );
+  }
+
+  Widget _buildStatusContent({
+    required FaIconData icon,
+    required Widget child,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 6,
+      children: [FaIcon(icon, size: 14), child],
     );
   }
 
@@ -1420,10 +1458,17 @@ class _EditorViewState extends State<EditorView> {
                   ),
                 ),
               ),
-              _buildStatusSection(
-                icon: FontAwesomeIcons.upRightAndDownLeftFromCenter,
-                child: Text(
-                  '${widget.document.width} × ${widget.document.height}',
+              PaintBarSection(
+                padding: PaintStatusButton.sectionPadding,
+                child: PaintStatusButton(
+                  tooltip: 'Resize image',
+                  onPressed: _resizeImage,
+                  child: _buildStatusContent(
+                    icon: FontAwesomeIcons.upRightAndDownLeftFromCenter,
+                    child: Text(
+                      '${widget.document.width} × ${widget.document.height}',
+                    ),
+                  ),
                 ),
               ),
               _buildStatusSection(

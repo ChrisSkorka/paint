@@ -211,6 +211,85 @@ void main() {
       });
     });
 
+    group('factory resized', () {
+      group('sizes', () {
+        test('larger', () {
+          final layer = layerFromRows([
+            [red, green],
+          ]);
+          final actual = pixelRows(
+            Layer.resized(
+              layer: layer,
+              width: 3,
+              height: 2,
+              offset: const PixelPoint(x: 0, y: 0),
+            ),
+          );
+          const expected = [
+            [red, green, transparent],
+            [transparent, transparent, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('smaller', () {
+          final layer = layerFromRows([
+            [red, green, blue],
+            [cyan, magenta, yellow],
+          ]);
+          final actual = pixelRows(
+            Layer.resized(
+              layer: layer,
+              width: 2,
+              height: 1,
+              offset: const PixelPoint(x: 0, y: 0),
+            ),
+          );
+          const expected = [
+            [red, green],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('offsets', () {
+        test('positive', () {
+          final layer = layerFromRows([
+            [red],
+          ]);
+          final actual = pixelRows(
+            Layer.resized(
+              layer: layer,
+              width: 2,
+              height: 2,
+              offset: const PixelPoint(x: 1, y: 1),
+            ),
+          );
+          const expected = [
+            [transparent, transparent],
+            [transparent, red],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('negative', () {
+          final layer = layerFromRows([
+            [red, green, blue],
+            [cyan, magenta, yellow],
+          ]);
+          final actual = pixelRows(
+            Layer.resized(
+              layer: layer,
+              width: 2,
+              height: 1,
+              offset: const PixelPoint(x: -1, y: -1),
+            ),
+          );
+          const expected = [
+            [magenta, yellow],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('factory rotated', () {
       group('directions', () {
         test('clockwise', () {

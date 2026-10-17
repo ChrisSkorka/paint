@@ -431,8 +431,29 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 9.2: image properties
 
-- [ ] allow change image size
-- [ ] allow renaming documents stored in-app
+- [x] allow resizing image:
+  - size in status bar is a button
+  - button triggers resize dialog
+  - resize dialog: 
+    - inputs for new size
+    - inputs for offset (of old content in new canvas)
+    - button (next to offset inputs) to center old image in new canvas (by setting offsets)
+    - <=256 x <=256 px preview of new canvas (i.e. as large as can fit in 256x256)
+- [x] crop tool:
+  - in selection ribbon
+  - enabled when a selection is made
+  - crop layers & frames to selection
+- [ ] allow renaming documents stored in-app in editor
+  - file name in status bar is a button
+  - button triggers text input dialog (cannot save empty name)
+  - name change stored in memory until document is saved
+- [ ] allow renaming documents stored in-app in new docs list
+  - new doc tab docs list has rename icon button left of delete
+  - button triggers text input dialog
+  - saves immediately upon closing dialog
+- [ ] allow duplicating docs
+  - new doc tab docs list has duplicate button between rename & delete
+  - increase saved doc list width by aprox 2 buttons
 
 ### phase 9.3: files & document
 
@@ -443,8 +464,14 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 9.3: misc
 
+- [ ] text inputs with label use different label looks
 - [ ] text inputs have unit text on right side
 - [ ] right click on web triggers system context menu
+- [ ] Pen ribbon becomes dynamic current tool settings ribbon
+  - for pen & eraser: Pen ribbon
+  - for text: Text ribbon - todo: text has lot's of settings taking up lots of space
+  - for select: Selection ribbon: rotate, mirror, select all, crop
+  - others: ?
 
 ### phase x: todo
 

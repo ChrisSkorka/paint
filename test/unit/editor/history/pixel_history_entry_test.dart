@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/editor/canvas/document.dart';
@@ -12,6 +13,95 @@ import 'package:paint/editor/history/pixel_history_entry.dart';
 
 void main() {
   group('class PixelHistoryEntry', () {
+    group('factory recorded', () {
+      group('outlines', () {
+        test('partial area', () {
+          final actual = PixelHistoryEntry.recorded(
+            name: 'Pen',
+            layerIndex: 0,
+            frameIndex: 0,
+            before: LayerSnapshot(
+              area: const PixelRectangle(left: 1, top: 0, width: 2, height: 1),
+              rgba: Uint8List(8),
+            ),
+            after: LayerSnapshot(
+              area: const PixelRectangle(left: 1, top: 0, width: 2, height: 1),
+              rgba: Uint8List(8),
+            ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
+            ),
+            canvasWidth: 4,
+            canvasHeight: 2,
+          );
+          final expected = PixelHistoryEntry(
+            name: 'Pen',
+            layerIndex: 0,
+            frameIndex: 0,
+            before: LayerSnapshot(
+              area: const PixelRectangle(left: 1, top: 0, width: 2, height: 1),
+              rgba: Uint8List(8),
+            ),
+            after: LayerSnapshot(
+              area: const PixelRectangle(left: 1, top: 0, width: 2, height: 1),
+              rgba: Uint8List(8),
+            ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
+            ),
+            outline: const Rect.fromLTWH(0.25, 0, 0.5, 0.5),
+          );
+          expect(actual, equals(expected));
+        });
+        test('whole canvas', () {
+          final actual = PixelHistoryEntry.recorded(
+            name: 'Pen',
+            layerIndex: 0,
+            frameIndex: 0,
+            before: LayerSnapshot(
+              area: const PixelRectangle(left: 0, top: 0, width: 2, height: 1),
+              rgba: Uint8List(8),
+            ),
+            after: LayerSnapshot(
+              area: const PixelRectangle(left: 0, top: 0, width: 2, height: 1),
+              rgba: Uint8List(8),
+            ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
+            ),
+            canvasWidth: 2,
+            canvasHeight: 1,
+          );
+          final expected = PixelHistoryEntry(
+            name: 'Pen',
+            layerIndex: 0,
+            frameIndex: 0,
+            before: LayerSnapshot(
+              area: const PixelRectangle(left: 0, top: 0, width: 2, height: 1),
+              rgba: Uint8List(8),
+            ),
+            after: LayerSnapshot(
+              area: const PixelRectangle(left: 0, top: 0, width: 2, height: 1),
+              rgba: Uint8List(8),
+            ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
+            ),
+            outline: const Rect.fromLTWH(0, 0, 1, 1),
+          );
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method undo', () {
       group('layers', () {
         test('first layer', () {
@@ -43,6 +133,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           historyEntry.undo(document);
           final actual = document.layers.first.images.first.rgba;
@@ -82,6 +173,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           historyEntry.undo(document);
           final actual = [
@@ -129,6 +221,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           historyEntry.undo(document);
           final actual = [
@@ -174,6 +267,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           historyEntry.redo(document);
           final actual = document.layers.first.images.first.rgba;
@@ -213,6 +307,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           historyEntry.redo(document);
           final actual = [
@@ -260,6 +355,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           historyEntry.redo(document);
           final actual = [
@@ -294,6 +390,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           final other = PixelHistoryEntry(
             name: 'Pen',
@@ -312,6 +409,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           final actual = historyEntry == other;
           const expected = true;
@@ -337,6 +435,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           final other = PixelHistoryEntry(
             name: 'Eraser',
@@ -355,6 +454,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           final actual = historyEntry == other;
           const expected = false;
@@ -378,6 +478,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           final other = PixelHistoryEntry(
             name: 'Pen',
@@ -396,6 +497,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           final actual = historyEntry == other;
           const expected = false;
@@ -419,6 +521,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           final other = PixelHistoryEntry(
             name: 'Pen',
@@ -437,6 +540,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           final actual = historyEntry == other;
           const expected = false;
@@ -460,6 +564,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           final other = PixelHistoryEntry(
             name: 'Pen',
@@ -478,6 +583,50 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
+          );
+          final actual = historyEntry == other;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('different outline', () {
+          final historyEntry = PixelHistoryEntry(
+            name: 'Pen',
+            layerIndex: 0,
+            frameIndex: 0,
+            before: LayerSnapshot(
+              area: const PixelRectangle(left: 1, top: 0, width: 2, height: 1),
+              rgba: Uint8List(8),
+            ),
+            after: LayerSnapshot(
+              area: const PixelRectangle(left: 1, top: 0, width: 2, height: 1),
+              rgba: Uint8List(8),
+            ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
+            ),
+            outline: Rect.zero,
+          );
+          final other = PixelHistoryEntry(
+            name: 'Pen',
+            layerIndex: 0,
+            frameIndex: 0,
+            before: LayerSnapshot(
+              area: const PixelRectangle(left: 1, top: 0, width: 2, height: 1),
+              rgba: Uint8List(8),
+            ),
+            after: LayerSnapshot(
+              area: const PixelRectangle(left: 1, top: 0, width: 2, height: 1),
+              rgba: Uint8List(8),
+            ),
+            thumbnail: Layer.filled(
+              width: 1,
+              height: 1,
+              color: PixelColor.transparent,
+            ),
+            outline: const Rect.fromLTWH(0, 0, 1, 1),
           );
           final actual = historyEntry == other;
           const expected = false;
@@ -501,6 +650,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           final other = PixelHistoryEntry(
             name: 'Pen',
@@ -519,6 +669,7 @@ void main() {
               height: 1,
               color: PixelColor.black,
             ),
+            outline: Rect.zero,
           );
           final actual = historyEntry == other;
           const expected = false;
@@ -542,6 +693,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           final other = PixelHistoryEntry(
             name: 'Pen',
@@ -560,6 +712,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           final actual = historyEntry == other;
           const expected = false;
@@ -588,6 +741,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           final other = PixelHistoryEntry(
             name: 'Pen',
@@ -606,6 +760,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           final actual = historyEntry.hashCode == other.hashCode;
           const expected = true;
@@ -631,6 +786,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           final other = PixelHistoryEntry(
             name: 'Eraser',
@@ -649,6 +805,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           final actual = historyEntry.hashCode == other.hashCode;
           const expected = false;
@@ -677,6 +834,7 @@ void main() {
               height: 1,
               color: PixelColor.transparent,
             ),
+            outline: Rect.zero,
           );
           final actual = historyEntry.toString();
           const expected = 'PixelHistoryEntry(Pen, layer: 2, frame: 0)';

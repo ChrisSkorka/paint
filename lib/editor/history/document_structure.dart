@@ -5,6 +5,8 @@ import '../canvas/document_layer.dart';
 
 class DocumentStructure {
   const DocumentStructure({
+    required this.width,
+    required this.height,
     required this.layers,
     required this.activeLayerIndex,
     required this.frameHolds,
@@ -14,6 +16,8 @@ class DocumentStructure {
 
   factory DocumentStructure.capture({required Document document}) {
     return DocumentStructure(
+      width: document.width,
+      height: document.height,
       layers: List.unmodifiable(document.layers),
       activeLayerIndex: document.activeLayerIndex,
       frameHolds: List.unmodifiable(document.frameHolds),
@@ -22,6 +26,8 @@ class DocumentStructure {
     );
   }
 
+  final int width;
+  final int height;
   final List<DocumentLayer> layers;
   final int activeLayerIndex;
   final List<int> frameHolds;
@@ -29,6 +35,8 @@ class DocumentStructure {
   final int activeFrameIndex;
 
   void restore(Document document) {
+    document.width = width;
+    document.height = height;
     document.layers
       ..clear()
       ..addAll(layers);
@@ -41,6 +49,8 @@ class DocumentStructure {
   @override
   bool operator ==(Object other) =>
       other is DocumentStructure &&
+      other.width == width &&
+      other.height == height &&
       const ListEquality<DocumentLayer>().equals(other.layers, layers) &&
       other.activeLayerIndex == activeLayerIndex &&
       const ListEquality<int>().equals(other.frameHolds, frameHolds) &&
@@ -49,6 +59,8 @@ class DocumentStructure {
 
   @override
   int get hashCode => Object.hash(
+    width,
+    height,
     const ListEquality<DocumentLayer>().hash(layers),
     activeLayerIndex,
     const ListEquality<int>().hash(frameHolds),
@@ -58,5 +70,5 @@ class DocumentStructure {
 
   @override
   String toString() =>
-      'DocumentStructure(layers: ${layers.length}, active: $activeLayerIndex, frames: ${frameHolds.length}, frame: $activeFrameIndex, fps: $fps)';
+      'DocumentStructure($width, $height, layers: ${layers.length}, active: $activeLayerIndex, frames: ${frameHolds.length}, frame: $activeFrameIndex, fps: $fps)';
 }
