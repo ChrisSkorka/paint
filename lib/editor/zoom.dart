@@ -4,6 +4,14 @@ class Zoom {
   factory Zoom.nearest({required double scale}) =>
       Zoom(step: scale >= 1 ? scale.round() - 1 : 1 - (1 / scale).round());
 
+  factory Zoom.fitting({required double scale}) => Zoom(
+    step: switch (scale) {
+      >= 1 => scale.floor() - 1,
+      > 0 => 1 - (1 / scale).ceil(),
+      _ => minimum.step,
+    }.clamp(minimum.step, maximum.step),
+  );
+
   final int step;
 
   static const minimum = Zoom(step: -7);

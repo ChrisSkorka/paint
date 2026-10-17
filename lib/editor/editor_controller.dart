@@ -746,10 +746,6 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void stepZoom({required bool larger}) {
-    setZoom(_zoom.stepped(larger: larger));
-  }
-
   void editPrimary({required bool primary}) {
     _editingPrimary = primary;
     notifyListeners();

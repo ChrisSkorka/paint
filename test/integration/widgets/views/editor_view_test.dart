@@ -911,6 +911,70 @@ void main() {
           const expected = 2.0;
           expect(actual, equals(expected));
         });
+        testWidgets('fit on open', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 64, height: 48),
+                  fitOnOpen: true,
+                ),
+              ),
+            ),
+          );
+          final hidden = tester
+              .widget<Opacity>(
+                find
+                    .descendant(
+                      of: canvasArea(),
+                      matching: find.byType(Opacity),
+                    )
+                    .first,
+              )
+              .opacity;
+          await tester.pump();
+          final actual = [
+            hidden,
+            tester
+                .widget<Opacity>(
+                  find
+                      .descendant(
+                        of: canvasArea(),
+                        matching: find.byType(Opacity),
+                      )
+                      .first,
+                )
+                .opacity,
+            canvasOffCenter(tester),
+            canvasSize(tester),
+          ];
+          const expected = [0.0, 1.0, Offset.zero, Size(768, 576)];
+          expect(actual, equals(expected));
+        });
+        testWidgets('fit on open reduced', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4000, height: 1000),
+                  fitOnOpen: true,
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+          final actual = [canvasOffCenter(tester), canvasSize(tester)];
+          const expected = [Offset.zero, Size(1000, 250)];
+          expect(actual, equals(expected));
+        });
         testWidgets('small initial', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
@@ -995,7 +1059,7 @@ void main() {
             delta: const Offset(0, -5000),
           );
           final actual = canvasOffset(tester);
-          const expected = Offset(15, 584);
+          const expected = Offset(15, 599);
           expect(actual, equals(expected));
         });
         testWidgets('large initial', (tester) async {
@@ -4811,6 +4875,100 @@ void main() {
           const expected = Size(10, 10);
           expect(actual, equals(expected));
         });
+        testWidgets('ctrl equal keeps center pixel', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 400, height: 400),
+                ),
+              ),
+            ),
+          );
+          final center = canvasAreaCenter(tester);
+          final before = canvasPixelAt(tester, point: center);
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.equal,
+            modifiers: [LogicalKeyboardKey.controlLeft],
+          );
+          final actual = canvasPixelAt(tester, point: center);
+          final expected = before;
+          expect(actual, equals(expected));
+        });
+        testWidgets('ctrl 0 after scrolling', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 64, height: 48),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.digit0,
+            modifiers: [LogicalKeyboardKey.controlLeft],
+          );
+          await scrollWheel(
+            tester,
+            at: tester.getCenter(canvasArea()),
+            delta: const Offset(0, 100),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.digit0,
+            modifiers: [LogicalKeyboardKey.controlLeft],
+          );
+          final actual = [canvasOffCenter(tester), canvasSize(tester)];
+          const expected = [Offset.zero, Size(768, 576)];
+          expect(actual, equals(expected));
+        });
+        testWidgets('ctrl scroll at maximum', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.enterText(
+            find.descendant(
+              of: find.ancestor(
+                of: find.text('Zoom:'),
+                matching: find.byType(NumericValueRange),
+              ),
+              matching: find.byType(TextField),
+            ),
+            '100',
+          );
+          await tester.pump();
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await scrollWheel(
+            tester,
+            at: tester.getCenter(canvasArea()),
+            delta: const Offset(0, -50),
+          );
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          final actual = canvasSize(tester);
+          const expected = Size(200, 200);
+          expect(actual, equals(expected));
+        });
         testWidgets('ctrl minus', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
@@ -4858,8 +5016,8 @@ void main() {
             key: LogicalKeyboardKey.digit0,
             modifiers: [LogicalKeyboardKey.controlLeft],
           );
-          final actual = canvasSize(tester);
-          const expected = Size(8, 8);
+          final actual = [canvasOffCenter(tester), canvasSize(tester)];
+          const expected = [Offset.zero, Size(200, 200)];
           expect(actual, equals(expected));
         });
       });
@@ -7890,7 +8048,7 @@ void main() {
           },
           variant: TargetPlatformVariant.only(TargetPlatform.macOS),
         );
-        testWidgets('view stays put', (tester) async {
+        testWidgets('keeps cursor pixel', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
             MaterialApp(
@@ -7899,22 +8057,51 @@ void main() {
                   files: StubFileAccess(),
                   library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(),
-                  document: Document.blank(width: 200, height: 200),
+                  document: Document.blank(width: 400, height: 400),
                 ),
               ),
             ),
           );
-          final center = tester.getCenter(find.byType(PixelCanvas));
+          final cursor =
+              tester.getTopLeft(find.byType(PixelCanvas)) +
+              const Offset(300, 200);
           await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-          await scrollWheel(tester, at: center, delta: const Offset(0, -50));
-          await scrollWheel(tester, at: center, delta: const Offset(0, 50));
+          await scrollWheel(tester, at: cursor, delta: const Offset(0, -50));
           await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
           await tester.pump();
-          final actual = [canvasScrollOffsets(tester), canvasSize(tester)];
-          const expected = [
-            [0.0, 0.0],
-            Size(800, 800),
+          final actual = [
+            canvasPixelAt(tester, point: cursor),
+            canvasSize(tester),
           ];
+          const expected = [Offset(75, 50), Size(2000, 2000)];
+          expect(actual, equals(expected));
+        });
+        testWidgets('fitting canvas keeps cursor pixel', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 20, height: 20),
+                ),
+              ),
+            ),
+          );
+          final cursor =
+              tester.getTopLeft(find.byType(PixelCanvas)) +
+              const Offset(70, 70);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await scrollWheel(tester, at: cursor, delta: const Offset(0, -50));
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          final actual = [
+            canvasPixelAt(tester, point: cursor),
+            canvasSize(tester),
+          ];
+          const expected = [Offset(17.5, 17.5), Size(100, 100)];
           expect(actual, equals(expected));
         });
       });
@@ -8233,6 +8420,41 @@ void main() {
           await tester.pump();
           final actual = canvasSize(tester);
           const expected = Size(1, 1);
+          expect(actual, equals(expected));
+        });
+        testWidgets('slider twice per frame', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 400, height: 400),
+                ),
+              ),
+            ),
+          );
+          final center = canvasAreaCenter(tester);
+          final before = canvasPixelAt(tester, point: center);
+          final slider = tester.widget<Slider>(
+            find.descendant(
+              of: find.ancestor(
+                of: find.text('Zoom:'),
+                matching: find.byType(NumericValueRange),
+              ),
+              matching: find.byType(Slider),
+            ),
+          );
+          slider.onChanged!(2.5);
+          slider.onChanged!(2.9);
+          await tester.pump();
+          final actual = [
+            canvasPixelAt(tester, point: center),
+            canvasSize(tester),
+          ];
+          final expected = [before, const Size(2800, 2800)];
           expect(actual, equals(expected));
         });
         testWidgets('slider below one', (tester) async {

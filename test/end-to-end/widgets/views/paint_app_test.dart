@@ -62,7 +62,7 @@ void main() {
             find.text('64 × 64').evaluate().length,
             canvasSize(tester),
           ];
-          const expected = [0, 1, Size(256, 256)];
+          const expected = [0, 1, Size(512, 512)];
           expect(actual, equals(expected));
         });
       });
@@ -83,7 +83,7 @@ void main() {
           final gesture = await tester.startGesture(
             topLeft + const Offset(1, 1),
           );
-          await gesture.moveTo(topLeft + const Offset(9, 1));
+          await gesture.moveTo(topLeft + const Offset(17, 1));
           await gesture.up();
           await tester.pump();
           final documentLayer = canvasLayers(tester).first.image;

@@ -23,6 +23,36 @@ void main() {
       });
     });
 
+    group('factory fitting', () {
+      group('scales', () {
+        test('whole', () {
+          final actual = Zoom.fitting(scale: 3.7);
+          const expected = Zoom(step: 2);
+          expect(actual, equals(expected));
+        });
+        test('fraction', () {
+          final actual = Zoom.fitting(scale: 0.4);
+          const expected = Zoom(step: -2);
+          expect(actual, equals(expected));
+        });
+        test('none', () {
+          final actual = Zoom.fitting(scale: 0);
+          const expected = Zoom.minimum;
+          expect(actual, equals(expected));
+        });
+        test('huge', () {
+          final actual = Zoom.fitting(scale: 500);
+          const expected = Zoom.maximum;
+          expect(actual, equals(expected));
+        });
+        test('tiny', () {
+          final actual = Zoom.fitting(scale: 0.01);
+          const expected = Zoom.minimum;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method tryParse', () {
       group('texts', () {
         test('whole', () {

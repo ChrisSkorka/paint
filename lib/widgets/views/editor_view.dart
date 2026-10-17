@@ -29,6 +29,7 @@ import '../../editor/tools/tool_kind.dart';
 import '../../editor/tools/tool_size.dart';
 import '../../editor/zoom.dart';
 import '../components/canvas_margin.dart';
+import '../components/canvas_scroll_controller.dart';
 import '../components/color_dialog.dart';
 import '../components/edge_shadow.dart';
 import '../components/exponential_scale.dart';
@@ -62,6 +63,7 @@ class EditorView extends StatefulWidget {
     required this.files,
     required this.library,
     this.active = true,
+    this.fitOnOpen = false,
     this.onUnsavedChanged,
   });
 
@@ -70,9 +72,11 @@ class EditorView extends StatefulWidget {
   final FileAccess files;
   final DocumentLibrary library;
   final bool active;
+  final bool fitOnOpen;
   final ValueChanged<bool>? onUnsavedChanged;
 
   static const canvasEdge = 15.0;
+  static const canvasVisible = 48.0;
   static const penSizeWidth = 56.0;
 
   @override
@@ -86,10 +90,16 @@ class _EditorViewState extends State<EditorView> {
   var exportFormat = ExportFormat.png;
   Timer? playback;
   final focusNode = FocusNode(debugLabel: 'Editor');
-  final verticalScroll = ScrollController();
-  final horizontalScroll = ScrollController();
+  final verticalScroll = CanvasScrollController(
+    restingPosition: EditorView.canvasEdge,
+  );
+  final horizontalScroll = CanvasScrollController(
+    restingPosition: EditorView.canvasEdge,
+  );
+  final canvasAreaKey = GlobalKey();
   var unsaved = false;
   var textDrag = Offset.zero;
+  late var awaitingFit = widget.fitOnOpen;
 
   @override
   void initState() {
@@ -97,6 +107,9 @@ class _EditorViewState extends State<EditorView> {
     FocusManager.instance.addListener(_reclaimFocus);
     controller.addListener(_reportUnsaved);
     WidgetsBinding.instance.addPostFrameCallback((_) => _focusWhenActive());
+    if (awaitingFit) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _fitOnOpen());
+    }
   }
 
   @override
@@ -362,9 +375,9 @@ class _EditorViewState extends State<EditorView> {
     EditorShortcut.smallerSize: () => controller.stepToolSize(larger: false),
     EditorShortcut.largerSize: () => controller.stepToolSize(larger: true),
     EditorShortcut.swapColors: controller.swapColors,
-    EditorShortcut.zoomIn: () => controller.stepZoom(larger: true),
-    EditorShortcut.zoomOut: () => controller.stepZoom(larger: false),
-    EditorShortcut.resetZoom: () => controller.setZoom(Zoom.standard),
+    EditorShortcut.zoomIn: () => _stepZoom(larger: true),
+    EditorShortcut.zoomOut: () => _stepZoom(larger: false),
+    EditorShortcut.resetZoom: _zoomToFit,
     EditorShortcut.previousFrame: () => controller.stepFrame(forward: false),
     EditorShortcut.nextFrame: () => controller.stepFrame(forward: true),
     EditorShortcut.firstFrame: controller.selectFirstFrame,
@@ -438,7 +451,10 @@ class _EditorViewState extends State<EditorView> {
     if (EditorShortcut.primaryModifierPressed) {
       GestureBinding.instance.pointerSignalResolver.register(
         event,
-        (_) => controller.stepZoom(larger: !forward),
+        (_) => _stepZoom(
+          larger: !forward,
+          focus: _canvasAreaBox().globalToLocal(event.position),
+        ),
       );
     } else if (HardwareKeyboard.instance.isAltPressed) {
       GestureBinding.instance.pointerSignalResolver.register(
@@ -448,76 +464,160 @@ class _EditorViewState extends State<EditorView> {
     }
   }
 
+  RenderBox _canvasAreaBox() =>
+      canvasAreaKey.currentContext!.findRenderObject()! as RenderBox;
+
+  void _stepZoom({required bool larger, Offset? focus}) =>
+      _zoomTo(controller.zoom.stepped(larger: larger), focus: focus);
+
+  void _zoomTo(Zoom zoom, {Offset? focus}) {
+    if (zoom == controller.zoom) return;
+    final area = _canvasAreaBox().size;
+    final focusPoint = focus ?? area.center(Offset.zero);
+    verticalScroll.pendingOffset = zoomedCanvasOffset(
+      available: area.height,
+      length: widget.document.height,
+      visible: EditorView.canvasVisible,
+      scrollbar: PaintScrollBehavior.scrollbarTrack,
+      offset: verticalScroll.pendingOffset ?? verticalScroll.offset,
+      focus: focusPoint.dy,
+      oldScale: controller.zoom.scale,
+      newScale: zoom.scale,
+    );
+    horizontalScroll.pendingOffset = zoomedCanvasOffset(
+      available: area.width,
+      length: widget.document.width,
+      visible: EditorView.canvasVisible,
+      scrollbar: PaintScrollBehavior.scrollbarTrack,
+      offset: horizontalScroll.pendingOffset ?? horizontalScroll.offset,
+      focus: focusPoint.dx,
+      oldScale: controller.zoom.scale,
+      newScale: zoom.scale,
+    );
+    controller.setZoom(zoom);
+  }
+
+  void _fitOnOpen() {
+    _zoomToFit();
+    setState(() => awaitingFit = false);
+  }
+
+  void _zoomToFit() {
+    final area = _canvasAreaBox().size;
+    final zoom = Zoom.fitting(
+      scale: min(
+        fittingScale(
+          available: area.width,
+          length: widget.document.width,
+          edge: EditorView.canvasEdge,
+          scrollbar: PaintScrollBehavior.scrollbarTrack,
+        ),
+        fittingScale(
+          available: area.height,
+          length: widget.document.height,
+          edge: EditorView.canvasEdge,
+          scrollbar: PaintScrollBehavior.scrollbarTrack,
+        ),
+      ),
+    );
+    final verticalOffset = centeredCanvasOffset(
+      available: area.height,
+      length: widget.document.height,
+      visible: EditorView.canvasVisible,
+      scrollbar: PaintScrollBehavior.scrollbarTrack,
+      scale: zoom.scale,
+    );
+    final horizontalOffset = centeredCanvasOffset(
+      available: area.width,
+      length: widget.document.width,
+      visible: EditorView.canvasVisible,
+      scrollbar: PaintScrollBehavior.scrollbarTrack,
+      scale: zoom.scale,
+    );
+    if (zoom == controller.zoom) {
+      verticalScroll.jumpTo(verticalOffset);
+      horizontalScroll.jumpTo(horizontalOffset);
+      return;
+    }
+    verticalScroll.pendingOffset = verticalOffset;
+    horizontalScroll.pendingOffset = horizontalOffset;
+    controller.setZoom(zoom);
+  }
+
   Widget _buildCanvasArea() {
     return Container(
       color: PaintStyle.canvasAreaBackground,
       child: CustomPaint(
         foregroundPainter: const EdgeShadowPainter(),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final vertical = canvasMargin(
-              available: constraints.maxHeight,
-              extent: widget.document.height * controller.zoom.scale,
-              edge: EditorView.canvasEdge,
-              scrollbar: PaintScrollBehavior.scrollbarTrack,
-            );
-            final horizontal = canvasMargin(
-              available: constraints.maxWidth,
-              extent: widget.document.width * controller.zoom.scale,
-              edge: EditorView.canvasEdge,
-              scrollbar: PaintScrollBehavior.scrollbarTrack,
-            );
-            return _buildCanvasScrollbars(
-              child: SingleChildScrollView(
-                controller: verticalScroll,
-                reverse: vertical.reverse,
+        child: Opacity(
+          opacity: awaitingFit ? 0 : 1,
+          child: LayoutBuilder(
+            key: canvasAreaKey,
+            builder: (context, constraints) {
+              final vertical = canvasMargin(
+                available: constraints.maxHeight,
+                extent: widget.document.height * controller.zoom.scale,
+                visible: EditorView.canvasVisible,
+                scrollbar: PaintScrollBehavior.scrollbarTrack,
+              );
+              final horizontal = canvasMargin(
+                available: constraints.maxWidth,
+                extent: widget.document.width * controller.zoom.scale,
+                visible: EditorView.canvasVisible,
+                scrollbar: PaintScrollBehavior.scrollbarTrack,
+              );
+              verticalScroll.leading = vertical.leading;
+              horizontalScroll.leading = horizontal.leading;
+              return _buildCanvasScrollbars(
                 child: SingleChildScrollView(
-                  controller: horizontalScroll,
-                  scrollDirection: Axis.horizontal,
-                  reverse: horizontal.reverse,
-                  child: Listener(
-                    behavior: HitTestBehavior.translucent,
-                    onPointerSignal: _scrollCanvas,
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        horizontal.leading,
-                        vertical.leading,
-                        horizontal.trailing,
-                        vertical.trailing,
-                      ),
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          boxShadow: PaintStyle.faintShadow,
+                  controller: verticalScroll,
+                  child: SingleChildScrollView(
+                    controller: horizontalScroll,
+                    scrollDirection: Axis.horizontal,
+                    child: Listener(
+                      behavior: HitTestBehavior.translucent,
+                      onPointerSignal: _scrollCanvas,
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          horizontal.leading,
+                          vertical.leading,
+                          horizontal.trailing,
+                          vertical.trailing,
                         ),
-                        child: Stack(
-                          children: [
-                            ListenableBuilder(
-                              listenable: controller.pointerPreview,
-                              builder: (context, _) => PixelCanvas(
-                                width: widget.document.width,
-                                height: widget.document.height,
-                                zoom: controller.zoom.scale,
-                                layers: controller.canvasLayers,
-                                pointerPreview: controller.pointerPreview,
-                                layersChanged: controller.layersChanged,
-                                onPointerDown: _pointerDown,
-                                onPointerMove: controller.pointerMove,
-                                onPointerUp: controller.pointerUp,
-                                onPointerExit: controller.pointerExit,
-                                selection: controller.selectionArea,
-                                cursor: _canvasCursor(),
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            boxShadow: PaintStyle.faintShadow,
+                          ),
+                          child: Stack(
+                            children: [
+                              ListenableBuilder(
+                                listenable: controller.pointerPreview,
+                                builder: (context, _) => PixelCanvas(
+                                  width: widget.document.width,
+                                  height: widget.document.height,
+                                  zoom: controller.zoom.scale,
+                                  layers: controller.canvasLayers,
+                                  pointerPreview: controller.pointerPreview,
+                                  layersChanged: controller.layersChanged,
+                                  onPointerDown: _pointerDown,
+                                  onPointerMove: controller.pointerMove,
+                                  onPointerUp: controller.pointerUp,
+                                  onPointerExit: controller.pointerExit,
+                                  selection: controller.selectionArea,
+                                  cursor: _canvasCursor(),
+                                ),
                               ),
-                            ),
-                            ?_buildTextDraft(),
-                          ],
+                              ?_buildTextDraft(),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -1365,7 +1465,7 @@ class _EditorViewState extends State<EditorView> {
                   valueToText: (step) => Zoom(step: step).label,
                   textToValue: (text) => Zoom.tryParse(text)?.step,
                   allowedCharacters: '[0-9/]',
-                  onChanged: (step) => controller.setZoom(Zoom(step: step)),
+                  onChanged: (step) => _zoomTo(Zoom(step: step)),
                 ),
               ),
             ],

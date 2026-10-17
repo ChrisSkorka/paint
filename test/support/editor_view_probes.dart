@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paint/widgets/components/paint_scroll_behavior.dart';
 import 'package:paint/widgets/components/paint_bar.dart';
 import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/onion_skin.dart';
@@ -378,3 +379,27 @@ List<double> canvasScrollOffsets(WidgetTester tester) => [
   ))
     state.position.pixels,
 ];
+
+Offset canvasPixelAt(WidgetTester tester, {required Offset point}) =>
+    (point - tester.getTopLeft(find.byType(PixelCanvas))) /
+    tester.widget<PixelCanvas>(find.byType(PixelCanvas)).zoom;
+
+Offset canvasAreaCenter(WidgetTester tester) => tester.getCenter(
+  find
+      .ancestor(
+        of: find.byType(PixelCanvas),
+        matching: find.byType(SingleChildScrollView),
+      )
+      .last,
+);
+
+Offset canvasOffCenter(WidgetTester tester) {
+  final area = tester.getRect(canvasArea());
+  final visibleCenter = Rect.fromLTWH(
+    area.left,
+    area.top,
+    area.width - PaintScrollBehavior.scrollbarTrack,
+    area.height - PaintScrollBehavior.scrollbarTrack,
+  ).center;
+  return tester.getCenter(find.byType(PixelCanvas)) - visibleCenter;
+}

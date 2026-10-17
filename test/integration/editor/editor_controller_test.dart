@@ -5196,58 +5196,6 @@ void main() {
       });
     });
 
-    group('method stepZoom', () {
-      group('direction', () {
-        test('larger', () {
-          final editorController = EditorController.forDocument(
-            document: Document.blank(width: 3, height: 3),
-          );
-          editorController.stepZoom(larger: true);
-          final actual = editorController.zoom.scale;
-          const expected = 5.0;
-          expect(actual, equals(expected));
-        });
-        test('smaller', () {
-          final editorController = EditorController.forDocument(
-            document: Document.blank(width: 3, height: 3),
-          );
-          editorController.stepZoom(larger: false);
-          final actual = editorController.zoom.scale;
-          const expected = 3.0;
-          expect(actual, equals(expected));
-        });
-        test('below one', () {
-          final editorController = EditorController.forDocument(
-            document: Document.blank(width: 3, height: 3),
-          )..setZoom(const Zoom(step: 0));
-          editorController.stepZoom(larger: false);
-          final actual = editorController.zoom.scale;
-          const expected = 0.5;
-          expect(actual, equals(expected));
-        });
-      });
-      group('limits', () {
-        test('maximum', () {
-          final editorController = EditorController.forDocument(
-            document: Document.blank(width: 3, height: 3),
-          )..setZoom(Zoom.maximum);
-          editorController.stepZoom(larger: true);
-          final actual = editorController.zoom;
-          const expected = Zoom.maximum;
-          expect(actual, equals(expected));
-        });
-        test('minimum', () {
-          final editorController = EditorController.forDocument(
-            document: Document.blank(width: 3, height: 3),
-          )..setZoom(Zoom.minimum);
-          editorController.stepZoom(larger: false);
-          final actual = editorController.zoom;
-          const expected = Zoom.minimum;
-          expect(actual, equals(expected));
-        });
-      });
-    });
-
     group('method editPrimary', () {
       group('slots', () {
         test('secondary', () {

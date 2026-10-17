@@ -151,6 +151,7 @@ class _HomeViewState extends State<HomeView> {
       files: widget.files,
       library: widget.library,
       active: active,
+      fitOnOpen: true,
       onUnsavedChanged: (unsaved) => _markUnsaved(tab: tab, unsaved: unsaved),
     );
   }

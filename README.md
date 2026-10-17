@@ -304,8 +304,8 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [x] horizontally scrollable views (top ribbons & tabs as far as I know) scroll on scroll wheen without needed shift pressed
 - [x] button and scroll zoom step by 1 instead of x2
 - [x] allow zoom less than 1x (1/2, 1/3, 1/4, ...)
-- [ ] zoom centered on canvas center except on scroll, then center around cursor
-- [ ] default zoom fit's doc
+- [x] zoom centered on canvas center except on scroll, then center around cursor
+- [x] default zoom & ctrl+0 fit's doc centered in canvas
 - [ ] exponential zoom step sizes:
   - internal representation is still int
   - negative numbers represent fractional zooms (-2 => 1/2, -10 => 1/10)
