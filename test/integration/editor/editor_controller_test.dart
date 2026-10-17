@@ -1057,6 +1057,264 @@ void main() {
       });
     });
 
+    group('method stepToolPreset', () {
+      group('current preset', () {
+        test('forward', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3)
+              ..toolPresets = const ToolPresets(
+                recent: [
+                  ToolPreset(
+                    kind: ToolKind.pen,
+                    color: PixelColor.black,
+                    size: 1,
+                    tip: BrushTip.square,
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.eraser,
+                    size: 1,
+                    tip: BrushTip.square,
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.bucketFill,
+                    color: PixelColor.black,
+                  ),
+                ],
+              ),
+          );
+          editorController.stepToolPreset(forward: true);
+          final actual = editorController.toolKind;
+          const expected = ToolKind.eraser;
+          expect(actual, equals(expected));
+        });
+        test('backward', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3)
+              ..toolPresets = const ToolPresets(
+                recent: [
+                  ToolPreset(
+                    kind: ToolKind.pen,
+                    color: PixelColor.black,
+                    size: 1,
+                    tip: BrushTip.square,
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.eraser,
+                    size: 1,
+                    tip: BrushTip.square,
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.bucketFill,
+                    color: PixelColor.black,
+                  ),
+                ],
+              ),
+          );
+          editorController.stepToolPreset(forward: false);
+          final actual = editorController.toolKind;
+          const expected = ToolKind.bucketFill;
+          expect(actual, equals(expected));
+        });
+        test('forward from last', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3)
+              ..toolPresets = const ToolPresets(
+                recent: [
+                  ToolPreset(
+                    kind: ToolKind.eraser,
+                    size: 1,
+                    tip: BrushTip.square,
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.bucketFill,
+                    color: PixelColor.black,
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.pen,
+                    color: PixelColor.black,
+                    size: 1,
+                    tip: BrushTip.square,
+                  ),
+                ],
+              ),
+          );
+          editorController.stepToolPreset(forward: true);
+          final actual = editorController.toolKind;
+          const expected = ToolKind.eraser;
+          expect(actual, equals(expected));
+        });
+      });
+      group('no current preset', () {
+        test('forward', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3)
+              ..toolPresets = const ToolPresets(
+                recent: [
+                  ToolPreset(
+                    kind: ToolKind.eraser,
+                    size: 1,
+                    tip: BrushTip.square,
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.bucketFill,
+                    color: PixelColor.black,
+                  ),
+                ],
+              ),
+          );
+          editorController.stepToolPreset(forward: true);
+          final actual = editorController.toolKind;
+          const expected = ToolKind.eraser;
+          expect(actual, equals(expected));
+        });
+        test('backward', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3)
+              ..toolPresets = const ToolPresets(
+                recent: [
+                  ToolPreset(
+                    kind: ToolKind.eraser,
+                    size: 1,
+                    tip: BrushTip.square,
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.bucketFill,
+                    color: PixelColor.black,
+                  ),
+                ],
+              ),
+          );
+          editorController.stepToolPreset(forward: false);
+          final actual = editorController.toolKind;
+          const expected = ToolKind.bucketFill;
+          expect(actual, equals(expected));
+        });
+      });
+      group('locked presets', () {
+        test('forward from last', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3)
+              ..toolPresets = const ToolPresets(
+                locked: [
+                  ToolPreset(
+                    kind: ToolKind.bucketFill,
+                    color: PixelColor.black,
+                  ),
+                ],
+                recent: [
+                  ToolPreset(
+                    kind: ToolKind.eraser,
+                    size: 1,
+                    tip: BrushTip.square,
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.pen,
+                    color: PixelColor.black,
+                    size: 1,
+                    tip: BrushTip.square,
+                  ),
+                ],
+              ),
+          );
+          editorController.stepToolPreset(forward: true);
+          final actual = editorController.toolKind;
+          const expected = ToolKind.eraser;
+          expect(actual, equals(expected));
+        });
+        test('backward from first', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3)
+              ..toolPresets = const ToolPresets(
+                locked: [
+                  ToolPreset(
+                    kind: ToolKind.bucketFill,
+                    color: PixelColor.black,
+                  ),
+                ],
+                recent: [
+                  ToolPreset(
+                    kind: ToolKind.pen,
+                    color: PixelColor.black,
+                    size: 1,
+                    tip: BrushTip.square,
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.eraser,
+                    size: 1,
+                    tip: BrushTip.square,
+                  ),
+                ],
+              ),
+          );
+          editorController.stepToolPreset(forward: false);
+          final actual = editorController.toolKind;
+          const expected = ToolKind.eraser;
+          expect(actual, equals(expected));
+        });
+        test('current locked', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3)
+              ..toolPresets = const ToolPresets(
+                locked: [
+                  ToolPreset(
+                    kind: ToolKind.pen,
+                    color: PixelColor.black,
+                    size: 1,
+                    tip: BrushTip.square,
+                  ),
+                ],
+                recent: [
+                  ToolPreset(
+                    kind: ToolKind.eraser,
+                    size: 1,
+                    tip: BrushTip.square,
+                  ),
+                  ToolPreset(
+                    kind: ToolKind.bucketFill,
+                    color: PixelColor.black,
+                  ),
+                ],
+              ),
+          );
+          editorController.stepToolPreset(forward: true);
+          final actual = editorController.toolKind;
+          const expected = ToolKind.eraser;
+          expect(actual, equals(expected));
+        });
+        test('only locked', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3)
+              ..toolPresets = const ToolPresets(
+                locked: [
+                  ToolPreset(
+                    kind: ToolKind.eraser,
+                    size: 1,
+                    tip: BrushTip.square,
+                  ),
+                ],
+                recent: [],
+              ),
+          );
+          editorController.stepToolPreset(forward: true);
+          final actual = editorController.toolKind;
+          const expected = ToolKind.pen;
+          expect(actual, equals(expected));
+        });
+      });
+      group('no presets', () {
+        test('forward', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3)
+              ..toolPresets = const ToolPresets(recent: []),
+          );
+          editorController.stepToolPreset(forward: true);
+          final actual = editorController.toolKind;
+          const expected = ToolKind.pen;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method setPenSize', () {
       group('sizes', () {
         test('larger', () {

@@ -181,6 +181,16 @@ enum EditorShortcut {
     group: ShortcutGroup.tools,
     activators: [SingleActivator(LogicalKeyboardKey.keyA)],
   ),
+  nextToolPreset(
+    label: 'Next recent / favorite tool',
+    group: ShortcutGroup.tools,
+    activators: [SingleActivator(LogicalKeyboardKey.tab)],
+  ),
+  previousToolPreset(
+    label: 'Previous recent / favorite tool',
+    group: ShortcutGroup.tools,
+    activators: [SingleActivator(LogicalKeyboardKey.tab, shift: true)],
+  ),
   toolPreset(
     label: 'Recent / favorite tool',
     group: ShortcutGroup.tools,

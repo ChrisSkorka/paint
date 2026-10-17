@@ -42,6 +42,28 @@ void main() {
     ),
   );
 
+  Widget scrollingToolPresetList({
+    required ScrollController controller,
+    ToolPreset? selected,
+  }) => MaterialApp(
+    home: Center(
+      child: SizedBox(
+        width: 150,
+        child: SingleChildScrollView(
+          controller: controller,
+          scrollDirection: Axis.horizontal,
+          child: ToolPresetList(
+            presets: const [pen, eraser, fill],
+            lockedCount: 0,
+            selected: selected,
+            onApply: (index) {},
+            onLockChanged: ({required int index, required bool locked}) {},
+          ),
+        ),
+      ),
+    ),
+  );
+
   List<PaintSplitButton> buttons(WidgetTester tester) => tester
       .widgetList<PaintSplitButton>(find.byType(PaintSplitButton))
       .toList();
@@ -254,6 +276,91 @@ void main() {
             for (final button in buttons(tester)) button.selected,
           ];
           const expected = [false, true, false];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('lifecycle', () {
+      group('reveal selection', () {
+        testWidgets('hidden', (tester) async {
+          final controller = ScrollController();
+          addTearDown(controller.dispose);
+          await tester.pumpWidget(
+            scrollingToolPresetList(controller: controller),
+          );
+          await tester.pumpWidget(
+            scrollingToolPresetList(controller: controller, selected: fill),
+          );
+          await tester.pumpAndSettle();
+          final actual = controller.offset;
+          final expected = controller.position.maxScrollExtent;
+          expect(actual, equals(expected));
+        });
+        testWidgets('visible', (tester) async {
+          final controller = ScrollController();
+          addTearDown(controller.dispose);
+          await tester.pumpWidget(
+            scrollingToolPresetList(controller: controller),
+          );
+          await tester.pumpWidget(
+            scrollingToolPresetList(controller: controller, selected: pen),
+          );
+          await tester.pumpAndSettle();
+          final actual = controller.offset;
+          final expected = 0.0;
+          expect(actual, equals(expected));
+        });
+        testWidgets('back to start', (tester) async {
+          final controller = ScrollController();
+          addTearDown(controller.dispose);
+          await tester.pumpWidget(
+            scrollingToolPresetList(controller: controller),
+          );
+          await tester.pumpWidget(
+            scrollingToolPresetList(controller: controller, selected: fill),
+          );
+          await tester.pumpAndSettle();
+          await tester.pumpWidget(
+            scrollingToolPresetList(controller: controller, selected: pen),
+          );
+          await tester.pumpAndSettle();
+          final actual = controller.offset;
+          final expected = 0.0;
+          expect(actual, equals(expected));
+        });
+        testWidgets('unmatched', (tester) async {
+          final controller = ScrollController();
+          addTearDown(controller.dispose);
+          await tester.pumpWidget(
+            scrollingToolPresetList(controller: controller),
+          );
+          controller.jumpTo(20);
+          await tester.pumpWidget(
+            scrollingToolPresetList(controller: controller, selected: null),
+          );
+          await tester.pumpAndSettle();
+          final actual = controller.offset;
+          final expected = 20.0;
+          expect(actual, equals(expected));
+        });
+        testWidgets('unchanged', (tester) async {
+          final controller = ScrollController();
+          addTearDown(controller.dispose);
+          await tester.pumpWidget(
+            scrollingToolPresetList(controller: controller),
+          );
+          await tester.pumpWidget(
+            scrollingToolPresetList(controller: controller, selected: fill),
+          );
+          await tester.pumpAndSettle();
+          controller.jumpTo(0);
+          await tester.pumpWidget(
+            scrollingToolPresetList(controller: controller, selected: fill),
+          );
+          await tester.pumpAndSettle();
+          final actual = controller.offset;
+          final expected = 0.0;
           expect(actual, equals(expected));
         });
       });

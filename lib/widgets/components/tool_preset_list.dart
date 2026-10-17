@@ -7,7 +7,7 @@ import 'paint_split_button.dart';
 import 'paint_style.dart';
 import 'tool_icons.dart';
 
-class ToolPresetList extends StatelessWidget {
+class ToolPresetList extends StatefulWidget {
   const ToolPresetList({
     super.key,
     required this.presets,
@@ -19,6 +19,7 @@ class ToolPresetList extends StatelessWidget {
 
   static const propertyStyle = TextStyle(fontSize: 10);
   static const shadowLuminance = 0.5;
+  static const revealDuration = Duration(milliseconds: 200);
 
   final List<ToolPreset> presets;
   final int lockedCount;
@@ -26,21 +27,51 @@ class ToolPresetList extends StatelessWidget {
   final ValueChanged<int> onApply;
   final void Function({required int index, required bool locked}) onLockChanged;
 
+  int get selectedIndex => presets.indexWhere((preset) => preset == selected);
+
+  @override
+  State<ToolPresetList> createState() => _ToolPresetListState();
+}
+
+class _ToolPresetListState extends State<ToolPresetList> {
+  final itemKeys = <GlobalKey>[];
+
+  @override
+  void didUpdateWidget(ToolPresetList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final index = widget.selectedIndex;
+    if (index < 0 || index == oldWidget.selectedIndex) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _revealItem(index));
+  }
+
+  void _revealItem(int index) {
+    itemKeys[index].currentContext!.findRenderObject()!.showOnScreen(
+      duration: ToolPresetList.revealDuration,
+      curve: Curves.easeOut,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    while (itemKeys.length < widget.presets.length) {
+      itemKeys.add(GlobalKey());
+    }
     return Row(
       mainAxisSize: MainAxisSize.min,
       spacing: 8,
       children: [
-        for (var index = 0; index < presets.length; index++)
-          _buildItem(index: index),
+        for (var index = 0; index < widget.presets.length; index++)
+          KeyedSubtree(
+            key: itemKeys[index],
+            child: _buildItem(index: index),
+          ),
       ],
     );
   }
 
   Widget _buildItem({required int index}) {
-    final preset = presets[index];
-    final locked = index < lockedCount;
+    final preset = widget.presets[index];
+    final locked = index < widget.lockedCount;
     final color = preset.color ?? preset.secondaryColor;
     final size = preset.size ?? preset.textFormat?.size;
     final tip = preset.tip;
@@ -56,7 +87,7 @@ class ToolPresetList extends StatelessWidget {
               spacing: 4,
               children: [
                 if (tip != null) FaIcon(tipIcon(tip: tip), size: 10),
-                Text('$size px', style: propertyStyle),
+                Text('$size px', style: ToolPresetList.propertyStyle),
               ],
             ),
       tooltip: preset.kind.label,
@@ -64,15 +95,16 @@ class ToolPresetList extends StatelessWidget {
         EditorShortcut.toolPreset.platformActivators[index],
       ),
       color: iconColor,
-      iconShadows: iconColor.computeLuminance() > shadowLuminance
+      iconShadows: iconColor.computeLuminance() > ToolPresetList.shadowLuminance
           ? PaintStyle.iconShadow
           : null,
-      selected: preset == selected,
-      onPressed: () => onApply(index),
+      selected: preset == widget.selected,
+      onPressed: () => widget.onApply(index),
       secondaryIcon: locked ? FontAwesomeIcons.lock : FontAwesomeIcons.lockOpen,
       secondaryTooltip: locked ? 'Unlock' : 'Lock',
       secondaryOnHover: true,
-      onSecondaryPressed: () => onLockChanged(index: index, locked: !locked),
+      onSecondaryPressed: () =>
+          widget.onLockChanged(index: index, locked: !locked),
     );
   }
 }

@@ -444,6 +444,10 @@ class _EditorViewState extends State<EditorView> {
     EditorShortcut.rectangle: () => controller.selectTool(ToolKind.rectangle),
     EditorShortcut.circle: () => controller.selectTool(ToolKind.circle),
     EditorShortcut.arrow: () => controller.selectTool(ToolKind.arrow),
+    EditorShortcut.nextToolPreset: () =>
+        controller.stepToolPreset(forward: true),
+    EditorShortcut.previousToolPreset: () =>
+        controller.stepToolPreset(forward: false),
     EditorShortcut.smallerSize: () => controller.stepToolSize(larger: false),
     EditorShortcut.largerSize: () => controller.stepToolSize(larger: true),
     EditorShortcut.swapColors: controller.swapColors,

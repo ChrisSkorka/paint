@@ -5337,6 +5337,94 @@ void main() {
       });
 
       group('tool shortcuts', () {
+        testWidgets('tab', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2)
+                    ..toolPresets = const ToolPresets(
+                      recent: [
+                        ToolPreset(
+                          kind: ToolKind.eraser,
+                          size: 1,
+                          tip: BrushTip.square,
+                        ),
+                        ToolPreset(
+                          kind: ToolKind.bucketFill,
+                          color: PixelColor.black,
+                        ),
+                      ],
+                    ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.tab);
+          final actual = allSelectedTools(tester);
+          const expected = [
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('shift tab', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2)
+                    ..toolPresets = const ToolPresets(
+                      recent: [
+                        ToolPreset(
+                          kind: ToolKind.eraser,
+                          size: 1,
+                          tip: BrushTip.square,
+                        ),
+                        ToolPreset(
+                          kind: ToolKind.bucketFill,
+                          color: PixelColor.black,
+                        ),
+                      ],
+                    ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.tab,
+            modifiers: [LogicalKeyboardKey.shiftLeft],
+          );
+          final actual = allSelectedTools(tester);
+          const expected = [
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
+          expect(actual, equals(expected));
+        });
         testWidgets('1', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(

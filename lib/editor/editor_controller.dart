@@ -33,6 +33,7 @@ import 'tools/text_stamp.dart';
 import 'tools/tool.dart';
 import 'tools/tool_kind.dart';
 import 'tools/tool_preset.dart';
+import 'tools/tool_presets.dart';
 import 'tools/tool_size.dart';
 import 'zoom.dart';
 
@@ -308,6 +309,17 @@ class EditorController extends ChangeNotifier {
       _shapeFilled = preset.secondaryColor != null;
     }
     selectTool(preset.kind);
+  }
+
+  void stepToolPreset({required bool forward}) {
+    final ToolPresets(:locked, :recent) = document.toolPresets;
+    if (recent.isEmpty) return;
+    final current = recent.indexWhere((preset) => preset == toolPreset);
+    final index = switch (current) {
+      < 0 => forward ? 0 : -1,
+      _ => current + (forward ? 1 : -1),
+    };
+    applyToolPreset(index: locked.length + index % recent.length);
   }
 
   void setToolPresetLocked({required int index, required bool locked}) {

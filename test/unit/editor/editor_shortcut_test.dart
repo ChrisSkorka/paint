@@ -74,6 +74,8 @@ void main() {
             'R',
             'O',
             'A',
+            'Tab',
+            'Shift+Tab',
             '1–9',
             '[',
             ']',
