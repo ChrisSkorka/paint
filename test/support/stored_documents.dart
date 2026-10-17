@@ -6,9 +6,11 @@ StoredDocument storedDocument({
   required String id,
   String name = 'Cat',
   int minute = 0,
+  String? filePath,
 }) => StoredDocument(
   id: id,
   name: name,
   modified: DateTime(2026, 10, 10, 12, minute),
   thumbnail: Layer.filled(width: 2, height: 1, color: PixelColor.white),
+  filePath: filePath,
 );

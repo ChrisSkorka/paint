@@ -18,6 +18,7 @@ class Document {
     this.fps = defaultFps,
     this.activeFrameIndex = 0,
     this.storeId,
+    this.filePath,
     this.toolPresets = const ToolPresets(),
   });
 
@@ -75,6 +76,7 @@ class Document {
   int fps;
   int activeFrameIndex;
   String? storeId;
+  String? filePath;
   ToolPresets toolPresets;
 
   int get frameCount => frameHolds.length;
@@ -172,6 +174,7 @@ class Document {
       other.fps == fps &&
       other.activeFrameIndex == activeFrameIndex &&
       other.storeId == storeId &&
+      other.filePath == filePath &&
       other.toolPresets == toolPresets &&
       const ListEquality<DocumentLayer>().equals(other.layers, layers);
 
@@ -185,6 +188,7 @@ class Document {
     fps,
     activeFrameIndex,
     storeId,
+    filePath,
     toolPresets,
     const ListEquality<DocumentLayer>().hash(layers),
   );

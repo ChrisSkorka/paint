@@ -63,6 +63,31 @@ void main() {
   );
 
   group('enum ExportFormat', () {
+    group('method matches', () {
+      group('extensions', () {
+        test('same', () {
+          final actual = ExportFormat.png.matches(path: '/pictures/cat.png');
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        test('uppercase', () {
+          final actual = ExportFormat.png.matches(path: '/pictures/cat.PNG');
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        test('different', () {
+          final actual = ExportFormat.png.matches(path: '/pictures/cat.gif');
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('without dot', () {
+          final actual = ExportFormat.png.matches(path: '/pictures/png');
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method fileName', () {
       group('formats', () {
         test('png', () {

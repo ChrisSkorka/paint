@@ -698,7 +698,11 @@ void main() {
             color: PixelColor.white,
           );
           final stubFiles = StubFileAccess(
-            file: (name: 'cat.png', bytes: ImageCodec.encodePng(layer: image)),
+            file: (
+              name: 'cat.png',
+              path: null,
+              bytes: ImageCodec.encodePng(layer: image),
+            ),
           );
           await tester.pumpWidget(
             MaterialApp(
@@ -724,6 +728,7 @@ void main() {
           final stubFiles = StubFileAccess(
             file: (
               name: 'cat.ora',
+              path: null,
               bytes: OraCodec.encode(
                 document: Document.blank(width: 2, height: 1),
               ),
@@ -745,6 +750,66 @@ void main() {
           await tester.pump();
           final actual = created;
           final expected = [Document.blank(name: 'cat', width: 2, height: 1)];
+          expect(actual, equals(expected));
+        });
+        testWidgets('file path', (tester) async {
+          final created = <Document>[];
+          void stubOnCreate(Document document) => created.add(document);
+          final stubFiles = StubFileAccess(
+            file: (
+              name: 'cat.png',
+              path: '/pictures/cat.png',
+              bytes: ImageCodec.encodePng(
+                layer: Layer.filled(
+                  width: 1,
+                  height: 1,
+                  color: PixelColor.white,
+                ),
+              ),
+            ),
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: NewDocumentView(
+                  files: stubFiles,
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  onCreate: stubOnCreate,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.text('From file'));
+          await tester.pump();
+          final actual = [for (final document in created) document.filePath];
+          const expected = ['/pictures/cat.png'];
+          expect(actual, equals(expected));
+        });
+        testWidgets('recent directory', (tester) async {
+          final stubFiles = StubFileAccess();
+          final stubStore = StubDocumentStore()
+            ..entries['1'] = storedDocument(
+              id: '1',
+              filePath: '/recent/dog.png',
+            );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: NewDocumentView(
+                  files: stubFiles,
+                  library: stubDocumentLibrary(store: stubStore),
+                  clipboard: StubImageClipboard(),
+                  onCreate: (_) {},
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+          await tester.tap(find.text('From file'));
+          await tester.pump();
+          final actual = stubFiles.openDirectories;
+          const expected = ['/recent/'];
           expect(actual, equals(expected));
         });
         testWidgets('cancelled', (tester) async {
@@ -772,7 +837,11 @@ void main() {
           final created = <Document>[];
           void stubOnCreate(Document document) => created.add(document);
           final stubFiles = StubFileAccess(
-            file: (name: 'cat.png', bytes: Uint8List.fromList([1, 2, 3])),
+            file: (
+              name: 'cat.png',
+              path: null,
+              bytes: Uint8List.fromList([1, 2, 3]),
+            ),
           );
           await tester.pumpWidget(
             MaterialApp(

@@ -9,6 +9,7 @@ class StoredDocument {
     required this.name,
     required this.modified,
     required this.thumbnail,
+    this.filePath,
   });
 
   factory StoredDocument.fromJson(Map<String, Object?> json) {
@@ -19,6 +20,7 @@ class StoredDocument {
       thumbnail: ImageCodec.decode(
         bytes: base64.decode(json['thumbnail']! as String),
       )!,
+      filePath: json['filePath'] as String?,
     );
   }
 
@@ -26,12 +28,14 @@ class StoredDocument {
   final String name;
   final DateTime modified;
   final Layer thumbnail;
+  final String? filePath;
 
   Map<String, Object?> toJson() => {
     'id': id,
     'name': name,
     'modified': modified.millisecondsSinceEpoch,
     'thumbnail': base64.encode(ImageCodec.encodePng(layer: thumbnail)),
+    'filePath': filePath,
   };
 
   @override
@@ -40,10 +44,11 @@ class StoredDocument {
       other.id == id &&
       other.name == name &&
       other.modified == modified &&
-      other.thumbnail == thumbnail;
+      other.thumbnail == thumbnail &&
+      other.filePath == filePath;
 
   @override
-  int get hashCode => Object.hash(id, name, modified, thumbnail);
+  int get hashCode => Object.hash(id, name, modified, thumbnail, filePath);
 
   @override
   String toString() => 'StoredDocument($id, $name, $modified)';

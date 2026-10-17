@@ -14,6 +14,7 @@ import '../../editor/editor_shortcut.dart';
 import '../../editor/files/document_library.dart';
 import '../../editor/files/export_format.dart';
 import '../../editor/files/file_access.dart';
+import '../../editor/files/file_location.dart';
 import '../../editor/files/image_clipboard.dart';
 import '../../editor/files/save_status.dart';
 import '../../editor/canvas/layer.dart';
@@ -344,15 +345,43 @@ class _EditorViewState extends State<EditorView> {
     if (saved && mounted) controller.markSaved(point: point, name: name);
   }
 
-  Future<void> _export(ExportFormat format) async {
-    setState(() => exportFormat = format);
+  String? get _exportPath => switch (widget.document.filePath) {
+    final path? when exportFormat.matches(path: path) => path,
+    _ => null,
+  };
+
+  Future<void> _exportAgain() async {
+    final path = _exportPath;
+    if (path == null) return _exportAs(exportFormat);
     await _attempt(
       failure: 'Could not export',
-      action: () => widget.files.save(
-        fileName: format.fileName(document: widget.document),
-        format: format,
-        bytes: format.encode(document: widget.document),
+      action: () => widget.files.overwrite(
+        path: path,
+        format: exportFormat,
+        bytes: exportFormat.encode(document: widget.document),
       ),
+    );
+  }
+
+  Future<void> _exportAs(ExportFormat format) async {
+    setState(() => exportFormat = format);
+    final directory = switch (widget.document.filePath) {
+      final path? => directoryOf(path: path),
+      null => widget.library.recentDirectory,
+    };
+    await _attempt(
+      failure: 'Could not export',
+      action: () async {
+        final path = await widget.files.saveAs(
+          fileName: format.fileName(document: widget.document),
+          directory: directory,
+          format: format,
+          bytes: format.encode(document: widget.document),
+        );
+        if (path != null && mounted) {
+          setState(() => widget.document.filePath = path);
+        }
+      },
     );
   }
 
@@ -387,7 +416,7 @@ class _EditorViewState extends State<EditorView> {
 
   late final _shortcutActions = <EditorShortcut, VoidCallback>{
     EditorShortcut.save: _save,
-    EditorShortcut.export: () => _export(exportFormat),
+    EditorShortcut.export: _exportAgain,
     EditorShortcut.undo: controller.undo,
     EditorShortcut.redo: controller.redo,
     EditorShortcut.copy: _copySelection,
@@ -587,75 +616,87 @@ class _EditorViewState extends State<EditorView> {
       color: PaintStyle.canvasAreaBackground,
       child: CustomPaint(
         foregroundPainter: const EdgeShadowPainter(),
-        child: Opacity(
-          opacity: awaitingFit ? 0 : 1,
-          child: LayoutBuilder(
-            key: canvasAreaKey,
-            builder: (context, constraints) {
-              final vertical = canvasMargin(
-                available: constraints.maxHeight,
-                extent: widget.document.height * controller.zoom.scale,
-                visible: EditorView.canvasVisible,
-                scrollbar: PaintScrollBehavior.scrollbarTrack,
-              );
-              final horizontal = canvasMargin(
-                available: constraints.maxWidth,
-                extent: widget.document.width * controller.zoom.scale,
-                visible: EditorView.canvasVisible,
-                scrollbar: PaintScrollBehavior.scrollbarTrack,
-              );
-              verticalScroll.leading = vertical.leading;
-              horizontalScroll.leading = horizontal.leading;
-              return _buildCanvasScrollbars(
-                child: SingleChildScrollView(
-                  controller: verticalScroll,
-                  child: SingleChildScrollView(
-                    controller: horizontalScroll,
-                    scrollDirection: Axis.horizontal,
-                    child: Listener(
-                      behavior: HitTestBehavior.translucent,
-                      onPointerSignal: _scrollCanvas,
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          horizontal.leading,
-                          vertical.leading,
-                          horizontal.trailing,
-                          vertical.trailing,
-                        ),
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            boxShadow: PaintStyle.faintShadow,
-                          ),
-                          child: Stack(
-                            children: [
-                              ListenableBuilder(
-                                listenable: controller.pointerPreview,
-                                builder: (context, _) => PixelCanvas(
-                                  width: widget.document.width,
-                                  height: widget.document.height,
-                                  zoom: controller.zoom.scale,
-                                  layers: controller.canvasLayers,
-                                  pointerPreview: controller.pointerPreview,
-                                  layersChanged: controller.layersChanged,
-                                  onPointerDown: _pointerDown,
-                                  onPointerMove: controller.pointerMove,
-                                  onPointerUp: controller.pointerUp,
-                                  onPointerExit: controller.pointerExit,
-                                  selection: controller.selectionArea,
-                                  cursor: _canvasCursor(),
-                                ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Opacity(
+              opacity: awaitingFit ? 0 : 1,
+              child: LayoutBuilder(
+                key: canvasAreaKey,
+                builder: (context, constraints) {
+                  final vertical = canvasMargin(
+                    available: constraints.maxHeight,
+                    extent: widget.document.height * controller.zoom.scale,
+                    visible: EditorView.canvasVisible,
+                    scrollbar: PaintScrollBehavior.scrollbarTrack,
+                  );
+                  final horizontal = canvasMargin(
+                    available: constraints.maxWidth,
+                    extent: widget.document.width * controller.zoom.scale,
+                    visible: EditorView.canvasVisible,
+                    scrollbar: PaintScrollBehavior.scrollbarTrack,
+                  );
+                  verticalScroll.leading = vertical.leading;
+                  horizontalScroll.leading = horizontal.leading;
+                  return _buildCanvasScrollbars(
+                    child: SingleChildScrollView(
+                      controller: verticalScroll,
+                      child: SingleChildScrollView(
+                        controller: horizontalScroll,
+                        scrollDirection: Axis.horizontal,
+                        child: Listener(
+                          behavior: HitTestBehavior.translucent,
+                          onPointerSignal: _scrollCanvas,
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              horizontal.leading,
+                              vertical.leading,
+                              horizontal.trailing,
+                              vertical.trailing,
+                            ),
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                boxShadow: PaintStyle.faintShadow,
                               ),
-                              ?_buildTextDraft(),
-                            ],
+                              child: Stack(
+                                children: [
+                                  ListenableBuilder(
+                                    listenable: controller.pointerPreview,
+                                    builder: (context, _) => PixelCanvas(
+                                      width: widget.document.width,
+                                      height: widget.document.height,
+                                      zoom: controller.zoom.scale,
+                                      layers: controller.canvasLayers,
+                                      pointerPreview: controller.pointerPreview,
+                                      layersChanged: controller.layersChanged,
+                                      onPointerDown: _pointerDown,
+                                      onPointerMove: controller.pointerMove,
+                                      onPointerUp: controller.pointerUp,
+                                      onPointerExit: controller.pointerExit,
+                                      selection: controller.selectionArea,
+                                      cursor: _canvasCursor(),
+                                    ),
+                                  ),
+                                  ?_buildTextDraft(),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+                  );
+                },
+              ),
+            ),
+            if (awaitingFit)
+              const Center(
+                child: Text(
+                  'Loading...',
+                  style: TextStyle(color: PaintStyle.titleColor),
                 ),
-              );
-            },
-          ),
+              ),
+          ],
         ),
       ),
     );
@@ -1033,16 +1074,20 @@ class _EditorViewState extends State<EditorView> {
                           children: [
                             PaintSplitButton(
                               icon: FontAwesomeIcons.download,
-                              tooltip: 'Export as ${exportFormat.label}',
+                              tooltip: switch (_exportPath) {
+                                final path? =>
+                                  'Export to ${fileNameOf(path: path)}',
+                                null => 'Export as ${exportFormat.label}',
+                              },
                               shortcut: EditorShortcut.export.keys,
                               secondaryTooltip: 'Export formats',
-                              onPressed: () => _export(exportFormat),
+                              onPressed: _exportAgain,
                               dropdown: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   for (final format in ExportFormat.values)
                                     MenuItemButton(
-                                      onPressed: () => _export(format),
+                                      onPressed: () => _exportAs(format),
                                       child: Text('Export as ${format.label}'),
                                     ),
                                 ],

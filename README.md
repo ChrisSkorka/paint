@@ -377,21 +377,33 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 7.5: misc tool refinements
 
-- [ ] when right clicking a tool or color, then the tool-config is temporary and after one use we switch back to the previous tool
+- [ ] right-click tool/setting for auto reverting tool/setting selection:
+  - when right clicking a tool or color, then the tool-config is temporary and after one use we switch back to the previous tool/setting preset
+  - when right-click selecting another tool, settings can still be changed
+  - revert once tool has been used
+    - selection is done once there's no more selection
+  - when reverting, settings are reverted too (using recent tool presets)
+  - can right click all buttons that contribute to tool presets:
+    - tools, shapes, colors, 
+    - pen settings: size, tip
+    - shape settings: boarder, fill
+    - text settings: size, formatting, boarder, fill, border size
+    (I think that's all the buttons going towards tool presets)
+- [ ] shortcut: tab to switch to next previous tool
 - [ ] re-add system cursor for tools
 
 ### phase 8: right pane refinement
 
 ### phase 8.1: ui feel
 
-- [ ] history previews show entire picture, not just modified layer?
-- [ ] history & layer item preview enlarges on hover
-- [ ] or hovering over previews in layers, frames, and history switches the canvas to show just that layer, frame, or history
+- [ ] history previews show entire picture, not just modified layer
   - how? save full image, recompute from all the diffs?
 - [ ] bulk actions:
   - layers, frames, and history items are selectable
   - edit, move, delete actions are applied to the selection
 - [ ] move image previews to left of layer, frames & history items?
+- [ ] history & layer item preview enlarges on hover?
+- [ ] or hovering over previews in layers, frames, and history switches the canvas to show just that layer, frame, or history
 
 ### phase 8.2: layers
 
@@ -457,11 +469,11 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [x] new docs tab: in-app docs have duplicate button
   - new doc tab docs list has duplicate button between rename & delete
   - increase saved doc list width by aprox 2 buttons
-- [ ] file open & save remember last location for doc (instead of default to code project)
-- [ ] editor canvas shows `Loading...` text in center until image is loaded
-- [ ] clicking the download primary button auto overrides a saved path, only secondary drop down options trigger path selection
-- [ ] new doc tabs open file file-picker defaults to last folder
-  - can we approximate last opened folder by getting the path of the most recent doc?
+- [x] file open & save remember last location for doc (instead of default to code project)
+- [x] editor canvas shows `Loading...` text in center until image is loaded
+- [x] clicking the download primary button auto overrides a saved path, only secondary drop down options trigger path selection
+- [x] new doc tabs open file file-picker defaults to last folder
+  - approximate last opened folder by getting the path of the most recent doc
 
 ### phase 9.3: misc
 

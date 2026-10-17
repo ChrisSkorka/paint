@@ -642,6 +642,14 @@ void main() {
           const expected = false;
           expect(actual, equals(expected));
         });
+        test('different file path', () {
+          final document = Document.blank(width: 2, height: 1);
+          final other = Document.blank(width: 2, height: 1)
+            ..filePath = '/cat.png';
+          final actual = document == other;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
         test('different tool presets', () {
           final document = Document.blank(width: 2, height: 1);
           final other = Document.blank(width: 2, height: 1)
@@ -783,6 +791,14 @@ void main() {
         test('different store id', () {
           final document = Document.blank(width: 2, height: 1);
           final other = Document.blank(width: 2, height: 1)..storeId = '1';
+          final actual = document.hashCode == other.hashCode;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('different file path', () {
+          final document = Document.blank(width: 2, height: 1);
+          final other = Document.blank(width: 2, height: 1)
+            ..filePath = '/cat.png';
           final actual = document.hashCode == other.hashCode;
           const expected = false;
           expect(actual, equals(expected));

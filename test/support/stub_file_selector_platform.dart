@@ -5,7 +5,7 @@ class StubFileSelectorPlatform extends FileSelectorPlatform {
 
   final XFile? openedFile;
   final FileSaveLocation? saveLocation;
-  final openRequests = <List<String>?>[];
+  final openRequests = <List<Object?>>[];
   final saveRequests = <List<Object?>>[];
 
   @override
@@ -14,7 +14,7 @@ class StubFileSelectorPlatform extends FileSelectorPlatform {
     String? initialDirectory,
     String? confirmButtonText,
   }) async {
-    openRequests.add(acceptedTypeGroups?.single.extensions);
+    openRequests.add([acceptedTypeGroups?.single.extensions, initialDirectory]);
     return openedFile;
   }
 
@@ -27,6 +27,7 @@ class StubFileSelectorPlatform extends FileSelectorPlatform {
       acceptedTypeGroups?.single.label,
       acceptedTypeGroups?.single.extensions,
       options.suggestedName,
+      options.initialDirectory,
     ]);
     return saveLocation;
   }

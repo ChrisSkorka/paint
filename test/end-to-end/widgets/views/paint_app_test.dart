@@ -234,6 +234,7 @@ void main() {
               files: StubFileAccess(
                 file: (
                   name: 'walk.gif',
+                  path: null,
                   bytes: GifCodec.encode(
                     document: animatedDocument(
                       spriteColors: [0xFF000000, 0xFFFF0000],

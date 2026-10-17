@@ -6,6 +6,7 @@ import '../canvas/layer.dart';
 import '../canvas/pixel_color.dart';
 import 'document_format_exception.dart';
 import 'document_store.dart';
+import 'file_location.dart';
 import 'ora_codec.dart';
 import 'stored_document.dart';
 
@@ -19,6 +20,13 @@ class DocumentLibrary extends ChangeNotifier {
   var _documents = const <StoredDocument>[];
 
   List<StoredDocument> get documents => _documents;
+
+  String? get recentDirectory => _documents
+      .map((entry) => entry.filePath)
+      .nonNulls
+      .map((path) => directoryOf(path: path))
+      .nonNulls
+      .firstOrNull;
 
   Future<void> refresh() async {
     final documents = await store.list();
@@ -39,6 +47,7 @@ class DocumentLibrary extends ChangeNotifier {
         layer: document.flatten(background: PixelColor.transparent, frame: 0),
         maximumSize: thumbnailSize,
       ),
+      filePath: document.filePath,
     );
     await store.save(
       entry: entry,
@@ -50,7 +59,9 @@ class DocumentLibrary extends ChangeNotifier {
   Future<Document> open({required StoredDocument entry}) async {
     final bytes = await store.load(id: entry.id);
     if (bytes == null) throw DocumentFormatException.missing();
-    return OraCodec.decode(name: entry.name, bytes: bytes)..storeId = entry.id;
+    return OraCodec.decode(name: entry.name, bytes: bytes)
+      ..storeId = entry.id
+      ..filePath = entry.filePath;
   }
 
   Future<void> rename({
@@ -65,6 +76,7 @@ class DocumentLibrary extends ChangeNotifier {
         name: name,
         modified: entry.modified,
         thumbnail: entry.thumbnail,
+        filePath: entry.filePath,
       ),
       bytes: bytes,
     );
@@ -81,6 +93,7 @@ class DocumentLibrary extends ChangeNotifier {
         name: '${entry.name} copy',
         modified: modified,
         thumbnail: entry.thumbnail,
+        filePath: entry.filePath,
       ),
       bytes: bytes,
     );

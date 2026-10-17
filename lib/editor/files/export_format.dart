@@ -22,6 +22,9 @@ enum ExportFormat {
   final String extension;
   final String mimeType;
 
+  bool matches({required String path}) =>
+      path.toLowerCase().endsWith('.$extension');
+
   String fileName({required Document document}) =>
       '${document.name}.$extension';
 

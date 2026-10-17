@@ -102,9 +102,12 @@ class _NewDocumentViewState extends State<NewDocumentView> {
 
   Future<void> _openFile() async {
     await _openWith(() async {
-      final file = await widget.files.open();
+      final file = await widget.files.open(
+        directory: widget.library.recentDirectory,
+      );
       if (file == null) return null;
-      return DocumentCodec.decode(fileName: file.name, bytes: file.bytes);
+      return DocumentCodec.decode(fileName: file.name, bytes: file.bytes)
+        ..filePath = file.path;
     });
   }
 

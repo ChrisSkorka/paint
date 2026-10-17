@@ -121,6 +121,7 @@ void main() {
           final stubFiles = StubFileAccess(
             file: (
               name: 'cat.ora',
+              path: null,
               bytes: OraCodec.encode(
                 document: Document.blank(width: 3, height: 2),
               ),

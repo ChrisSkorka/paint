@@ -50,6 +50,46 @@ void main() {
       });
     });
 
+    group('getter recentDirectory', () {
+      group('documents', () {
+        test('none', () async {
+          final library = documentLibrary(stubStore: StubDocumentStore());
+          await library.refresh();
+          final actual = library.recentDirectory;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+        test('newest with path', () async {
+          final stubStore = StubDocumentStore()
+            ..entries['1'] = storedDocument(
+              id: '1',
+              minute: 1,
+              filePath: '/old/cat.png',
+            )
+            ..entries['2'] = storedDocument(
+              id: '2',
+              minute: 2,
+              filePath: '/new/cat.png',
+            )
+            ..entries['3'] = storedDocument(id: '3', minute: 3);
+          final library = documentLibrary(stubStore: stubStore);
+          await library.refresh();
+          final actual = library.recentDirectory;
+          const expected = '/new/';
+          expect(actual, equals(expected));
+        });
+        test('path without directory', () async {
+          final stubStore = StubDocumentStore()
+            ..entries['1'] = storedDocument(id: '1', filePath: 'cat.png');
+          final library = documentLibrary(stubStore: stubStore);
+          await library.refresh();
+          final actual = library.recentDirectory;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method save', () {
       group('documents', () {
         test('new', () async {
@@ -109,6 +149,19 @@ void main() {
         });
       });
 
+      group('file path', () {
+        test('remembered', () async {
+          final library = documentLibrary(stubStore: StubDocumentStore());
+          await library.save(
+            document: Document.blank(width: 2, height: 1)
+              ..filePath = '/pictures/cat.png',
+          );
+          final actual = library.documents.single.filePath;
+          const expected = '/pictures/cat.png';
+          expect(actual, equals(expected));
+        });
+      });
+
       group('thumbnail', () {
         test('large document', () async {
           final library = documentLibrary(stubStore: StubDocumentStore());
@@ -145,6 +198,19 @@ void main() {
             ..storeId = '1';
           expect(actual, equals(expected));
         });
+        test('file path', () async {
+          final stubStore = StubDocumentStore()
+            ..files['1'] = OraCodec.encode(
+              document: Document.blank(width: 2, height: 1),
+            );
+          final library = documentLibrary(stubStore: stubStore);
+          final document = await library.open(
+            entry: storedDocument(id: '1', filePath: '/pictures/cat.png'),
+          );
+          final actual = document.filePath;
+          const expected = '/pictures/cat.png';
+          expect(actual, equals(expected));
+        });
       });
 
       group('errors', () {
@@ -177,6 +243,18 @@ void main() {
               '1': Uint8List.fromList([1]),
             },
           ];
+          expect(actual, equals(expected));
+        });
+        test('file path', () async {
+          final stubStore = StubDocumentStore()
+            ..files['1'] = Uint8List.fromList([1]);
+          final library = documentLibrary(stubStore: stubStore);
+          await library.rename(
+            entry: storedDocument(id: '1', filePath: '/pictures/cat.png'),
+            name: 'Dog',
+          );
+          final actual = library.documents.single.filePath;
+          const expected = '/pictures/cat.png';
           expect(actual, equals(expected));
         });
       });
@@ -216,6 +294,19 @@ void main() {
               id: Uint8List.fromList([1]),
             },
           ];
+          expect(actual, equals(expected));
+        });
+        test('file path', () async {
+          final stubStore = StubDocumentStore()
+            ..files['1'] = Uint8List.fromList([1]);
+          final library = documentLibrary(stubStore: stubStore);
+          await library.duplicate(
+            entry: storedDocument(id: '1', filePath: '/pictures/cat.png'),
+          );
+          final actual = [
+            for (final entry in library.documents) entry.filePath,
+          ];
+          const expected = ['/pictures/cat.png'];
           expect(actual, equals(expected));
         });
       });

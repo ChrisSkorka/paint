@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -40,6 +42,7 @@ import '../../../support/keyboard.dart';
 import '../../../support/layer_probes.dart';
 import '../../../support/view_probes.dart';
 import '../../../support/wheel.dart';
+import '../../../support/stored_documents.dart';
 import '../../../support/stub_document_store.dart';
 import '../../../support/stub_file_access.dart';
 import '../../../support/stub_image_clipboard.dart';
@@ -955,6 +958,27 @@ void main() {
             canvasSize(tester),
           ];
           const expected = [0.0, 1.0, Offset.zero, Size(768, 576)];
+          expect(actual, equals(expected));
+        });
+        testWidgets('loading until fit', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 64, height: 48),
+                  fitOnOpen: true,
+                ),
+              ),
+            ),
+          );
+          final loading = find.text('Loading...').evaluate().length;
+          await tester.pump();
+          final actual = [loading, find.text('Loading...').evaluate().length];
+          const expected = [1, 0];
           expect(actual, equals(expected));
         });
         testWidgets('fit on open reduced', (tester) async {
@@ -3193,6 +3217,198 @@ void main() {
           const expected = [
             ['Cat.gif', ExportFormat.gif],
           ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('remembered path', (tester) async {
+          useDesktopView(tester);
+          final stubFiles = StubFileAccess(savePath: '/pictures/dog.png');
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: stubFiles,
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(name: 'Cat', width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Export as PNG (Ctrl+Shift+E)'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Export to dog.png (Ctrl+Shift+E)'));
+          await tester.pump();
+          final actual = [
+            for (final file in stubFiles.saved) [file.fileName, file.directory],
+            for (final file in stubFiles.overwritten) [file.path, file.format],
+          ];
+          const expected = [
+            ['Cat.png', null],
+            ['/pictures/dog.png', ExportFormat.png],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('opened path', (tester) async {
+          useDesktopView(tester);
+          final stubFiles = StubFileAccess();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: stubFiles,
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(name: 'Cat', width: 2, height: 1)
+                    ..filePath = '/pictures/cat.png',
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Export to cat.png (Ctrl+Shift+E)'));
+          await tester.pump();
+          final actual = [
+            for (final file in stubFiles.saved) [file.fileName, file.format],
+            for (final file in stubFiles.overwritten) [file.path, file.format],
+          ];
+          const expected = [
+            ['/pictures/cat.png', ExportFormat.png],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('path of other format', (tester) async {
+          useDesktopView(tester);
+          final stubFiles = StubFileAccess();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: stubFiles,
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(name: 'Cat', width: 2, height: 1)
+                    ..filePath = '/pictures/cat.gif',
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Export as PNG (Ctrl+Shift+E)'));
+          await tester.pump();
+          final actual = [
+            for (final file in stubFiles.saved) [file.fileName, file.directory],
+            for (final file in stubFiles.overwritten) [file.path, file.format],
+          ];
+          const expected = [
+            ['Cat.png', '/pictures/'],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('dropdown with path', (tester) async {
+          useDesktopView(tester);
+          final stubFiles = StubFileAccess();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: stubFiles,
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(name: 'Cat', width: 2, height: 1)
+                    ..filePath = '/pictures/cat.png',
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Export formats'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('Export as PNG'));
+          await tester.pumpAndSettle();
+          final actual = [
+            for (final file in stubFiles.saved) [file.fileName, file.directory],
+            for (final file in stubFiles.overwritten) [file.path, file.format],
+          ];
+          const expected = [
+            ['Cat.png', '/pictures/'],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('recent directory', (tester) async {
+          useDesktopView(tester);
+          final stubFiles = StubFileAccess();
+          final library = stubDocumentLibrary(
+            store: StubDocumentStore()
+              ..entries['1'] = storedDocument(
+                id: '1',
+                filePath: '/recent/dog.png',
+              ),
+          );
+          await library.refresh();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: stubFiles,
+                  library: library,
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(name: 'Cat', width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Export as PNG (Ctrl+Shift+E)'));
+          await tester.pump();
+          final actual = [
+            for (final file in stubFiles.saved) [file.fileName, file.directory],
+          ];
+          const expected = [
+            ['Cat.png', '/recent/'],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('overwrite failure', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(saveError: Exception('denied')),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1)
+                    ..filePath = '/pictures/cat.png',
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Export to cat.png (Ctrl+Shift+E)'));
+          await tester.pump();
+          final actual = find.text('Could not export').evaluate().length;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        testWidgets('closed while choosing', (tester) async {
+          useDesktopView(tester);
+          final saveGate = Completer<void>();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(
+                    savePath: '/pictures/dog.png',
+                    saveGate: saveGate,
+                  ),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Export as PNG (Ctrl+Shift+E)'));
+          await tester.pumpWidget(const SizedBox());
+          saveGate.complete();
+          await tester.pump();
+          final actual = tester.takeException();
+          const expected = null;
           expect(actual, equals(expected));
         });
         testWidgets('failure', (tester) async {

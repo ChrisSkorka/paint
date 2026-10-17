@@ -9,11 +9,13 @@ void main() {
     String name = 'Cat',
     int minute = 0,
     PixelColor color = PixelColor.white,
+    String? filePath,
   }) => StoredDocument(
     id: id,
     name: name,
     modified: DateTime(2026, 10, 10, 12, minute),
     thumbnail: Layer.filled(width: 2, height: 1, color: color),
+    filePath: filePath,
   );
 
   group('class StoredDocument', () {
@@ -24,6 +26,23 @@ void main() {
           final expected = storedDocument();
           expect(actual, equals(expected));
         });
+        test('file path', () {
+          final actual = StoredDocument.fromJson(
+            storedDocument(filePath: '/pictures/cat.png').toJson(),
+          );
+          final expected = storedDocument(filePath: '/pictures/cat.png');
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('legacy', () {
+        test('without file path', () {
+          final actual = StoredDocument.fromJson(
+            storedDocument().toJson()..remove('filePath'),
+          );
+          final expected = storedDocument();
+          expect(actual, equals(expected));
+        });
       });
     });
 
@@ -31,7 +50,7 @@ void main() {
       group('fields', () {
         test('all fields', () {
           final actual = storedDocument().toJson().keys.toList();
-          const expected = ['id', 'name', 'modified', 'thumbnail'];
+          const expected = ['id', 'name', 'modified', 'thumbnail', 'filePath'];
           expect(actual, equals(expected));
         });
       });
@@ -64,6 +83,12 @@ void main() {
         test('different thumbnail', () {
           final actual =
               storedDocument() == storedDocument(color: PixelColor.black);
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('different file path', () {
+          final actual =
+              storedDocument() == storedDocument(filePath: '/cat.png');
           const expected = false;
           expect(actual, equals(expected));
         });
