@@ -20,6 +20,7 @@ import 'package:paint/editor/tools/text_orientation.dart';
 import 'package:paint/editor/tools/tool_kind.dart';
 import 'package:paint/editor/tools/tool_preset.dart';
 import 'package:paint/editor/tools/tool_presets.dart';
+import 'package:paint/editor/zoom.dart';
 
 import '../../support/document_probes.dart';
 import '../../support/layer_probes.dart';
@@ -5187,9 +5188,9 @@ void main() {
           );
           var notifications = 0;
           editorController.addListener(() => notifications++);
-          editorController.setZoom(8);
+          editorController.setZoom(const Zoom(step: 7));
           final actual = [editorController.zoom, notifications];
-          const expected = [8, 1];
+          const expected = [Zoom(step: 7), 1];
           expect(actual, equals(expected));
         });
       });
@@ -5200,19 +5201,28 @@ void main() {
         test('larger', () {
           final editorController = EditorController.forDocument(
             document: Document.blank(width: 3, height: 3),
-          )..setZoom(4);
+          );
           editorController.stepZoom(larger: true);
-          final actual = editorController.zoom;
-          const expected = 8;
+          final actual = editorController.zoom.scale;
+          const expected = 5.0;
           expect(actual, equals(expected));
         });
         test('smaller', () {
           final editorController = EditorController.forDocument(
             document: Document.blank(width: 3, height: 3),
-          )..setZoom(4);
+          );
           editorController.stepZoom(larger: false);
-          final actual = editorController.zoom;
-          const expected = 2;
+          final actual = editorController.zoom.scale;
+          const expected = 3.0;
+          expect(actual, equals(expected));
+        });
+        test('below one', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          )..setZoom(const Zoom(step: 0));
+          editorController.stepZoom(larger: false);
+          final actual = editorController.zoom.scale;
+          const expected = 0.5;
           expect(actual, equals(expected));
         });
       });
@@ -5220,19 +5230,19 @@ void main() {
         test('maximum', () {
           final editorController = EditorController.forDocument(
             document: Document.blank(width: 3, height: 3),
-          )..setZoom(64);
+          )..setZoom(Zoom.maximum);
           editorController.stepZoom(larger: true);
           final actual = editorController.zoom;
-          const expected = 100;
+          const expected = Zoom.maximum;
           expect(actual, equals(expected));
         });
         test('minimum', () {
           final editorController = EditorController.forDocument(
             document: Document.blank(width: 3, height: 3),
-          )..setZoom(1);
+          )..setZoom(Zoom.minimum);
           editorController.stepZoom(larger: false);
           final actual = editorController.zoom;
-          const expected = 1;
+          const expected = Zoom.minimum;
           expect(actual, equals(expected));
         });
       });

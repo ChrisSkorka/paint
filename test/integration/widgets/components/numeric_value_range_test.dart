@@ -135,6 +135,70 @@ void main() {
 
     group('interactions', () {
       group('typing', () {
+        testWidgets('custom parse', (tester) async {
+          final changes = <int>[];
+          void stubOnChanged(int value) => changes.add(value);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: Center(
+                  child: NumericValueRange(
+                    label: 'Zoom:',
+                    value: -1,
+                    minimum: -3,
+                    maximum: 3,
+                    valueToText: (value) =>
+                        value < 0 ? '1/${1 - value}' : '${value + 1}',
+                    textToValue: (text) => switch (text.split('/')) {
+                      ['1', final divisor] => 1 - int.parse(divisor),
+                      [final factor] => int.parse(factor) - 1,
+                      _ => null,
+                    },
+                    allowedCharacters: '[0-9/]',
+                    onChanged: stubOnChanged,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.enterText(find.byType(TextField), '1/3');
+          final actual = changes;
+          const expected = [-2];
+          expect(actual, equals(expected));
+        });
+        testWidgets('filtered characters', (tester) async {
+          void stubOnChanged(int value) {}
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: Center(
+                  child: NumericValueRange(
+                    label: 'Zoom:',
+                    value: -1,
+                    minimum: -3,
+                    maximum: 3,
+                    valueToText: (value) =>
+                        value < 0 ? '1/${1 - value}' : '${value + 1}',
+                    textToValue: (text) => switch (text.split('/')) {
+                      ['1', final divisor] => 1 - int.parse(divisor),
+                      [final factor] => int.parse(factor) - 1,
+                      _ => null,
+                    },
+                    allowedCharacters: '[0-9/]',
+                    onChanged: stubOnChanged,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.enterText(find.byType(TextField), '1/x3');
+          final actual = tester
+              .widget<TextField>(find.byType(TextField))
+              .controller!
+              .text;
+          const expected = '1/3';
+          expect(actual, equals(expected));
+        });
         testWidgets('valid', (tester) async {
           final changes = <int>[];
           void stubOnChanged(int value) => changes.add(value);
@@ -252,6 +316,40 @@ void main() {
         });
       });
       group('submitting', () {
+        testWidgets('custom format', (tester) async {
+          void stubOnChanged(int value) {}
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: Center(
+                  child: NumericValueRange(
+                    label: 'Zoom:',
+                    value: -1,
+                    minimum: -3,
+                    maximum: 3,
+                    valueToText: (value) =>
+                        value < 0 ? '1/${1 - value}' : '${value + 1}',
+                    textToValue: (text) => switch (text.split('/')) {
+                      ['1', final divisor] => 1 - int.parse(divisor),
+                      [final factor] => int.parse(factor) - 1,
+                      _ => null,
+                    },
+                    allowedCharacters: '[0-9/]',
+                    onChanged: stubOnChanged,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.enterText(find.byType(TextField), '9');
+          await tester.testTextInput.receiveAction(TextInputAction.done);
+          final actual = tester
+              .widget<TextField>(find.byType(TextField))
+              .controller!
+              .text;
+          const expected = '4';
+          expect(actual, equals(expected));
+        });
         testWidgets('in range', (tester) async {
           final changes = <int>[];
           void stubOnChanged(int value) => changes.add(value);

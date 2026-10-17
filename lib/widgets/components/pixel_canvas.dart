@@ -34,7 +34,7 @@ class PixelCanvas extends StatefulWidget {
 
   final int width;
   final int height;
-  final int zoom;
+  final double zoom;
   final List<CanvasLayer> layers;
   final PointerPreview pointerPreview;
   final void Function({
@@ -102,8 +102,8 @@ class _PixelCanvasState extends State<PixelCanvas> {
                   child: CustomPaint(
                     painter: const ChessGridPainter(),
                     size: Size(
-                      widget.width * widget.zoom.toDouble(),
-                      widget.height * widget.zoom.toDouble(),
+                      widget.width * widget.zoom,
+                      widget.height * widget.zoom,
                     ),
                   ),
                 ),
@@ -147,7 +147,7 @@ class PixelLayersPainter extends CustomPainter {
   });
 
   final List<CanvasLayer> layers;
-  final int zoom;
+  final double zoom;
   final LayerImageCache imageCache;
 
   static ColorFilter tintFilter(PixelColor tint) => ColorFilter.matrix([
@@ -160,7 +160,7 @@ class PixelLayersPainter extends CustomPainter {
   static void paintPixels({
     required Canvas canvas,
     required Layer pixels,
-    required int zoom,
+    required double zoom,
   }) {
     paintArea(canvas: canvas, pixels: pixels, area: pixels.bounds, zoom: zoom);
   }
@@ -169,7 +169,7 @@ class PixelLayersPainter extends CustomPainter {
     required Canvas canvas,
     required Layer pixels,
     required PixelRectangle area,
-    required int zoom,
+    required double zoom,
   }) {
     final clipped = area.intersection(pixels.bounds);
     for (var y = clipped.top; y < clipped.bottom; y++) {
@@ -190,7 +190,7 @@ class PixelLayersPainter extends CustomPainter {
     required int y,
     required int left,
     required int right,
-    required int zoom,
+    required double zoom,
   }) {
     var runStart = left;
     for (var x = left + 1; x <= right; x++) {
@@ -200,12 +200,7 @@ class PixelLayersPainter extends CustomPainter {
       }
       if (runColor.alpha > 0) {
         canvas.drawRect(
-          Rect.fromLTWH(
-            runStart * zoom.toDouble(),
-            y * zoom.toDouble(),
-            (x - runStart) * zoom.toDouble(),
-            zoom.toDouble(),
-          ),
+          Rect.fromLTWH(runStart * zoom, y * zoom, (x - runStart) * zoom, zoom),
           Paint()
             ..color = Color(runColor.argb)
             ..isAntiAlias = false,
@@ -250,10 +245,10 @@ class PixelLayersPainter extends CustomPainter {
         tile.image,
         Rect.fromLTWH(0, 0, area.width.toDouble(), area.height.toDouble()),
         Rect.fromLTWH(
-          area.left * zoom.toDouble(),
-          area.top * zoom.toDouble(),
-          area.width * zoom.toDouble(),
-          area.height * zoom.toDouble(),
+          area.left * zoom,
+          area.top * zoom,
+          area.width * zoom,
+          area.height * zoom,
         ),
         paint,
       );
@@ -286,7 +281,7 @@ class PointerPreviewPainter extends CustomPainter {
     : super(repaint: preview);
 
   final PointerPreview preview;
-  final int zoom;
+  final double zoom;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -307,17 +302,17 @@ class SelectionOutlinePainter extends CustomPainter {
   const SelectionOutlinePainter({required this.area, required this.zoom});
 
   final PixelRectangle? area;
-  final int zoom;
+  final double zoom;
 
   @override
   void paint(Canvas canvas, Size size) {
     final area = this.area;
     if (area == null) return;
     final outline = Rect.fromLTWH(
-      area.left * zoom.toDouble(),
-      area.top * zoom.toDouble(),
-      area.width * zoom.toDouble(),
-      area.height * zoom.toDouble(),
+      area.left * zoom,
+      area.top * zoom,
+      area.width * zoom,
+      area.height * zoom,
     ).deflate(0.5);
     canvas.drawRect(
       outline,

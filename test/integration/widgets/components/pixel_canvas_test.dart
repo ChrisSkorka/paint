@@ -187,6 +187,34 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
+        testWidgets('reduced zoom', (tester) async {
+          final events = <List<Object>>[];
+          await tester.pumpWidget(
+            Center(
+              child: PixelCanvas(
+                width: 8,
+                height: 4,
+                zoom: 0.5,
+                layers: const [],
+                pointerPreview: PointerPreview.sized(width: 8, height: 4),
+                onPointerDown: ({required point, required button}) =>
+                    events.add(['down', point, button]),
+                onPointerMove: ({required point}) =>
+                    events.add(['move', point]),
+                onPointerUp: ({required point}) => events.add(['up', point]),
+                onPointerExit: () => events.add(['exit']),
+              ),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(2.5, 1.2));
+          final actual = events;
+          const expected = [
+            ['down', PixelPoint(x: 5, y: 2), PointerButton.primary],
+            ['up', PixelPoint(x: 5, y: 2)],
+          ];
+          expect(actual, equals(expected));
+        });
         testWidgets('secondary', (tester) async {
           final events = <List<Object>>[];
           await tester.pumpWidget(

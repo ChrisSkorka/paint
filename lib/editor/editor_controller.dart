@@ -34,6 +34,7 @@ import 'tools/tool.dart';
 import 'tools/tool_kind.dart';
 import 'tools/tool_preset.dart';
 import 'tools/tool_size.dart';
+import 'zoom.dart';
 
 class EditorController extends ChangeNotifier {
   EditorController({
@@ -61,7 +62,7 @@ class EditorController extends ChangeNotifier {
   var _drawingToolKind = ToolKind.pen;
   var _penSize = 1;
   var _penTip = BrushTip.square;
-  var _zoom = defaultZoom;
+  var _zoom = Zoom.standard;
   var _primaryColor = PixelColor.black;
   var _secondaryColor = PixelColor.white;
   var _editingPrimary = true;
@@ -95,9 +96,6 @@ class EditorController extends ChangeNotifier {
   static const _noArea = PixelRectangle(left: 0, top: 0, width: 0, height: 0);
   static const minimumToolSize = ToolPreset.minimumSize;
   static const maximumToolSize = ToolPreset.maximumSize;
-  static const defaultZoom = 4;
-  static const minimumZoom = 1;
-  static const maximumZoom = 100;
 
   @override
   void dispose() {
@@ -109,7 +107,7 @@ class EditorController extends ChangeNotifier {
   ToolKind get toolKind => _toolKind;
   int get penSize => _penSize;
   BrushTip get penTip => _penTip;
-  int get zoom => _zoom;
+  Zoom get zoom => _zoom;
   PixelColor get primaryColor => _primaryColor;
   PixelColor get secondaryColor => _secondaryColor;
   bool get shapeOutlined => _shapeOutlined;
@@ -743,13 +741,13 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setZoom(int zoom) {
+  void setZoom(Zoom zoom) {
     _zoom = zoom;
     notifyListeners();
   }
 
   void stepZoom({required bool larger}) {
-    setZoom((larger ? _zoom * 2 : _zoom ~/ 2).clamp(minimumZoom, maximumZoom));
+    setZoom(_zoom.stepped(larger: larger));
   }
 
   void editPrimary({required bool primary}) {

@@ -27,6 +27,7 @@ import '../../editor/tools/text_format.dart';
 import '../../editor/tools/text_stamp.dart';
 import '../../editor/tools/tool_kind.dart';
 import '../../editor/tools/tool_size.dart';
+import '../../editor/zoom.dart';
 import '../components/canvas_margin.dart';
 import '../components/color_dialog.dart';
 import '../components/edge_shadow.dart';
@@ -363,8 +364,7 @@ class _EditorViewState extends State<EditorView> {
     EditorShortcut.swapColors: controller.swapColors,
     EditorShortcut.zoomIn: () => controller.stepZoom(larger: true),
     EditorShortcut.zoomOut: () => controller.stepZoom(larger: false),
-    EditorShortcut.resetZoom: () =>
-        controller.setZoom(EditorController.defaultZoom),
+    EditorShortcut.resetZoom: () => controller.setZoom(Zoom.standard),
     EditorShortcut.previousFrame: () => controller.stepFrame(forward: false),
     EditorShortcut.nextFrame: () => controller.stepFrame(forward: true),
     EditorShortcut.firstFrame: controller.selectFirstFrame,
@@ -457,13 +457,13 @@ class _EditorViewState extends State<EditorView> {
           builder: (context, constraints) {
             final vertical = canvasMargin(
               available: constraints.maxHeight,
-              extent: widget.document.height * controller.zoom.toDouble(),
+              extent: widget.document.height * controller.zoom.scale,
               edge: EditorView.canvasEdge,
               scrollbar: PaintScrollBehavior.scrollbarTrack,
             );
             final horizontal = canvasMargin(
               available: constraints.maxWidth,
-              extent: widget.document.width * controller.zoom.toDouble(),
+              extent: widget.document.width * controller.zoom.scale,
               edge: EditorView.canvasEdge,
               scrollbar: PaintScrollBehavior.scrollbarTrack,
             );
@@ -496,7 +496,7 @@ class _EditorViewState extends State<EditorView> {
                               builder: (context, _) => PixelCanvas(
                                 width: widget.document.width,
                                 height: widget.document.height,
-                                zoom: controller.zoom,
+                                zoom: controller.zoom.scale,
                                 layers: controller.canvasLayers,
                                 pointerPreview: controller.pointerPreview,
                                 layersChanged: controller.layersChanged,
@@ -526,12 +526,11 @@ class _EditorViewState extends State<EditorView> {
   Widget? _buildTextDraft() {
     final origin = controller.textOrigin;
     if (origin == null) return null;
-    final zoom = controller.zoom;
-    final scale = zoom.toDouble();
+    final scale = controller.zoom.scale;
     final format = controller.textFormat;
     return Positioned(
-      left: origin.x * zoom - TextDraft.handleWidth,
-      top: origin.y * zoom - TextDraft.handleWidth,
+      left: origin.x * scale - TextDraft.handleWidth,
+      top: origin.y * scale - TextDraft.handleWidth,
       child: TextDraft(
         style: format.style(
           scale: scale,
@@ -562,10 +561,10 @@ class _EditorViewState extends State<EditorView> {
 
   void _moveText(Offset delta) {
     textDrag += delta;
-    final zoom = controller.zoom;
-    final offsetX = textDrag.dx ~/ zoom;
-    final offsetY = textDrag.dy ~/ zoom;
-    textDrag -= Offset(offsetX * zoom.toDouble(), offsetY * zoom.toDouble());
+    final scale = controller.zoom.scale;
+    final offsetX = textDrag.dx ~/ scale;
+    final offsetY = textDrag.dy ~/ scale;
+    textDrag -= Offset(offsetX * scale, offsetY * scale);
     controller.moveText(offsetX: offsetX, offsetY: offsetY);
   }
 
@@ -1355,16 +1354,18 @@ class _EditorViewState extends State<EditorView> {
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: NumericValueRange(
                   label: 'Zoom:',
-                  value: controller.zoom,
-                  minimum: EditorController.minimumZoom,
-                  maximum: EditorController.maximumZoom,
-                  rangeMinimum: 0,
+                  value: controller.zoom.step,
+                  minimum: Zoom.minimum.step,
+                  maximum: Zoom.maximum.step,
+                  rangeMinimum: -3,
                   rangeMaximum: 4,
-                  valueToRange: (value) => log(value) / ln2,
-                  rangeToValue: (range) => pow(2, range).round(),
-                  decrement: (value) => value ~/ 2,
-                  increment: (value) => value * 2,
-                  onChanged: controller.setZoom,
+                  valueToRange: (step) => log(Zoom(step: step).scale) / ln2,
+                  rangeToValue: (range) =>
+                      Zoom.nearest(scale: pow(2, range).toDouble()).step,
+                  valueToText: (step) => Zoom(step: step).label,
+                  textToValue: (text) => Zoom.tryParse(text)?.step,
+                  allowedCharacters: '[0-9/]',
+                  onChanged: (step) => controller.setZoom(Zoom(step: step)),
                 ),
               ),
             ],

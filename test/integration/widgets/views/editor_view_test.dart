@@ -4808,7 +4808,7 @@ void main() {
             modifiers: [LogicalKeyboardKey.controlLeft],
           );
           final actual = canvasSize(tester);
-          const expected = Size(16, 16);
+          const expected = Size(10, 10);
           expect(actual, equals(expected));
         });
         testWidgets('ctrl minus', (tester) async {
@@ -4831,7 +4831,7 @@ void main() {
             modifiers: [LogicalKeyboardKey.controlLeft],
           );
           final actual = canvasSize(tester);
-          const expected = Size(4, 4);
+          const expected = Size(6, 6);
           expect(actual, equals(expected));
         });
         testWidgets('ctrl 0', (tester) async {
@@ -7694,7 +7694,7 @@ void main() {
           await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
           await tester.pump();
           final actual = canvasSize(tester);
-          const expected = Size(16, 16);
+          const expected = Size(10, 10);
           expect(actual, equals(expected));
         });
         testWidgets('ctrl scroll down', (tester) async {
@@ -7717,7 +7717,7 @@ void main() {
           await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
           await tester.pump();
           final actual = canvasSize(tester);
-          const expected = Size(4, 4);
+          const expected = Size(6, 6);
           expect(actual, equals(expected));
         });
         testWidgets('right ctrl', (tester) async {
@@ -7740,7 +7740,7 @@ void main() {
           await tester.sendKeyUpEvent(LogicalKeyboardKey.controlRight);
           await tester.pump();
           final actual = canvasSize(tester);
-          const expected = Size(16, 16);
+          const expected = Size(10, 10);
           expect(actual, equals(expected));
         });
         testWidgets('canvas margin', (tester) async {
@@ -7767,7 +7767,7 @@ void main() {
           await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
           await tester.pump();
           final actual = canvasSize(tester);
-          const expected = Size(16, 16);
+          const expected = Size(10, 10);
           expect(actual, equals(expected));
         });
         testWidgets('without ctrl', (tester) async {
@@ -7858,7 +7858,7 @@ void main() {
             await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
             await tester.pump();
             final actual = canvasSize(tester);
-            const expected = Size(16, 16);
+            const expected = Size(10, 10);
             expect(actual, equals(expected));
           },
           variant: TargetPlatformVariant.only(TargetPlatform.macOS),
@@ -8117,7 +8117,7 @@ void main() {
           await tester.tap(find.byTooltip('Increase'));
           await tester.pump();
           final actual = canvasSize(tester);
-          const expected = Size(16, 16);
+          const expected = Size(10, 10);
           expect(actual, equals(expected));
         });
         testWidgets('decrease', (tester) async {
@@ -8137,7 +8137,7 @@ void main() {
           await tester.tap(find.byTooltip('Decrease'));
           await tester.pump();
           final actual = canvasSize(tester);
-          const expected = Size(4, 4);
+          const expected = Size(6, 6);
           expect(actual, equals(expected));
         });
         testWidgets('slider', (tester) async {
@@ -8168,6 +8168,101 @@ void main() {
           await tester.pump();
           final actual = canvasSize(tester);
           const expected = Size(16, 16);
+          expect(actual, equals(expected));
+        });
+        testWidgets('decrease below one', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          for (var tap = 0; tap < 4; tap++) {
+            await tester.tap(find.byTooltip('Decrease'));
+            await tester.pump();
+          }
+          final actual = [
+            canvasSize(tester),
+            tester
+                .widget<TextField>(
+                  find.descendant(
+                    of: find.ancestor(
+                      of: find.text('Zoom:'),
+                      matching: find.byType(NumericValueRange),
+                    ),
+                    matching: find.byType(TextField),
+                  ),
+                )
+                .controller!
+                .text,
+          ];
+          const expected = [Size(2, 2), '1/2'];
+          expect(actual, equals(expected));
+        });
+        testWidgets('typed fraction', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.enterText(
+            find.descendant(
+              of: find.ancestor(
+                of: find.text('Zoom:'),
+                matching: find.byType(NumericValueRange),
+              ),
+              matching: find.byType(TextField),
+            ),
+            '1/4',
+          );
+          await tester.pump();
+          final actual = canvasSize(tester);
+          const expected = Size(1, 1);
+          expect(actual, equals(expected));
+        });
+        testWidgets('slider below one', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          tester
+              .widget<Slider>(
+                find.descendant(
+                  of: find.ancestor(
+                    of: find.text('Zoom:'),
+                    matching: find.byType(NumericValueRange),
+                  ),
+                  matching: find.byType(Slider),
+                ),
+              )
+              .onChanged!(-1);
+          await tester.pump();
+          final actual = canvasSize(tester);
+          const expected = Size(2, 2);
           expect(actual, equals(expected));
         });
       });

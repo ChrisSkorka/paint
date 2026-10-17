@@ -302,9 +302,20 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [x] vertically scrollable views always show scroll bars (& scroll bars are touchscreen friendly thickness) (but only when content overflows)
 - [x] allow scrolling document/canvas to the right & bottom when smaller than available space (currently if smaller, it's constraint to top left corner)
 - [x] horizontally scrollable views (top ribbons & tabs as far as I know) scroll on scroll wheen without needed shift pressed
-- [ ] allow zoom less than 1x
+- [x] button and scroll zoom step by 1 instead of x2
+- [x] allow zoom less than 1x (1/2, 1/3, 1/4, ...)
+- [ ] zoom centered on canvas center except on scroll, then center around cursor
 - [ ] default zoom fit's doc
-- [ ] button and scroll zoom step by 1 instead of x2
+- [ ] exponential zoom step sizes:
+  - internal representation is still int
+  - negative numbers represent fractional zooms (-2 => 1/2, -10 => 1/10)
+  - number input allows any integers
+  - buttons and scroll use a size step method similar to toolSizeStep
+  - step sizes rules:
+    - < +- 8: 1
+    - < +- 16: 2
+    - < +- 32: 4
+    - ...
 
 ### phase 7: tool refinement
 

@@ -20,6 +20,9 @@ class NumericValueRange extends StatefulWidget {
     this.rangeToValue = _round,
     this.decrement = _decrement,
     this.increment = _increment,
+    this.valueToText = _text,
+    this.textToValue = int.tryParse,
+    this.allowedCharacters = '[0-9]',
   });
 
   final String label;
@@ -34,24 +37,30 @@ class NumericValueRange extends StatefulWidget {
   final int Function(double range) rangeToValue;
   final int Function(int value) decrement;
   final int Function(int value) increment;
+  final String Function(int value) valueToText;
+  final int? Function(String text) textToValue;
+  final String allowedCharacters;
 
   static double _toDouble(int value) => value.toDouble();
   static int _round(double range) => range.round();
   static int _decrement(int value) => value - 1;
   static int _increment(int value) => value + 1;
+  static String _text(int value) => '$value';
 
   @override
   State<NumericValueRange> createState() => _NumericValueRangeState();
 }
 
 class _NumericValueRangeState extends State<NumericValueRange> {
-  late final textController = TextEditingController(text: '${widget.value}');
+  late final textController = TextEditingController(
+    text: widget.valueToText(widget.value),
+  );
 
   @override
   void didUpdateWidget(NumericValueRange oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (int.tryParse(textController.text) != widget.value) {
-      textController.text = '${widget.value}';
+    if (widget.textToValue(textController.text) != widget.value) {
+      textController.text = widget.valueToText(widget.value);
     }
   }
 
@@ -75,11 +84,11 @@ class _NumericValueRangeState extends State<NumericValueRange> {
   }
 
   void _submit(String text) {
-    final clamped = (int.tryParse(text) ?? widget.value).clamp(
+    final clamped = (widget.textToValue(text) ?? widget.value).clamp(
       widget.minimum,
       widget.maximum,
     );
-    textController.text = '$clamped';
+    textController.text = widget.valueToText(clamped);
     _commit(clamped);
   }
 
@@ -98,10 +107,14 @@ class _NumericValueRangeState extends State<NumericValueRange> {
           width: 64,
           child: TextField(
             controller: textController,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(
+                RegExp(widget.allowedCharacters),
+              ),
+            ],
             onSubmitted: _submit,
             onChanged: (text) {
-              final value = int.tryParse(text);
+              final value = widget.textToValue(text);
               if (value != null &&
                   value >= widget.minimum &&
                   value <= widget.maximum) {
