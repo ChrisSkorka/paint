@@ -306,15 +306,16 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [x] allow zoom less than 1x (1/2, 1/3, 1/4, ...)
 - [x] zoom centered on canvas center except on scroll, then center around cursor
 - [x] default zoom & ctrl+0 fit's doc centered in canvas
-- [ ] exponential zoom step sizes:
+- [x] exponential zoom step sizes:
   - internal representation is still int
   - negative numbers represent fractional zooms (-2 => 1/2, -10 => 1/10)
   - number input allows any integers
   - buttons and scroll use a size step method similar to toolSizeStep
   - step sizes rules:
-    - < +- 8: 1
-    - < +- 16: 2
-    - < +- 32: 4
+    - < +- 4: 1
+    - < +- 8: 2
+    - < +- 16: 4
+    - < +- 32: 8
     - ...
 
 ### phase 7: tool refinement
@@ -374,15 +375,44 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - maintain hex text input
   - maintain org v new color
 
-### phase 7.5: history
+### phase 7.5: misc tool refinements
 
+- [ ] when right clicking a tool or color, then the tool-config is temporary and after one use we switch back to the previous tool
+- [ ] re-add system cursor for tools
+
+### phase 8: right pane refinement
+
+### phase 8.1: ui feel
+
+- [ ] history previews show entire picture, not just modified layer?
 - [ ] history & layer item preview enlarges on hover
-- [ ] feature to convert history diff into layer?
-- [ ] feature to remove/undo intermediate history item
+- [ ] or hovering over previews in layers, frames, and history switches the canvas to show just that layer, frame, or history
+  - how? save full image, recompute from all the diffs?
+- [ ] bulk actions:
+  - layers, frames, and history items are selectable
+  - edit, move, delete actions are applied to the selection
+- [ ] move image previews to left of layer, frames & history items?
 
-### phase 8: polish
+### phase 8.2: layers
 
-### phase 8.1: performance
+- [ ] merge down layers
+- [ ] allow renaming layers
+
+### phase 8.3: history
+
+- [ ] delete/revert history items: append new history item that applies the reverse diff
+  - how to handle erasure?
+- [ ] convert history items into layer: append convert to layer at end of history that applies all required changes
+  - how to treat deletions at start of selection? apply inversion bitmap in layer above?
+  - can we layerize selective actions, or just from an action until end?
+  - how about layer CRUD ops? disallow layerization?
+  - what if i've gone back (undid) some items? drop residual items?
+  - how to handle edits in per-frame layers
+- [ ] revert/layerize should push new items, not actually remove/edit history (so that you can undo a history edit)
+
+### phase 9: polish
+
+### phase 9.1: performance
 
 - [x] FPS on larger canvases
   - a 4096*4096 canvas is unusable
@@ -399,26 +429,25 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - [ ] image compression (package:archive, XOR against previous layer)
 - [ ] drawing with huge tools, crashes app
 
-### phase 8.5: image properties
+### phase 9.2: image properties
 
 - [ ] allow change image size
 - [ ] allow renaming documents stored in-app
 
-### phase 8.7: misc
+### phase 9.3: files & document
 
+- [ ] new docs tab: in-app docs have duplicate button
+- [ ] file open & save remember last location for doc (instead of default to code project)
 - [ ] new docs tab shows loading indicator when loading takes longer than 1s
-- [ ] move image previews to left of layer, frames & history items
+- [ ] save real file when opening real files on native system
+
+### phase 9.3: misc
+
 - [ ] text inputs have unit text on right side
 - [ ] right click on web triggers system context menu
-- [ ] save real file when opening real files on native system
-- [ ] allow renaming layers
-- [ ] allow zoom less than 1x
-- [ ] default zoom fit's doc
-- [ ] new docs tab: in-app docs have duplicate button
 
 ### phase x: todo
 
-- [ ] when right clicking a tool or color, then the tool-config is temporary and after one use we switch back to the previous tool
 - [ ] animation loop toggle
 - [ ] interchangeable panes: move panes between top & right panels
 - [ ] wide double buttons for pairs: undo/redo, rotate, mirror

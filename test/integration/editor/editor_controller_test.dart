@@ -5188,9 +5188,9 @@ void main() {
           );
           var notifications = 0;
           editorController.addListener(() => notifications++);
-          editorController.setZoom(const Zoom(step: 7));
+          editorController.setZoom(const Zoom(factor: 8));
           final actual = [editorController.zoom, notifications];
-          const expected = [Zoom(step: 7), 1];
+          const expected = [Zoom(factor: 8), 1];
           expect(actual, equals(expected));
         });
       });

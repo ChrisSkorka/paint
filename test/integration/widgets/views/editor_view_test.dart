@@ -4872,7 +4872,7 @@ void main() {
             modifiers: [LogicalKeyboardKey.controlLeft],
           );
           final actual = canvasSize(tester);
-          const expected = Size(10, 10);
+          const expected = Size(12, 12);
           expect(actual, equals(expected));
         });
         testWidgets('ctrl equal keeps center pixel', (tester) async {
@@ -4955,7 +4955,7 @@ void main() {
               ),
               matching: find.byType(TextField),
             ),
-            '100',
+            '96',
           );
           await tester.pump();
           await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
@@ -4966,7 +4966,7 @@ void main() {
           );
           await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
           final actual = canvasSize(tester);
-          const expected = Size(200, 200);
+          const expected = Size(192, 192);
           expect(actual, equals(expected));
         });
         testWidgets('ctrl minus', (tester) async {
@@ -5017,7 +5017,7 @@ void main() {
             modifiers: [LogicalKeyboardKey.controlLeft],
           );
           final actual = [canvasOffCenter(tester), canvasSize(tester)];
-          const expected = [Offset.zero, Size(200, 200)];
+          const expected = [Offset.zero, Size(192, 192)];
           expect(actual, equals(expected));
         });
       });
@@ -7852,7 +7852,7 @@ void main() {
           await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
           await tester.pump();
           final actual = canvasSize(tester);
-          const expected = Size(10, 10);
+          const expected = Size(12, 12);
           expect(actual, equals(expected));
         });
         testWidgets('ctrl scroll down', (tester) async {
@@ -7898,7 +7898,7 @@ void main() {
           await tester.sendKeyUpEvent(LogicalKeyboardKey.controlRight);
           await tester.pump();
           final actual = canvasSize(tester);
-          const expected = Size(10, 10);
+          const expected = Size(12, 12);
           expect(actual, equals(expected));
         });
         testWidgets('canvas margin', (tester) async {
@@ -7925,7 +7925,7 @@ void main() {
           await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
           await tester.pump();
           final actual = canvasSize(tester);
-          const expected = Size(10, 10);
+          const expected = Size(12, 12);
           expect(actual, equals(expected));
         });
         testWidgets('without ctrl', (tester) async {
@@ -8016,7 +8016,7 @@ void main() {
             await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
             await tester.pump();
             final actual = canvasSize(tester);
-            const expected = Size(10, 10);
+            const expected = Size(12, 12);
             expect(actual, equals(expected));
           },
           variant: TargetPlatformVariant.only(TargetPlatform.macOS),
@@ -8073,7 +8073,7 @@ void main() {
             canvasPixelAt(tester, point: cursor),
             canvasSize(tester),
           ];
-          const expected = [Offset(75, 50), Size(2000, 2000)];
+          const expected = [Offset(75, 50), Size(2400, 2400)];
           expect(actual, equals(expected));
         });
         testWidgets('fitting canvas keeps cursor pixel', (tester) async {
@@ -8101,7 +8101,7 @@ void main() {
             canvasPixelAt(tester, point: cursor),
             canvasSize(tester),
           ];
-          const expected = [Offset(17.5, 17.5), Size(100, 100)];
+          const expected = [Offset(17.5, 17.5), Size(120, 120)];
           expect(actual, equals(expected));
         });
       });
@@ -8304,7 +8304,7 @@ void main() {
           await tester.tap(find.byTooltip('Increase'));
           await tester.pump();
           final actual = canvasSize(tester);
-          const expected = Size(10, 10);
+          const expected = Size(12, 12);
           expect(actual, equals(expected));
         });
         testWidgets('decrease', (tester) async {
@@ -8393,6 +8393,35 @@ void main() {
           const expected = [Size(2, 2), '1/2'];
           expect(actual, equals(expected));
         });
+        testWidgets('typed negative', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 4, height: 4),
+                ),
+              ),
+            ),
+          );
+          await tester.enterText(
+            find.descendant(
+              of: find.ancestor(
+                of: find.text('Zoom:'),
+                matching: find.byType(NumericValueRange),
+              ),
+              matching: find.byType(TextField),
+            ),
+            '-4',
+          );
+          await tester.pump();
+          final actual = canvasSize(tester);
+          const expected = Size(1, 1);
+          expect(actual, equals(expected));
+        });
         testWidgets('typed fraction', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
@@ -8455,6 +8484,39 @@ void main() {
             canvasSize(tester),
           ];
           final expected = [before, const Size(2800, 2800)];
+          expect(actual, equals(expected));
+        });
+        testWidgets('typing through minus one', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 20, height: 20),
+                ),
+              ),
+            ),
+          );
+          final field = find.descendant(
+            of: find.ancestor(
+              of: find.text('Zoom:'),
+              matching: find.byType(NumericValueRange),
+            ),
+            matching: find.byType(TextField),
+          );
+          await tester.enterText(field, '-1');
+          await tester.pump();
+          final typed = [
+            tester.widget<TextField>(field).controller!.text,
+            canvasSize(tester),
+          ];
+          await tester.enterText(field, '-10');
+          await tester.pump();
+          final actual = [...typed, canvasSize(tester)];
+          const expected = ['-1', Size(20, 20), Size(2, 2)];
           expect(actual, equals(expected));
         });
         testWidgets('slider below one', (tester) async {

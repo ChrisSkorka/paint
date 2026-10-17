@@ -471,7 +471,10 @@ class _EditorViewState extends State<EditorView> {
       _zoomTo(controller.zoom.stepped(larger: larger), focus: focus);
 
   void _zoomTo(Zoom zoom, {Offset? focus}) {
-    if (zoom == controller.zoom) return;
+    if (zoom.scale == controller.zoom.scale) {
+      controller.setZoom(zoom);
+      return;
+    }
     final area = _canvasAreaBox().size;
     final focusPoint = focus ?? area.center(Offset.zero);
     verticalScroll.pendingOffset = zoomedCanvasOffset(
@@ -534,7 +537,7 @@ class _EditorViewState extends State<EditorView> {
       scrollbar: PaintScrollBehavior.scrollbarTrack,
       scale: zoom.scale,
     );
-    if (zoom == controller.zoom) {
+    if (zoom.scale == controller.zoom.scale) {
       verticalScroll.jumpTo(verticalOffset);
       horizontalScroll.jumpTo(horizontalOffset);
       return;
@@ -1454,18 +1457,23 @@ class _EditorViewState extends State<EditorView> {
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: NumericValueRange(
                   label: 'Zoom:',
-                  value: controller.zoom.step,
-                  minimum: Zoom.minimum.step,
-                  maximum: Zoom.maximum.step,
-                  rangeMinimum: -3,
+                  value: controller.zoom.factor,
+                  minimum: Zoom.minimum.factor,
+                  maximum: Zoom.maximum.factor,
+                  rangeMinimum: -4,
                   rangeMaximum: 4,
-                  valueToRange: (step) => log(Zoom(step: step).scale) / ln2,
+                  valueToRange: (factor) =>
+                      log(Zoom(factor: factor).scale) / ln2,
                   rangeToValue: (range) =>
-                      Zoom.nearest(scale: pow(2, range).toDouble()).step,
-                  valueToText: (step) => Zoom(step: step).label,
-                  textToValue: (text) => Zoom.tryParse(text)?.step,
-                  allowedCharacters: '[0-9/]',
-                  onChanged: (step) => _zoomTo(Zoom(step: step)),
+                      Zoom.nearest(scale: pow(2, range).toDouble()).factor,
+                  decrement: (factor) =>
+                      Zoom(factor: factor).stepped(larger: false).factor,
+                  increment: (factor) =>
+                      Zoom(factor: factor).stepped(larger: true).factor,
+                  valueToText: (factor) => Zoom(factor: factor).label,
+                  textToValue: (text) => Zoom.tryParse(text)?.factor,
+                  allowedCharacters: '[0-9/-]',
+                  onChanged: (factor) => _zoomTo(Zoom(factor: factor)),
                 ),
               ),
             ],
