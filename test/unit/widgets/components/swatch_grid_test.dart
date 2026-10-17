@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/widgets/components/chess_grid.dart';
@@ -108,6 +109,57 @@ void main() {
           await tester.tap(find.byType(Swatch));
           final actual = selected;
           const expected = [Color(0xFF112233)];
+          expect(actual, equals(expected));
+        });
+      });
+      group('right click', () {
+        testWidgets('color', (tester) async {
+          final selected = <Color>[];
+          final rightClickSelected = <Color>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: Swatch(
+                  color: const Color(0xFF112233),
+                  onSelect: selected.add,
+                  onRightClickSelect: rightClickSelected.add,
+                  borderRadius: BorderRadius.zero,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(
+            find.byType(Swatch),
+            buttons: kSecondaryMouseButton,
+            kind: PointerDeviceKind.mouse,
+          );
+          final actual = [selected, rightClickSelected];
+          const expected = [
+            <Color>[],
+            [Color(0xFF112233)],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('without handler', (tester) async {
+          final selected = <Color>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: Swatch(
+                  color: const Color(0xFF112233),
+                  onSelect: selected.add,
+                  borderRadius: BorderRadius.zero,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(
+            find.byType(Swatch),
+            buttons: kSecondaryMouseButton,
+            kind: PointerDeviceKind.mouse,
+          );
+          final actual = selected;
+          const expected = <Color>[];
           expect(actual, equals(expected));
         });
       });

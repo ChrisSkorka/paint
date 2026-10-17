@@ -13,6 +13,7 @@ class NumberStepper extends StatefulWidget {
     required this.decreaseTooltip,
     required this.increaseTooltip,
     required this.onChanged,
+    this.onRightClickChanged,
     this.editable = true,
     this.enabled = true,
     this.valueWidth = defaultValueWidth,
@@ -26,6 +27,7 @@ class NumberStepper extends StatefulWidget {
   final String decreaseTooltip;
   final String increaseTooltip;
   final ValueChanged<int> onChanged;
+  final ValueChanged<int>? onRightClickChanged;
   final bool editable;
   final bool enabled;
   final double valueWidth;
@@ -58,13 +60,19 @@ class _NumberStepperState extends State<NumberStepper> {
     super.dispose();
   }
 
-  void _commit(int value) {
+  void _commit(int value, {ValueChanged<int>? onChanged}) {
     final clamped = value.clamp(widget.minimum, widget.maximum);
     textController.text = '$clamped';
-    if (clamped != widget.value) widget.onChanged(clamped);
+    if (clamped != widget.value) (onChanged ?? widget.onChanged)(clamped);
   }
 
   void _submit() => _commit(int.tryParse(textController.text) ?? widget.value);
+
+  VoidCallback? _rightClickCommit(int value) {
+    final onRightClickChanged = widget.onRightClickChanged;
+    if (onRightClickChanged == null) return null;
+    return () => _commit(value, onChanged: onRightClickChanged);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +85,7 @@ class _NumberStepperState extends State<NumberStepper> {
           onPressed: widget.enabled && widget.value > widget.minimum
               ? () => _commit(widget.decrement(widget.value))
               : null,
+          onRightClick: _rightClickCommit(widget.decrement(widget.value)),
         ),
         SizedBox(
           width: widget.valueWidth,
@@ -103,6 +112,7 @@ class _NumberStepperState extends State<NumberStepper> {
           onPressed: widget.enabled && widget.value < widget.maximum
               ? () => _commit(widget.increment(widget.value))
               : null,
+          onRightClick: _rightClickCommit(widget.increment(widget.value)),
         ),
       ],
     );

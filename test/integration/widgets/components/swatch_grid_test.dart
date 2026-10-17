@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/widgets/components/swatch_grid.dart';
@@ -164,6 +165,33 @@ void main() {
           );
           await tester.tap(find.byType(Swatch).at(1));
           final actual = selected;
+          const expected = [Color(0xFF222222)];
+          expect(actual, equals(expected));
+        });
+      });
+      group('right click', () {
+        testWidgets('select color', (tester) async {
+          final rightClickSelected = <Color>[];
+          void stubOnSelect(Color color) {}
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: SwatchGrid(
+                  colors: const [
+                    [Color(0xFF111111), Color(0xFF222222)],
+                  ],
+                  onSelect: stubOnSelect,
+                  onRightClickSelect: rightClickSelected.add,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(
+            find.byType(Swatch).at(1),
+            buttons: kSecondaryMouseButton,
+            kind: PointerDeviceKind.mouse,
+          );
+          final actual = rightClickSelected;
           const expected = [Color(0xFF222222)];
           expect(actual, equals(expected));
         });

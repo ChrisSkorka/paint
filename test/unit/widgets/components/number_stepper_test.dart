@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/widgets/components/number_stepper.dart';
@@ -333,6 +334,93 @@ void main() {
           await tester.tap(find.byTooltip('Fewer'));
           final actual = changes;
           const expected = [4];
+          expect(actual, equals(expected));
+        });
+      });
+      group('right click', () {
+        testWidgets('increase', (tester) async {
+          final changes = <int>[];
+          final rightClickChanges = <int>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: NumberStepper(
+                  value: 5,
+                  minimum: 0,
+                  maximum: 10,
+                  decreaseTooltip: 'Fewer',
+                  increaseTooltip: 'More',
+                  onChanged: changes.add,
+                  onRightClickChanged: rightClickChanges.add,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(
+            find.byTooltip('More'),
+            buttons: kSecondaryMouseButton,
+            kind: PointerDeviceKind.mouse,
+          );
+          final actual = [changes, rightClickChanges];
+          const expected = [
+            <int>[],
+            [6],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('decrease', (tester) async {
+          final changes = <int>[];
+          final rightClickChanges = <int>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: NumberStepper(
+                  value: 5,
+                  minimum: 0,
+                  maximum: 10,
+                  decreaseTooltip: 'Fewer',
+                  increaseTooltip: 'More',
+                  onChanged: changes.add,
+                  onRightClickChanged: rightClickChanges.add,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(
+            find.byTooltip('Fewer'),
+            buttons: kSecondaryMouseButton,
+            kind: PointerDeviceKind.mouse,
+          );
+          final actual = [changes, rightClickChanges];
+          const expected = [
+            <int>[],
+            [4],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('without handler', (tester) async {
+          final changes = <int>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: NumberStepper(
+                  value: 5,
+                  minimum: 0,
+                  maximum: 10,
+                  decreaseTooltip: 'Fewer',
+                  increaseTooltip: 'More',
+                  onChanged: changes.add,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(
+            find.byTooltip('More'),
+            buttons: kSecondaryMouseButton,
+            kind: PointerDeviceKind.mouse,
+          );
+          final actual = changes;
+          const expected = <int>[];
           expect(actual, equals(expected));
         });
       });

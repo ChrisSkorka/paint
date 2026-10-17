@@ -194,6 +194,12 @@ class _EditorViewState extends State<EditorView> {
   void _selectColor(Color color) =>
       controller.selectColor(PixelColor(argb: color.toARGB32()));
 
+  VoidCallback _temporarily(VoidCallback change) =>
+      () => controller.changeTemporarily(change);
+
+  ValueChanged<T> _temporarilyWith<T>(ValueChanged<T> change) =>
+      (value) => controller.changeTemporarily(() => change(value));
+
   Future<void> _editColor() async {
     final color = await showColorDialog(
       context: context,
@@ -214,6 +220,7 @@ class _EditorViewState extends State<EditorView> {
       onPressed: controller.toolKind.hasTip
           ? () => controller.setPenTip(tip)
           : null,
+      onRightClick: _temporarily(() => controller.setPenTip(tip)),
     );
   }
 
@@ -228,6 +235,7 @@ class _EditorViewState extends State<EditorView> {
       color: PaintStyle.shapeColor,
       selected: controller.toolKind == toolKind,
       onPressed: () => controller.selectTool(toolKind),
+      onRightClick: _temporarily(() => controller.selectTool(toolKind)),
     );
   }
 
@@ -787,6 +795,9 @@ class _EditorViewState extends State<EditorView> {
               decrement: smallerToolSize,
               increment: largerToolSize,
               onChanged: (size) => _setTextFormat(size: size),
+              onRightClickChanged: _temporarilyWith(
+                (size) => _setTextFormat(size: size),
+              ),
             ),
             ZeroIntrinsicWidth(
               child: SliderTheme(
@@ -817,18 +828,27 @@ class _EditorViewState extends State<EditorView> {
                   tooltip: 'Bold',
                   selected: format.bold,
                   onPressed: () => _setTextFormat(bold: !format.bold),
+                  onRightClick: _temporarily(
+                    () => _setTextFormat(bold: !format.bold),
+                  ),
                 ),
                 PaintIconButton(
                   icon: FontAwesomeIcons.italic,
                   tooltip: 'Italic',
                   selected: format.italic,
                   onPressed: () => _setTextFormat(italic: !format.italic),
+                  onRightClick: _temporarily(
+                    () => _setTextFormat(italic: !format.italic),
+                  ),
                 ),
                 PaintIconButton(
                   icon: FontAwesomeIcons.underline,
                   tooltip: 'Underline',
                   selected: format.underline,
                   onPressed: () => _setTextFormat(underline: !format.underline),
+                  onRightClick: _temporarily(
+                    () => _setTextFormat(underline: !format.underline),
+                  ),
                 ),
                 PaintIconButton(
                   icon: FontAwesomeIcons.strikethrough,
@@ -836,6 +856,9 @@ class _EditorViewState extends State<EditorView> {
                   selected: format.strikethrough,
                   onPressed: () =>
                       _setTextFormat(strikethrough: !format.strikethrough),
+                  onRightClick: _temporarily(
+                    () => _setTextFormat(strikethrough: !format.strikethrough),
+                  ),
                 ),
               ],
             ),
@@ -847,12 +870,18 @@ class _EditorViewState extends State<EditorView> {
                   tooltip: 'Fill text',
                   selected: format.filled,
                   onPressed: () => _setTextFormat(filled: !format.filled),
+                  onRightClick: _temporarily(
+                    () => _setTextFormat(filled: !format.filled),
+                  ),
                 ),
                 PaintIconButton(
                   icon: FontAwesomeIcons.square,
                   tooltip: 'Outline text',
                   selected: format.outlined,
                   onPressed: () => _setTextFormat(outlined: !format.outlined),
+                  onRightClick: _temporarily(
+                    () => _setTextFormat(outlined: !format.outlined),
+                  ),
                 ),
                 NumberStepper(
                   value: format.outlineWidth,
@@ -863,6 +892,10 @@ class _EditorViewState extends State<EditorView> {
                   enabled: format.outlined,
                   onChanged: (outlineWidth) =>
                       _setTextFormat(outlineWidth: outlineWidth),
+                  onRightClickChanged: _temporarilyWith(
+                    (outlineWidth) =>
+                        _setTextFormat(outlineWidth: outlineWidth),
+                  ),
                 ),
               ],
             ),
@@ -1214,6 +1247,9 @@ class _EditorViewState extends State<EditorView> {
                                 decrement: smallerToolSize,
                                 increment: largerToolSize,
                                 onChanged: controller.setPenSize,
+                                onRightClickChanged: _temporarilyWith(
+                                  controller.setPenSize,
+                                ),
                               ),
                               ZeroIntrinsicWidth(
                                 child: SliderTheme(
@@ -1270,6 +1306,9 @@ class _EditorViewState extends State<EditorView> {
                               selected: controller.toolKind == ToolKind.pen,
                               onPressed: () =>
                                   controller.selectTool(ToolKind.pen),
+                              onRightClick: _temporarily(
+                                () => controller.selectTool(ToolKind.pen),
+                              ),
                             ),
                             PaintIconButton(
                               icon: toolIcon(kind: ToolKind.eraser),
@@ -1279,6 +1318,9 @@ class _EditorViewState extends State<EditorView> {
                               selected: controller.toolKind == ToolKind.eraser,
                               onPressed: () =>
                                   controller.selectTool(ToolKind.eraser),
+                              onRightClick: _temporarily(
+                                () => controller.selectTool(ToolKind.eraser),
+                              ),
                             ),
                           ],
                         ),
@@ -1293,6 +1335,10 @@ class _EditorViewState extends State<EditorView> {
                                   controller.toolKind == ToolKind.bucketFill,
                               onPressed: () =>
                                   controller.selectTool(ToolKind.bucketFill),
+                              onRightClick: _temporarily(
+                                () =>
+                                    controller.selectTool(ToolKind.bucketFill),
+                              ),
                             ),
                             PaintIconButton(
                               icon: toolIcon(kind: ToolKind.colorPicker),
@@ -1317,6 +1363,9 @@ class _EditorViewState extends State<EditorView> {
                               selected: controller.toolKind == ToolKind.text,
                               onPressed: () =>
                                   controller.selectTool(ToolKind.text),
+                              onRightClick: _temporarily(
+                                () => controller.selectTool(ToolKind.text),
+                              ),
                               dropdown: _buildTextOptions(),
                             ),
                             PaintIconButton(
@@ -1326,6 +1375,9 @@ class _EditorViewState extends State<EditorView> {
                               selected: controller.toolKind == ToolKind.select,
                               onPressed: () =>
                                   controller.selectTool(ToolKind.select),
+                              onRightClick: _temporarily(
+                                () => controller.selectTool(ToolKind.select),
+                              ),
                             ),
                           ],
                         ),
@@ -1369,6 +1421,11 @@ class _EditorViewState extends State<EditorView> {
                                       !controller.shapeOutlined,
                                     )
                                   : null,
+                              onRightClick: _temporarily(
+                                () => controller.setShapeOutlined(
+                                  !controller.shapeOutlined,
+                                ),
+                              ),
                             ),
                             PaintIconButton(
                               icon: FontAwesomeIcons.solidSquare,
@@ -1379,6 +1436,11 @@ class _EditorViewState extends State<EditorView> {
                                       !controller.shapeFilled,
                                     )
                                   : null,
+                              onRightClick: _temporarily(
+                                () => controller.setShapeFilled(
+                                  !controller.shapeFilled,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -1410,6 +1472,7 @@ class _EditorViewState extends State<EditorView> {
                           child: SwatchGrid(
                             colors: _toColors(greyPalette),
                             onSelect: _selectColor,
+                            onRightClickSelect: _temporarilyWith(_selectColor),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -1417,6 +1480,7 @@ class _EditorViewState extends State<EditorView> {
                           child: SwatchGrid(
                             colors: _toColors(huePalette),
                             onSelect: _selectColor,
+                            onRightClickSelect: _temporarilyWith(_selectColor),
                           ),
                         ),
                         RibbonColumn(

@@ -93,12 +93,20 @@ class EditorController extends ChangeNotifier {
   PixelPoint? _textOrigin;
   var _textButton = PointerButton.primary;
   var _text = '';
+  _ToolSettings? _temporarySettings;
+  var _temporarySelectionMade = false;
   final _strokeProgress = _StrokeProgress();
   late final layersChanged = Listenable.merge([this, _strokeProgress]);
 
   static const _noArea = PixelRectangle(left: 0, top: 0, width: 0, height: 0);
   static const minimumToolSize = ToolPreset.minimumSize;
   static const maximumToolSize = ToolPreset.maximumSize;
+
+  @override
+  void notifyListeners() {
+    _revertFinishedSelection();
+    super.notifyListeners();
+  }
 
   @override
   void dispose() {
@@ -309,8 +317,55 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void changeTemporarily(VoidCallback change) {
+    final settings = _temporarySettings ?? _captureSettings();
+    change();
+    _temporarySettings = settings;
+  }
+
+  _ToolSettings _captureSettings() => (
+    toolKind: _toolKind,
+    drawingToolKind: _drawingToolKind,
+    primaryColor: _primaryColor,
+    secondaryColor: _secondaryColor,
+    penSize: _penSize,
+    penTip: _penTip,
+    shapeOutlined: _shapeOutlined,
+    shapeFilled: _shapeFilled,
+    textFormat: _textFormat,
+  );
+
+  void _revertTemporarySettings() {
+    final settings = _temporarySettings;
+    if (settings == null) return;
+    _temporarySettings = null;
+    _toolKind = settings.toolKind;
+    _drawingToolKind = settings.drawingToolKind;
+    _primaryColor = settings.primaryColor;
+    _secondaryColor = settings.secondaryColor;
+    _penSize = settings.penSize;
+    _penTip = settings.penTip;
+    _shapeOutlined = settings.shapeOutlined;
+    _shapeFilled = settings.shapeFilled;
+    _textFormat = settings.textFormat;
+  }
+
+  void _revertFinishedSelection() {
+    if (_temporarySettings == null || _toolKind != ToolKind.select) {
+      _temporarySelectionMade = false;
+      return;
+    }
+    if (_strokePoint != null) return;
+    if (_selection != null) {
+      _temporarySelectionMade = true;
+    } else if (_temporarySelectionMade) {
+      _revertTemporarySettings();
+    }
+  }
+
   void selectTool(ToolKind toolKind) {
     if (_strokePoint != null) return;
+    _temporarySettings = null;
     unawaited(commitText());
     _selection = null;
     _toolKind = toolKind;
@@ -377,17 +432,20 @@ class EditorController extends ChangeNotifier {
       color: textColor,
       outlineColor: textOutlineColor,
     );
+    final preset = _presetWith(
+      kind: ToolKind.text,
+      color: textColor,
+      secondaryColor: textOutlineColor,
+    );
     _textOrigin = null;
     _text = '';
+    if (stamp.text.isEmpty) {
+      notifyListeners();
+      return;
+    }
+    _usePreset(preset);
+    _revertTemporarySettings();
     notifyListeners();
-    if (stamp.text.isEmpty) return;
-    _usePreset(
-      _presetWith(
-        kind: ToolKind.text,
-        color: textColor,
-        secondaryColor: textOutlineColor,
-      ),
-    );
     final orientation = _textOrientation;
     final image = orientation.apply(await stamp.rasterize());
     final before = Layer.copyOf(document.activeLayer);
@@ -921,6 +979,7 @@ class EditorController extends ChangeNotifier {
     _finishSelecting();
     _redrawPointer(point: point, color: _strokeColor);
     _recordStroke();
+    if (_tool != null) _revertTemporarySettings();
     if (_toolKind == ToolKind.colorPicker && !_colorPickerHeld) {
       _toolKind = _drawingToolKind;
     }
@@ -1133,6 +1192,18 @@ class EditorController extends ChangeNotifier {
     pointerPreview.draw(tool: _tool, point: point, color: color);
   }
 }
+
+typedef _ToolSettings = ({
+  ToolKind toolKind,
+  ToolKind drawingToolKind,
+  PixelColor primaryColor,
+  PixelColor secondaryColor,
+  int penSize,
+  BrushTip penTip,
+  bool shapeOutlined,
+  bool shapeFilled,
+  TextFormat textFormat,
+});
 
 class _StrokeProgress extends ChangeNotifier {
   void advance() => notifyListeners();

@@ -12,6 +12,7 @@ class PaintSplitButton extends StatefulWidget {
     required this.tooltip,
     this.shortcut,
     required this.onPressed,
+    this.onRightClick,
     this.dropdown,
     this.onSecondaryPressed,
     this.secondaryIcon = FontAwesomeIcons.angleDown,
@@ -27,6 +28,7 @@ class PaintSplitButton extends StatefulWidget {
   final String tooltip;
   final String? shortcut;
   final VoidCallback onPressed;
+  final VoidCallback? onRightClick;
   final Widget? dropdown;
   final VoidCallback? onSecondaryPressed;
   final FaIconData secondaryIcon;
@@ -64,6 +66,7 @@ class _PaintSplitButtonState extends State<PaintSplitButton> {
               waitDuration: const Duration(milliseconds: 500),
               child: GestureDetector(
                 onTap: widget.onPressed,
+                onSecondaryTap: widget.onRightClick,
                 child: HighlightBox(
                   highlighted: highlighted,
                   borderRadius: const BorderRadius.horizontal(

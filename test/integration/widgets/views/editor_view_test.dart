@@ -39,6 +39,7 @@ import '../../../support/document_probes.dart';
 import '../../../support/editor_view_probes.dart';
 import '../../../support/hover.dart';
 import '../../../support/keyboard.dart';
+import '../../../support/right_click.dart';
 import '../../../support/layer_probes.dart';
 import '../../../support/view_probes.dart';
 import '../../../support/wheel.dart';
@@ -1683,6 +1684,278 @@ void main() {
           await tester.pump();
           final actual = selectedTools(tester);
           const expected = [true, false, false, false];
+          expect(actual, equals(expected));
+        });
+      });
+      group('temporary tools', () {
+        testWidgets('eraser', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await rightClick(tester, find.byTooltip('Eraser (E)'));
+          final selected = selectedTools(tester);
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(5, 1));
+          await tester.pump();
+          final actual = [selected, selectedTools(tester)];
+          const expected = [
+            [false, true, false, false],
+            [true, false, false, false],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('pen', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Eraser (E)'));
+          await tester.pump();
+          await rightClick(tester, find.byTooltip('Pen (P)'));
+          final actual = selectedTools(tester);
+          const expected = [true, false, false, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('fill', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await rightClick(tester, find.byTooltip('Fill (G)'));
+          final actual = selectedTools(tester);
+          const expected = [false, false, true, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('text', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await rightClick(tester, find.byTooltip('Text (T)'));
+          final actual = textToolSelected(tester);
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        testWidgets('select', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await rightClick(tester, find.byTooltip('Select (M)'));
+          final actual = selectToolSelected(tester);
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        testWidgets('shape', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await rightClick(tester, find.byTooltip('Circle (O)'));
+          final actual = selectedShapes(tester);
+          const expected = [false, false, true, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('shape style', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rectangle (R)'));
+          await tester.pump();
+          await rightClick(tester, find.byTooltip('Fill shape'));
+          await rightClick(tester, find.byTooltip('Outline'));
+          final actual = shapeStyle(tester);
+          const expected = [false, true, true, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('tip', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await rightClick(tester, find.byTooltip('Circle tip'));
+          final actual = selectedTips(tester);
+          const expected = [false, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('size', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await rightClick(tester, find.byTooltip('Increase size'));
+          final actual = tester.widget<NumberStepper>(sizeStepper()).value;
+          const expected = 2;
+          expect(actual, equals(expected));
+        });
+        testWidgets('color', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          await rightClick(tester, find.byType(Swatch).at(5));
+          final colors = wellColors(tester);
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(5, 1));
+          await tester.pump();
+          final actual = [
+            colors,
+            wellColors(tester),
+            pixelRows(document.activeLayer),
+          ];
+          const expected = [
+            [Color(0xff821717), Color(0xffffffff)],
+            [Color(0xff000000), Color(0xffffffff)],
+            [
+              [transparent, 0xff821717],
+              [transparent, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('text format', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text options'));
+          await tester.pump();
+          await rightClick(tester, find.byTooltip('Increase text size'));
+          for (final tooltip in [
+            'Bold',
+            'Italic',
+            'Underline',
+            'Strikethrough',
+          ]) {
+            await rightClick(tester, find.byTooltip(tooltip));
+          }
+          final actual = textOptions(tester);
+          const expected = [13, true, true, true, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('text outline', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Text options'));
+          await tester.pump();
+          await rightClick(tester, find.byTooltip('Outline text'));
+          await rightClick(tester, find.byTooltip('Increase outline width'));
+          await rightClick(tester, find.byTooltip('Fill text'));
+          final actual = textOutlineOptions(tester);
+          const expected = [false, true, 2, true];
           expect(actual, equals(expected));
         });
       });

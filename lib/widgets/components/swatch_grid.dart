@@ -4,10 +4,16 @@ import 'chess_grid.dart';
 import 'paint_style.dart';
 
 class SwatchGrid extends StatelessWidget {
-  const SwatchGrid({super.key, required this.colors, required this.onSelect});
+  const SwatchGrid({
+    super.key,
+    required this.colors,
+    required this.onSelect,
+    this.onRightClickSelect,
+  });
 
   final List<List<Color?>> colors;
   final ValueChanged<Color> onSelect;
+  final ValueChanged<Color>? onRightClickSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +31,7 @@ class SwatchGrid extends StatelessWidget {
                 Swatch(
                   color: color,
                   onSelect: onSelect,
+                  onRightClickSelect: onRightClickSelect,
                   borderRadius: BorderRadius.only(
                     topLeft: _corner(rowIndex == 0 && columnIndex == 0),
                     topRight: _corner(
@@ -53,11 +60,13 @@ class Swatch extends StatefulWidget {
     super.key,
     required this.color,
     required this.onSelect,
+    this.onRightClickSelect,
     required this.borderRadius,
   });
 
   final Color? color;
   final ValueChanged<Color> onSelect;
+  final ValueChanged<Color>? onRightClickSelect;
   final BorderRadius borderRadius;
 
   @override
@@ -128,6 +137,10 @@ class _SwatchState extends State<Swatch> {
       onExit: (_) => _removeHover(),
       child: GestureDetector(
         onTap: () => widget.onSelect(color),
+        onSecondaryTap: switch (widget.onRightClickSelect) {
+          final onRightClickSelect? => () => onRightClickSelect(color),
+          null => null,
+        },
         child: Container(
           width: PaintStyle.swatchSize,
           height: PaintStyle.swatchSize,

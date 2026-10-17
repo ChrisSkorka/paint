@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -397,6 +398,34 @@ void main() {
           await tester.pumpAndSettle();
           final actual = pressed;
           const expected = 0;
+          expect(actual, equals(expected));
+        });
+      });
+      group('right click', () {
+        testWidgets('main button', (tester) async {
+          var rightClicked = 0;
+          void stubOnPressed() {}
+          void stubOnRightClick() => rightClicked++;
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: PaintSplitButton(
+                  icon: FontAwesomeIcons.pencil,
+                  tooltip: 'Pen',
+                  onPressed: stubOnPressed,
+                  onRightClick: stubOnRightClick,
+                  dropdown: const Text('dropdown'),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(
+            find.byTooltip('Pen'),
+            buttons: kSecondaryMouseButton,
+            kind: PointerDeviceKind.mouse,
+          );
+          final actual = rightClicked;
+          const expected = 1;
           expect(actual, equals(expected));
         });
       });

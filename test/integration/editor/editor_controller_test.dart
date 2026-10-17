@@ -26,6 +26,7 @@ import 'package:paint/editor/zoom.dart';
 import '../../support/document_probes.dart';
 import '../../support/layer_probes.dart';
 import '../../support/notifications.dart';
+import '../../support/tool_settings_probes.dart';
 
 void main() {
   const transparent = 0x00000000;
@@ -711,6 +712,346 @@ void main() {
           editorController.selectTool(ToolKind.eraser);
           final actual = editorController.toolKind;
           const expected = ToolKind.pen;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method changeTemporarily', () {
+      group('changes', () {
+        test('tool', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          editorController.changeTemporarily(
+            () => editorController.selectTool(ToolKind.eraser),
+          );
+          final actual = editorController.toolKind;
+          const expected = ToolKind.eraser;
+          expect(actual, equals(expected));
+        });
+        test('every setting', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          editorController.changeTemporarily(() {
+            editorController
+              ..selectTool(ToolKind.rectangle)
+              ..selectColor(const PixelColor(argb: red))
+              ..swapColors()
+              ..selectColor(const PixelColor(argb: green))
+              ..setPenSize(3)
+              ..setPenTip(BrushTip.circle)
+              ..setShapeFilled(true)
+              ..setShapeOutlined(false)
+              ..setTextFormat(const TextFormat(bold: true));
+          });
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 2));
+          final actual = toolSettings(editorController);
+          const expected = defaultToolSettings;
+          expect(actual, equals(expected));
+        });
+      });
+      group('stroke', () {
+        test('pen', () {
+          final document = Document.blank(width: 3, height: 3);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.changeTemporarily(
+            () => editorController.selectColor(const PixelColor(argb: red)),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          final actual = [
+            toolSettings(editorController),
+            pixelRows(document.activeLayer),
+          ];
+          const expected = [
+            defaultToolSettings,
+            [
+              [red, transparent, transparent],
+              [transparent, transparent, transparent],
+              [transparent, transparent, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('during stroke', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          editorController.changeTemporarily(
+            () => editorController.selectTool(ToolKind.eraser),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          final actual = editorController.toolKind;
+          const expected = ToolKind.eraser;
+          expect(actual, equals(expected));
+        });
+        test('chained', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          editorController.changeTemporarily(
+            () => editorController.selectTool(ToolKind.eraser),
+          );
+          editorController.changeTemporarily(
+            () => editorController.setPenSize(4),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          final actual = toolSettings(editorController);
+          const expected = defaultToolSettings;
+          expect(actual, equals(expected));
+        });
+        test('second stroke', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          editorController.changeTemporarily(
+            () => editorController.setPenSize(4),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          editorController.setPenSize(2);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          final actual = editorController.penSize;
+          const expected = 2;
+          expect(actual, equals(expected));
+        });
+        test('color picker', () {
+          final document = Document.blank(width: 3, height: 3);
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: const PixelColor(argb: red),
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.changeTemporarily(
+            () => editorController.setPenSize(4),
+          );
+          editorController.holdColorPicker(held: true);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          editorController.holdColorPicker(held: false);
+          final actual = [
+            editorController.toolKind,
+            editorController.primaryColor,
+            editorController.penSize,
+          ];
+          const expected = [ToolKind.pen, PixelColor(argb: red), 4];
+          expect(actual, equals(expected));
+        });
+      });
+      group('text', () {
+        test('committed', () async {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          editorController.changeTemporarily(() {
+            editorController
+              ..selectTool(ToolKind.text)
+              ..setTextFormat(const TextFormat(size: 2, bold: true));
+          });
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.editText('a');
+          await editorController.commitText();
+          final actual = [
+            toolSettings(editorController),
+            editorController.document.toolPresets.recent,
+          ];
+          const expected = [
+            defaultToolSettings,
+            [
+              ToolPreset(
+                kind: ToolKind.text,
+                color: PixelColor.black,
+                textFormat: TextFormat(size: 2, bold: true),
+              ),
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('empty', () async {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          editorController.changeTemporarily(
+            () => editorController.selectTool(ToolKind.text),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          await editorController.commitText();
+          final actual = editorController.toolKind;
+          const expected = ToolKind.text;
+          expect(actual, equals(expected));
+        });
+      });
+      group('selection', () {
+        test('selected', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          editorController.changeTemporarily(
+            () => editorController.selectTool(ToolKind.select),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 1));
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 1));
+          final actual = [
+            editorController.toolKind,
+            editorController.hasSelection,
+          ];
+          const expected = [ToolKind.select, true];
+          expect(actual, equals(expected));
+        });
+        test('deselected', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          editorController.changeTemporarily(
+            () => editorController.selectTool(ToolKind.select),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 1));
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 1));
+          editorController.deselect();
+          final actual = toolSettings(editorController);
+          const expected = defaultToolSettings;
+          expect(actual, equals(expected));
+        });
+        test('clicked outside', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          editorController.changeTemporarily(
+            () => editorController.selectTool(ToolKind.select),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 1));
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 1));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 2, y: 2),
+            button: PointerButton.primary,
+          );
+          final during = editorController.toolKind;
+          editorController.pointerUp(point: const PixelPoint(x: 2, y: 2));
+          final actual = [during, editorController.toolKind];
+          const expected = [ToolKind.select, ToolKind.pen];
+          expect(actual, equals(expected));
+        });
+        test('without selection', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          editorController.changeTemporarily(
+            () => editorController.selectTool(ToolKind.select),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          final actual = editorController.toolKind;
+          const expected = ToolKind.select;
+          expect(actual, equals(expected));
+        });
+        test('other tool between', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          editorController.changeTemporarily(
+            () => editorController.selectTool(ToolKind.select),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 1));
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 1));
+          editorController.changeTemporarily(
+            () => editorController.selectTool(ToolKind.pen),
+          );
+          editorController.changeTemporarily(
+            () => editorController.selectTool(ToolKind.select),
+          );
+          final actual = editorController.toolKind;
+          const expected = ToolKind.select;
+          expect(actual, equals(expected));
+        });
+      });
+      group('permanent', () {
+        test('tool selected', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          editorController.changeTemporarily(
+            () => editorController.setPenSize(4),
+          );
+          editorController.selectTool(ToolKind.eraser);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          final actual = [editorController.toolKind, editorController.penSize];
+          const expected = [ToolKind.eraser, 4];
+          expect(actual, equals(expected));
+        });
+        test('setting changed', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3),
+          );
+          editorController.changeTemporarily(
+            () => editorController.selectTool(ToolKind.eraser),
+          );
+          editorController.setPenSize(4);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 0, y: 0));
+          final actual = toolSettings(editorController);
+          const expected = defaultToolSettings;
           expect(actual, equals(expected));
         });
       });

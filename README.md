@@ -377,7 +377,7 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 7.5: misc tool refinements
 
-- [ ] right-click tool/setting for auto reverting tool/setting selection:
+- [x] right-click tool/setting for auto reverting tool/setting selection:
   - when right clicking a tool or color, then the tool-config is temporary and after one use we switch back to the previous tool/setting preset
   - when right-click selecting another tool, settings can still be changed
   - revert once tool has been used
@@ -388,7 +388,6 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
     - pen settings: size, tip
     - shape settings: boarder, fill
     - text settings: size, formatting, boarder, fill, border size
-    (I think that's all the buttons going towards tool presets)
 - [ ] shortcut: tab to switch to next previous tool
 - [ ] re-add system cursor for tools
 

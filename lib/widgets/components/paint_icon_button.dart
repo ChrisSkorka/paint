@@ -10,6 +10,7 @@ class PaintIconButton extends StatefulWidget {
     required this.tooltip,
     this.shortcut,
     required this.onPressed,
+    this.onRightClick,
     this.color = PaintStyle.iconColor,
     this.selected = false,
   });
@@ -18,6 +19,7 @@ class PaintIconButton extends StatefulWidget {
   final String tooltip;
   final String? shortcut;
   final VoidCallback? onPressed;
+  final VoidCallback? onRightClick;
   final Color color;
   final bool selected;
 
@@ -43,6 +45,7 @@ class _PaintIconButtonState extends State<PaintIconButton> {
         onExit: (_) => setState(() => hovered = false),
         child: GestureDetector(
           onTap: widget.onPressed,
+          onSecondaryTap: enabled ? widget.onRightClick : null,
           child: HighlightBox(
             highlighted: widget.selected || (enabled && hovered),
             child: Opacity(

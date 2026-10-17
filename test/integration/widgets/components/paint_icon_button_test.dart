@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -203,6 +204,57 @@ void main() {
           await tester.tap(find.byType(PaintIconButton));
           final actual = pressed;
           const expected = 1;
+          expect(actual, equals(expected));
+        });
+      });
+      group('right click', () {
+        testWidgets('enabled', (tester) async {
+          var rightClicked = 0;
+          void stubOnPressed() {}
+          void stubOnRightClick() => rightClicked++;
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: PaintIconButton(
+                  icon: FontAwesomeIcons.pencil,
+                  tooltip: 'Pen',
+                  onPressed: stubOnPressed,
+                  onRightClick: stubOnRightClick,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(
+            find.byType(PaintIconButton),
+            buttons: kSecondaryMouseButton,
+            kind: PointerDeviceKind.mouse,
+          );
+          final actual = rightClicked;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        testWidgets('disabled', (tester) async {
+          var rightClicked = 0;
+          void stubOnRightClick() => rightClicked++;
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: PaintIconButton(
+                  icon: FontAwesomeIcons.pencil,
+                  tooltip: 'Pen',
+                  onPressed: null,
+                  onRightClick: stubOnRightClick,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(
+            find.byType(PaintIconButton),
+            buttons: kSecondaryMouseButton,
+            kind: PointerDeviceKind.mouse,
+          );
+          final actual = rightClicked;
+          const expected = 0;
           expect(actual, equals(expected));
         });
       });
