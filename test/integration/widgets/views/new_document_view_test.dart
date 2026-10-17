@@ -854,6 +854,96 @@ void main() {
           const expected = [[], 1];
           expect(actual, equals(expected));
         });
+        testWidgets('rename confirmed', (tester) async {
+          void stubOnCreate(Document document) {}
+          final stubStore = StubDocumentStore()
+            ..entries['1'] = storedDocument(id: '1', name: 'Cat')
+            ..files['1'] = Uint8List.fromList([1]);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: NewDocumentView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(store: stubStore),
+                  clipboard: StubImageClipboard(),
+                  onCreate: stubOnCreate,
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+          await tester.tap(find.byTooltip('Rename Cat'));
+          await tester.pumpAndSettle();
+          await tester.enterText(find.byKey(const Key('Name')), 'Dog');
+          await tester.pump();
+          await tester.tap(find.byTooltip('OK'));
+          await tester.pumpAndSettle();
+          final actual = [
+            stubStore.entries['1'],
+            find.text('Dog').evaluate().length,
+          ];
+          final expected = [storedDocument(id: '1', name: 'Dog'), 1];
+          expect(actual, equals(expected));
+        });
+        testWidgets('rename cancelled', (tester) async {
+          void stubOnCreate(Document document) {}
+          final stubStore = StubDocumentStore()
+            ..entries['1'] = storedDocument(id: '1', name: 'Cat')
+            ..files['1'] = Uint8List.fromList([1]);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: NewDocumentView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(store: stubStore),
+                  clipboard: StubImageClipboard(),
+                  onCreate: stubOnCreate,
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+          await tester.tap(find.byTooltip('Rename Cat'));
+          await tester.pumpAndSettle();
+          await tester.enterText(find.byKey(const Key('Name')), 'Dog');
+          await tester.pump();
+          await tester.tap(find.byTooltip('Cancel'));
+          await tester.pumpAndSettle();
+          final actual = [
+            stubStore.entries['1'],
+            find.text('Cat').evaluate().length,
+          ];
+          final expected = [storedDocument(id: '1', name: 'Cat'), 1];
+          expect(actual, equals(expected));
+        });
+        testWidgets('rename missing', (tester) async {
+          void stubOnCreate(Document document) {}
+          final stubStore = StubDocumentStore()
+            ..entries['1'] = storedDocument(id: '1', name: 'Cat');
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: NewDocumentView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(store: stubStore),
+                  clipboard: StubImageClipboard(),
+                  onCreate: stubOnCreate,
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+          await tester.tap(find.byTooltip('Rename Cat'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('OK'));
+          await tester.pumpAndSettle();
+          final actual = find
+              .text('Document no longer exists')
+              .evaluate()
+              .length;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
         testWidgets('delete confirmed', (tester) async {
           void stubOnCreate(Document document) {}
           final stubStore = StubDocumentStore()

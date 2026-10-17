@@ -66,7 +66,7 @@ class Document {
   static const maximumFps = 100;
   static const maximumHolds = 100;
 
-  final String name;
+  String name;
   int width;
   int height;
   final List<DocumentLayer> layers;

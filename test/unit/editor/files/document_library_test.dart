@@ -159,6 +159,43 @@ void main() {
       });
     });
 
+    group('method rename', () {
+      group('entries', () {
+        test('stored', () async {
+          final stubStore = StubDocumentStore()
+            ..entries['1'] = storedDocument(id: '1', minute: 4)
+            ..files['1'] = Uint8List.fromList([1]);
+          final library = documentLibrary(stubStore: stubStore);
+          await library.rename(
+            entry: storedDocument(id: '1', minute: 4),
+            name: 'Dog',
+          );
+          final actual = [library.documents, stubStore.files];
+          final expected = [
+            [storedDocument(id: '1', name: 'Dog', minute: 4)],
+            {
+              '1': Uint8List.fromList([1]),
+            },
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('errors', () {
+        test('missing', () async {
+          final library = documentLibrary(stubStore: StubDocumentStore());
+          Future<void> event() => library.rename(
+            entry: storedDocument(id: '1'),
+            name: 'Dog',
+          );
+          await expectLater(
+            event,
+            throwsA(equals(DocumentFormatException.missing())),
+          );
+        });
+      });
+    });
+
     group('method delete', () {
       group('entries', () {
         test('stored', () async {

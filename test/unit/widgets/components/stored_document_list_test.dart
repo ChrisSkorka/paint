@@ -20,6 +20,7 @@ void main() {
               home: StoredDocumentList(
                 documents: const [],
                 onOpen: (_) {},
+                onRename: (_) {},
                 onDelete: (_) {},
               ),
             ),
@@ -37,6 +38,7 @@ void main() {
                   storedDocument(id: '2', name: 'Dog', minute: 30),
                 ],
                 onOpen: (_) {},
+                onRename: (_) {},
                 onDelete: (_) {},
               ),
             ),
@@ -65,6 +67,7 @@ void main() {
                   storedDocument(id: '2', name: 'Dog'),
                 ],
                 onOpen: opened.add,
+                onRename: (_) {},
                 onDelete: (_) {},
               ),
             ),
@@ -72,6 +75,30 @@ void main() {
           await tester.tap(find.text('Dog'));
           final actual = opened;
           final expected = [storedDocument(id: '2', name: 'Dog')];
+          expect(actual, equals(expected));
+        });
+        testWidgets('rename', (tester) async {
+          final opened = <StoredDocument>[];
+          final renamed = <StoredDocument>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: StoredDocumentList(
+                documents: [
+                  storedDocument(id: '1', name: 'Cat'),
+                  storedDocument(id: '2', name: 'Dog'),
+                ],
+                onOpen: opened.add,
+                onRename: renamed.add,
+                onDelete: (_) {},
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rename Dog'));
+          final actual = [opened, renamed];
+          final expected = [
+            [],
+            [storedDocument(id: '2', name: 'Dog')],
+          ];
           expect(actual, equals(expected));
         });
         testWidgets('delete', (tester) async {
@@ -85,6 +112,7 @@ void main() {
                   storedDocument(id: '2', name: 'Dog'),
                 ],
                 onOpen: opened.add,
+                onRename: (_) {},
                 onDelete: deleted.add,
               ),
             ),

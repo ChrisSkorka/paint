@@ -8568,9 +8568,97 @@ void main() {
             document: Document.blank(width: 2, height: 1),
           );
           editorController.addLayer();
-          editorController.markSaved(editorController.history.point);
+          editorController.markSaved(
+            point: editorController.history.point,
+            name: Document.untitledName,
+          );
           final actual = editorController.hasUnsavedChanges;
           const expected = false;
+          expect(actual, equals(expected));
+        });
+      });
+      group('name', () {
+        test('renamed', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.rename(name: 'Cat');
+          final actual = editorController.hasUnsavedChanges;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        test('renamed back', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.rename(name: 'Cat');
+          editorController.rename(name: Document.untitledName);
+          final actual = editorController.hasUnsavedChanges;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('saved', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.rename(name: 'Cat');
+          editorController.markSaved(
+            point: editorController.history.point,
+            name: 'Cat',
+          );
+          final actual = editorController.hasUnsavedChanges;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('renamed during save', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.rename(name: 'Dog');
+          editorController.markSaved(
+            point: editorController.history.point,
+            name: 'Cat',
+          );
+          final actual = editorController.hasUnsavedChanges;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method rename', () {
+      group('document', () {
+        test('name', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.rename(name: 'Cat');
+          final actual = editorController.document.name;
+          const expected = 'Cat';
+          expect(actual, equals(expected));
+        });
+      });
+      group('save status', () {
+        test('stored', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1)..storeId = '1',
+          );
+          editorController.rename(name: 'Cat');
+          final actual = editorController.saveStatus;
+          const expected = SaveStatus.unsavedChanges;
+          expect(actual, equals(expected));
+        });
+      });
+      group('listeners', () {
+        test('notified', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.rename(name: 'Cat');
+          final actual = notifications;
+          const expected = 1;
           expect(actual, equals(expected));
         });
       });
@@ -8583,7 +8671,10 @@ void main() {
             document: Document.blank(width: 2, height: 1)..storeId = '1',
           );
           editorController.addLayer();
-          editorController.markSaved(editorController.history.point);
+          editorController.markSaved(
+            point: editorController.history.point,
+            name: Document.untitledName,
+          );
           final actual = editorController.saveStatus;
           const expected = SaveStatus.saved;
           expect(actual, equals(expected));
@@ -8594,7 +8685,7 @@ void main() {
           );
           final point = editorController.history.point;
           editorController.addLayer();
-          editorController.markSaved(point);
+          editorController.markSaved(point: point, name: Document.untitledName);
           final actual = editorController.saveStatus;
           const expected = SaveStatus.unsavedChanges;
           expect(actual, equals(expected));
@@ -8608,7 +8699,10 @@ void main() {
           );
           var notifications = 0;
           editorController.addListener(() => notifications++);
-          editorController.markSaved(editorController.history.point);
+          editorController.markSaved(
+            point: editorController.history.point,
+            name: Document.untitledName,
+          );
           final actual = notifications;
           const expected = 1;
           expect(actual, equals(expected));

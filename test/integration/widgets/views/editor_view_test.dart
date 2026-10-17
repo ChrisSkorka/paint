@@ -2751,6 +2751,149 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('rename', () {
+        testWidgets('status bar name', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(name: 'Cat', width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          final actual = find
+              .descendant(
+                of: find.byType(PaintStatusButton),
+                matching: find.text('Cat'),
+              )
+              .evaluate()
+              .length;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        testWidgets('ok', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(name: 'Cat', width: 2, height: 1);
+          var renames = 0;
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                  onRenamed: () => renames++,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rename document'));
+          await tester.pumpAndSettle();
+          await tester.enterText(find.byKey(const Key('Name')), 'Dog');
+          await tester.pump();
+          await tester.tap(find.byTooltip('OK'));
+          await tester.pumpAndSettle();
+          final actual = [
+            document.name,
+            texts(tester).contains('Dog'),
+            renames,
+          ];
+          const expected = ['Dog', true, 1];
+          expect(actual, equals(expected));
+        });
+        testWidgets('cancel', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(name: 'Cat', width: 2, height: 1);
+          var renames = 0;
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                  onRenamed: () => renames++,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rename document'));
+          await tester.pumpAndSettle();
+          await tester.enterText(find.byKey(const Key('Name')), 'Dog');
+          await tester.pump();
+          await tester.tap(find.byTooltip('Cancel'));
+          await tester.pumpAndSettle();
+          final actual = [document.name, renames];
+          const expected = ['Cat', 0];
+          expect(actual, equals(expected));
+        });
+        testWidgets('after save', (tester) async {
+          useDesktopView(tester);
+          final stubStore = StubDocumentStore();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(store: stubStore),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(name: 'Cat', width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Save (Ctrl+S)'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Rename document'));
+          await tester.pumpAndSettle();
+          await tester.enterText(find.byKey(const Key('Name')), 'Dog');
+          await tester.testTextInput.receiveAction(TextInputAction.done);
+          await tester.pumpAndSettle();
+          final actual = [
+            find.text('Unsaved changes').evaluate().length,
+            stubStore.entries.values.single.name,
+          ];
+          const expected = [1, 'Cat'];
+          expect(actual, equals(expected));
+        });
+        testWidgets('save renamed', (tester) async {
+          useDesktopView(tester);
+          final stubStore = StubDocumentStore();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(store: stubStore),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(name: 'Cat', width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rename document'));
+          await tester.pumpAndSettle();
+          await tester.enterText(find.byKey(const Key('Name')), 'Dog');
+          await tester.testTextInput.receiveAction(TextInputAction.done);
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Save (Ctrl+S)'));
+          await tester.pump();
+          final actual = [
+            find.text('Saved').evaluate().length,
+            stubStore.entries.values.single.name,
+          ];
+          const expected = [1, 'Dog'];
+          expect(actual, equals(expected));
+        });
+      });
+
       group('save', () {
         testWidgets('button', (tester) async {
           useDesktopView(tester);

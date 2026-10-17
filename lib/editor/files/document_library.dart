@@ -53,6 +53,24 @@ class DocumentLibrary extends ChangeNotifier {
     return OraCodec.decode(name: entry.name, bytes: bytes)..storeId = entry.id;
   }
 
+  Future<void> rename({
+    required StoredDocument entry,
+    required String name,
+  }) async {
+    final bytes = await store.load(id: entry.id);
+    if (bytes == null) throw DocumentFormatException.missing();
+    await store.save(
+      entry: StoredDocument(
+        id: entry.id,
+        name: name,
+        modified: entry.modified,
+        thumbnail: entry.thumbnail,
+      ),
+      bytes: bytes,
+    );
+    await refresh();
+  }
+
   Future<void> delete({required StoredDocument entry}) async {
     await store.delete(id: entry.id);
     await refresh();

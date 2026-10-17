@@ -52,6 +52,7 @@ import '../components/side_pane.dart';
 import '../components/stable_text.dart';
 import '../components/swatch_grid.dart';
 import '../components/text_draft.dart';
+import '../components/text_input_dialog.dart';
 import '../components/timeline.dart';
 import '../components/tool_icons.dart';
 import '../components/tool_preset_list.dart';
@@ -67,6 +68,7 @@ class EditorView extends StatefulWidget {
     this.active = true,
     this.fitOnOpen = false,
     this.onUnsavedChanged,
+    this.onRenamed,
   });
 
   final Document document;
@@ -76,6 +78,7 @@ class EditorView extends StatefulWidget {
   final bool active;
   final bool fitOnOpen;
   final ValueChanged<bool>? onUnsavedChanged;
+  final VoidCallback? onRenamed;
 
   static const canvasEdge = 15.0;
   static const canvasVisible = 48.0;
@@ -303,6 +306,18 @@ class _EditorViewState extends State<EditorView> {
     );
   }
 
+  Future<void> _renameDocument() async {
+    final name = await showTextInputDialog(
+      context: context,
+      title: 'Rename document',
+      label: 'Name',
+      initialText: widget.document.name,
+    );
+    if (name == null) return;
+    controller.rename(name: name);
+    widget.onRenamed?.call();
+  }
+
   Future<void> _copySelection() async {
     final content = controller.selectionContent;
     if (content != null) await widget.clipboard.write(content);
@@ -321,11 +336,12 @@ class _EditorViewState extends State<EditorView> {
 
   Future<void> _save() async {
     final point = controller.history.point;
+    final name = widget.document.name;
     final saved = await _attempt(
       failure: 'Could not save',
       action: () => widget.library.save(document: widget.document),
     );
-    if (saved && mounted) controller.markSaved(point);
+    if (saved && mounted) controller.markSaved(point: point, name: name);
   }
 
   Future<void> _export(ExportFormat format) async {
@@ -1471,9 +1487,16 @@ class _EditorViewState extends State<EditorView> {
                   ),
                 ),
               ),
-              _buildStatusSection(
-                icon: FontAwesomeIcons.file,
-                child: Text(widget.document.name),
+              PaintBarSection(
+                padding: PaintStatusButton.sectionPadding,
+                child: PaintStatusButton(
+                  tooltip: 'Rename document',
+                  onPressed: _renameDocument,
+                  child: _buildStatusContent(
+                    icon: FontAwesomeIcons.file,
+                    child: Text(widget.document.name),
+                  ),
+                ),
               ),
               _buildStatusSection(
                 icon: FontAwesomeIcons.floppyDisk,

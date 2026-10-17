@@ -66,6 +66,8 @@ class _HomeViewState extends State<HomeView> {
   void _markUnsaved({required _OpenTab tab, required bool unsaved}) =>
       setState(() => tab.unsaved = unsaved);
 
+  void _updateTitles() => setState(() {});
+
   Future<void> _closeTab(int index) async {
     final tab = tabs[index];
     if (tab.unsaved && !await _confirmClose(name: tab.title)) return;
@@ -153,6 +155,7 @@ class _HomeViewState extends State<HomeView> {
       active: active,
       fitOnOpen: true,
       onUnsavedChanged: (unsaved) => _markUnsaved(tab: tab, unsaved: unsaved),
+      onRenamed: _updateTitles,
     );
   }
 }

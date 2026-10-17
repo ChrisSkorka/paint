@@ -443,11 +443,11 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - in selection ribbon
   - enabled when a selection is made
   - crop layers & frames to selection
-- [ ] allow renaming documents stored in-app in editor
+- [x] allow renaming documents stored in-app in editor
   - file name in status bar is a button
   - button triggers text input dialog (cannot save empty name)
   - name change stored in memory until document is saved
-- [ ] allow renaming documents stored in-app in new docs list
+- [x] allow renaming documents stored in-app in new docs list
   - new doc tab docs list has rename icon button left of delete
   - button triggers text input dialog
   - saves immediately upon closing dialog

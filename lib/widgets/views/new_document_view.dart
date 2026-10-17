@@ -16,6 +16,7 @@ import '../components/paint_style.dart';
 import '../components/paint_wide_button.dart';
 import '../components/shortcut_list.dart';
 import '../components/stored_document_list.dart';
+import '../components/text_input_dialog.dart';
 
 class NewDocumentView extends StatefulWidget {
   const NewDocumentView({
@@ -112,14 +113,30 @@ class _NewDocumentViewState extends State<NewDocumentView> {
   }
 
   Future<void> _openWith(Future<Document?> Function() load) async {
-    try {
+    await _attempt(() async {
       final document = await load();
-      if (!mounted) return;
-      setState(() => error = null);
-      if (document != null) widget.onCreate(document);
+      if (document != null && mounted) widget.onCreate(document);
+    });
+  }
+
+  Future<void> _attempt(Future<void> Function() action) async {
+    try {
+      await action();
+      if (mounted) setState(() => error = null);
     } on DocumentFormatException catch (exception) {
       if (mounted) setState(() => error = exception.message);
     }
+  }
+
+  Future<void> _renameStored(StoredDocument entry) async {
+    final name = await showTextInputDialog(
+      context: context,
+      title: 'Rename document',
+      label: 'Name',
+      initialText: entry.name,
+    );
+    if (name == null) return;
+    await _attempt(() => widget.library.rename(entry: entry, name: name));
   }
 
   Future<void> _deleteStored(StoredDocument entry) async {
@@ -171,6 +188,7 @@ class _NewDocumentViewState extends State<NewDocumentView> {
                     builder: (context, _) => StoredDocumentList(
                       documents: widget.library.documents,
                       onOpen: _openStored,
+                      onRename: _renameStored,
                       onDelete: _deleteStored,
                     ),
                   ),

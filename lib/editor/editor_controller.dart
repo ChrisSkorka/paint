@@ -41,7 +41,8 @@ class EditorController extends ChangeNotifier {
     required this.document,
     required this.pointerPreview,
     required this.history,
-  });
+    required String savedName,
+  }) : _savedName = savedName;
 
   factory EditorController.forDocument({required Document document}) {
     return EditorController(
@@ -51,6 +52,7 @@ class EditorController extends ChangeNotifier {
         height: document.height,
       ),
       history: History.forDocument(document: document),
+      savedName: document.name,
     );
   }
 
@@ -77,6 +79,7 @@ class EditorController extends ChangeNotifier {
   Selection? _selection;
   var _strokeArea = _noArea;
   late var _layerCount = document.layers.length;
+  String _savedName;
   DocumentStructure? _structureBeforePreview;
   var _playing = false;
   var _onionSkin = const OnionSkin();
@@ -158,14 +161,21 @@ class EditorController extends ChangeNotifier {
 
   SaveStatus get saveStatus => switch (document.storeId) {
     null => SaveStatus.notSaved,
-    _ when history.isAtSavedPoint => SaveStatus.saved,
-    _ => SaveStatus.unsavedChanges,
+    _ when hasUnsavedChanges => SaveStatus.unsavedChanges,
+    _ => SaveStatus.saved,
   };
 
-  bool get hasUnsavedChanges => !history.isAtSavedPoint;
+  bool get hasUnsavedChanges =>
+      !history.isAtSavedPoint || document.name != _savedName;
 
-  void markSaved(HistoryPoint point) {
+  void markSaved({required HistoryPoint point, required String name}) {
     history.markSaved(point);
+    _savedName = name;
+    notifyListeners();
+  }
+
+  void rename({required String name}) {
+    document.name = name;
     notifyListeners();
   }
 

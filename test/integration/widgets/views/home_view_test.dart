@@ -515,6 +515,62 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('rename', () {
+        testWidgets('tab title', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: HomeView(
+                files: StubFileAccess(),
+                library: stubDocumentLibrary(),
+                clipboard: StubImageClipboard(),
+              ),
+            ),
+          );
+          await tester.tap(find.text('Create new'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Rename document'));
+          await tester.pumpAndSettle();
+          await tester.enterText(find.byKey(const Key('Name')), 'Dog');
+          await tester.testTextInput.receiveAction(TextInputAction.done);
+          await tester.pumpAndSettle();
+          final actual = documentTabState(tester);
+          const expected = [
+            [(title: 'Dog', unsaved: true)],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('already unsaved', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: HomeView(
+                files: StubFileAccess(),
+                library: stubDocumentLibrary(),
+                clipboard: StubImageClipboard(),
+              ),
+            ),
+          );
+          await tester.tap(find.text('Create new'));
+          await tester.pumpAndSettle();
+          await tester.tapAt(
+            tester.getTopLeft(find.byType(PixelCanvas)) + const Offset(1, 1),
+          );
+          await tester.pump();
+          await tester.tap(find.byTooltip('Rename document'));
+          await tester.pumpAndSettle();
+          await tester.enterText(find.byKey(const Key('Name')), 'Dog');
+          await tester.testTextInput.receiveAction(TextInputAction.done);
+          await tester.pumpAndSettle();
+          final actual = documentTabState(tester);
+          const expected = [
+            [(title: 'Dog', unsaved: true)],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
       group('close tab', () {
         testWidgets('only tab', (tester) async {
           useDesktopView(tester);
