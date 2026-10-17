@@ -368,3 +368,13 @@ List<Object> textOutlineOptions(WidgetTester tester) => [
       )
       .enabled,
 ];
+
+List<double> canvasScrollOffsets(WidgetTester tester) => [
+  for (final state in tester.stateList<ScrollableState>(
+    find.ancestor(
+      of: find.byType(PixelCanvas),
+      matching: find.byType(Scrollable),
+    ),
+  ))
+    state.position.pixels,
+];

@@ -30,6 +30,18 @@ void main() {
           const expected = 'Cmd+Y / Cmd+Shift+Z';
           expect(actual, equals(expected));
         });
+        test('scroll zoom', () {
+          final actual = EditorShortcut.scrollZoom.keys;
+          const expected = 'Ctrl+Scroll';
+          expect(actual, equals(expected));
+        });
+        test('scroll zoom on macos', () {
+          debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+          addTearDown(() => debugDefaultTargetPlatformOverride = null);
+          final actual = EditorShortcut.scrollZoom.keys;
+          const expected = 'Cmd+Scroll';
+          expect(actual, equals(expected));
+        });
         test('keys label', () {
           final actual = EditorShortcut.toolPreset.keys;
           const expected = '1–9';
@@ -69,6 +81,7 @@ void main() {
             'Ctrl+=',
             'Ctrl+-',
             'Ctrl+0',
+            'Ctrl+Scroll',
             ',',
             '.',
             'Home',

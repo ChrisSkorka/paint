@@ -229,6 +229,13 @@ enum EditorShortcut {
     group: ShortcutGroup.view,
     activators: [SingleActivator(LogicalKeyboardKey.digit0, control: true)],
   ),
+  scrollZoom(
+    label: 'Zoom in / out',
+    group: ShortcutGroup.view,
+    activators: [],
+    keysLabel: 'Scroll',
+    usesPrimaryModifier: true,
+  ),
   previousFrame(
     label: 'Previous frame',
     group: ShortcutGroup.animation,
@@ -373,12 +380,14 @@ enum EditorShortcut {
     required this.group,
     required this.activators,
     this.keysLabel,
+    this.usesPrimaryModifier = false,
   });
 
   final String label;
   final ShortcutGroup group;
   final List<SingleActivator> activators;
   final String? keysLabel;
+  final bool usesPrimaryModifier;
 
   static final _keyNames = {
     LogicalKeyboardKey.delete: 'Del',
@@ -409,7 +418,20 @@ enum EditorShortcut {
         includeRepeats: activator.includeRepeats,
       );
 
-  String get keys => keysLabel ?? platformActivators.map(describe).join(' / ');
+  static String get primaryModifierLabel => usesCommandKey ? 'Cmd' : 'Ctrl';
+
+  static bool get primaryModifierPressed => HardwareKeyboard
+      .instance
+      .logicalKeysPressed
+      .any(primaryModifierKeys.contains);
+
+  String get keys => switch (keysLabel) {
+    final label? => [
+      if (usesPrimaryModifier) primaryModifierLabel,
+      label,
+    ].join('+'),
+    null => platformActivators.map(describe).join(' / '),
+  };
 
   String tooltip(String text) => '$text ($keys)';
 

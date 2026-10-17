@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -431,6 +432,20 @@ class _EditorViewState extends State<EditorView> {
     );
   }
 
+  void _zoomOnScroll(PointerSignalEvent event) {
+    if (event is! PointerScrollEvent ||
+        event.scrollDelta.dy == 0 ||
+        !EditorShortcut.primaryModifierPressed) {
+      return;
+    }
+    GestureBinding.instance.pointerSignalResolver.register(
+      event,
+      (event) => controller.stepZoom(
+        larger: (event as PointerScrollEvent).scrollDelta.dy < 0,
+      ),
+    );
+  }
+
   Widget _buildCanvasArea() {
     return Container(
       color: PaintStyle.canvasAreaBackground,
@@ -458,37 +473,43 @@ class _EditorViewState extends State<EditorView> {
                   controller: horizontalScroll,
                   scrollDirection: Axis.horizontal,
                   reverse: horizontal.reverse,
-                  padding: EdgeInsets.fromLTRB(
-                    horizontal.leading,
-                    vertical.leading,
-                    horizontal.trailing,
-                    vertical.trailing,
-                  ),
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      boxShadow: PaintStyle.faintShadow,
-                    ),
-                    child: Stack(
-                      children: [
-                        ListenableBuilder(
-                          listenable: controller.pointerPreview,
-                          builder: (context, _) => PixelCanvas(
-                            width: widget.document.width,
-                            height: widget.document.height,
-                            zoom: controller.zoom,
-                            layers: controller.canvasLayers,
-                            pointerPreview: controller.pointerPreview,
-                            layersChanged: controller.layersChanged,
-                            onPointerDown: _pointerDown,
-                            onPointerMove: controller.pointerMove,
-                            onPointerUp: controller.pointerUp,
-                            onPointerExit: controller.pointerExit,
-                            selection: controller.selectionArea,
-                            cursor: _canvasCursor(),
-                          ),
+                  child: Listener(
+                    behavior: HitTestBehavior.translucent,
+                    onPointerSignal: _zoomOnScroll,
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        horizontal.leading,
+                        vertical.leading,
+                        horizontal.trailing,
+                        vertical.trailing,
+                      ),
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          boxShadow: PaintStyle.faintShadow,
                         ),
-                        ?_buildTextDraft(),
-                      ],
+                        child: Stack(
+                          children: [
+                            ListenableBuilder(
+                              listenable: controller.pointerPreview,
+                              builder: (context, _) => PixelCanvas(
+                                width: widget.document.width,
+                                height: widget.document.height,
+                                zoom: controller.zoom,
+                                layers: controller.canvasLayers,
+                                pointerPreview: controller.pointerPreview,
+                                layersChanged: controller.layersChanged,
+                                onPointerDown: _pointerDown,
+                                onPointerMove: controller.pointerMove,
+                                onPointerUp: controller.pointerUp,
+                                onPointerExit: controller.pointerExit,
+                                selection: controller.selectionArea,
+                                cursor: _canvasCursor(),
+                              ),
+                            ),
+                            ?_buildTextDraft(),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),

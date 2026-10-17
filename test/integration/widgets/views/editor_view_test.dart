@@ -7673,6 +7673,251 @@ void main() {
         });
       });
 
+      group('scroll zoom', () {
+        testWidgets('ctrl scroll up', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await scrollWheel(tester, at: center, delta: const Offset(0, -50));
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          final actual = canvasSize(tester);
+          const expected = Size(16, 16);
+          expect(actual, equals(expected));
+        });
+        testWidgets('ctrl scroll down', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await scrollWheel(tester, at: center, delta: const Offset(0, 50));
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          final actual = canvasSize(tester);
+          const expected = Size(4, 4);
+          expect(actual, equals(expected));
+        });
+        testWidgets('right ctrl', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlRight);
+          await scrollWheel(tester, at: center, delta: const Offset(0, -50));
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlRight);
+          await tester.pump();
+          final actual = canvasSize(tester);
+          const expected = Size(16, 16);
+          expect(actual, equals(expected));
+        });
+        testWidgets('canvas margin', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await scrollWheel(
+            tester,
+            at: center + const Offset(200, 100),
+            delta: const Offset(0, -50),
+          );
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          final actual = canvasSize(tester);
+          const expected = Size(16, 16);
+          expect(actual, equals(expected));
+        });
+        testWidgets('without ctrl', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await scrollWheel(tester, at: center, delta: const Offset(0, -50));
+          final actual = canvasSize(tester);
+          const expected = Size(8, 8);
+          expect(actual, equals(expected));
+        });
+        testWidgets('horizontal scroll', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await scrollWheel(tester, at: center, delta: const Offset(-50, 0));
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          final actual = canvasSize(tester);
+          const expected = Size(8, 8);
+          expect(actual, equals(expected));
+        });
+        testWidgets('scale signal', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await scaleWheel(tester, at: center, scale: 2);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          final actual = canvasSize(tester);
+          const expected = Size(8, 8);
+          expect(actual, equals(expected));
+        });
+        testWidgets(
+          'cmd on macos',
+          (tester) async {
+            useDesktopView(tester);
+            await tester.pumpWidget(
+              MaterialApp(
+                home: Scaffold(
+                  body: EditorView(
+                    files: StubFileAccess(),
+                    library: stubDocumentLibrary(),
+                    clipboard: StubImageClipboard(),
+                    document: Document.blank(width: 2, height: 2),
+                  ),
+                ),
+              ),
+            );
+            final center = tester.getCenter(find.byType(PixelCanvas));
+            await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+            await scrollWheel(tester, at: center, delta: const Offset(0, -50));
+            await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+            await tester.pump();
+            final actual = canvasSize(tester);
+            const expected = Size(16, 16);
+            expect(actual, equals(expected));
+          },
+          variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+        );
+        testWidgets(
+          'ctrl on macos',
+          (tester) async {
+            useDesktopView(tester);
+            await tester.pumpWidget(
+              MaterialApp(
+                home: Scaffold(
+                  body: EditorView(
+                    files: StubFileAccess(),
+                    library: stubDocumentLibrary(),
+                    clipboard: StubImageClipboard(),
+                    document: Document.blank(width: 2, height: 2),
+                  ),
+                ),
+              ),
+            );
+            final center = tester.getCenter(find.byType(PixelCanvas));
+            await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+            await scrollWheel(tester, at: center, delta: const Offset(0, -50));
+            await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+            await tester.pump();
+            final actual = canvasSize(tester);
+            const expected = Size(8, 8);
+            expect(actual, equals(expected));
+          },
+          variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+        );
+        testWidgets('view stays put', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 200, height: 200),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await scrollWheel(tester, at: center, delta: const Offset(0, -50));
+          await scrollWheel(tester, at: center, delta: const Offset(0, 50));
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          final actual = [canvasScrollOffsets(tester), canvasSize(tester)];
+          const expected = [
+            [0.0, 0.0],
+            Size(800, 800),
+          ];
+          expect(actual, equals(expected));
+        });
+      });
       group('zoom', () {
         testWidgets('increase', (tester) async {
           useDesktopView(tester);

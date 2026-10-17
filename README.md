@@ -252,7 +252,8 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [x] macos shortcuts
   - swap ctrl & cmd
   - show cmd in shortcut hints
-- [ ] ctrl/cmd + scroll zooms in & out
+- [x] ctrl/cmd + scroll zooms in & out
+- [ ] alt + scroll scrubs through timeline/frames (& loops)
 
 ### phase 6.2: tool history & favorites
 
@@ -301,6 +302,9 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [x] vertically scrollable views always show scroll bars (& scroll bars are touchscreen friendly thickness) (but only when content overflows)
 - [x] allow scrolling document/canvas to the right & bottom when smaller than available space (currently if smaller, it's constraint to top left corner)
 - [x] horizontally scrollable views (top ribbons & tabs as far as I know) scroll on scroll wheen without needed shift pressed
+- [ ] allow zoom less than 1x
+- [ ] default zoom fit's doc
+- [ ] button and scroll zoom step by 1 instead of x2
 
 ### phase 7: tool refinement
 
