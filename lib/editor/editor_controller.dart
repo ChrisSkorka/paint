@@ -147,7 +147,6 @@ class EditorController extends ChangeNotifier {
   PixelRectangle? get selectionArea => _selectingArea ?? _selection?.area;
   bool get hasSelection => _selection != null;
   bool get canTransform => hasSelection || _textOrigin != null;
-  bool get drawsPointer => _tool != null;
   Layer? get selectionContent => _selection?.content;
   bool get pointerOverSelection {
     final cursor = pointerPreview.cursor;

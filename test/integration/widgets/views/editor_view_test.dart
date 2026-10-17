@@ -2644,7 +2644,7 @@ void main() {
           final actual = tester
               .widget<PixelCanvas>(find.byType(PixelCanvas))
               .cursor;
-          const expected = SystemMouseCursors.none;
+          const expected = SystemMouseCursors.basic;
           expect(actual, equals(expected));
         });
         testWidgets('color picker', (tester) async {
@@ -2667,7 +2667,7 @@ void main() {
           final actual = tester
               .widget<PixelCanvas>(find.byType(PixelCanvas))
               .cursor;
-          const expected = SystemMouseCursors.precise;
+          const expected = SystemMouseCursors.basic;
           expect(actual, equals(expected));
         });
       });

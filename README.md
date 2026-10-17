@@ -399,7 +399,7 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - tab / shift+tab applies to recents only (I think this is already implemented)
   - change lock/unlock icons for solid & outline star
   - favorite button show number for secondary action when not hovered
-- [ ] re-add system cursor for tools
+- [x] re-add system cursor for tools
 
 ### phase 8: right pane refinement
 

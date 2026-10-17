@@ -8188,37 +8188,6 @@ void main() {
       });
     });
 
-    group('getter drawsPointer', () {
-      group('tools', () {
-        test('pen', () {
-          final editorController = EditorController.forDocument(
-            document: Document.blank(width: 1, height: 1),
-          );
-          final actual = editorController.drawsPointer;
-          const expected = true;
-          expect(actual, equals(expected));
-        });
-        test('select', () {
-          final editorController = EditorController.forDocument(
-            document: Document.blank(width: 1, height: 1),
-          );
-          editorController.selectTool(ToolKind.select);
-          final actual = editorController.drawsPointer;
-          const expected = false;
-          expect(actual, equals(expected));
-        });
-        test('color picker', () {
-          final editorController = EditorController.forDocument(
-            document: Document.blank(width: 1, height: 1),
-          );
-          editorController.selectTool(ToolKind.colorPicker);
-          final actual = editorController.drawsPointer;
-          const expected = false;
-          expect(actual, equals(expected));
-        });
-      });
-    });
-
     group('getter layersChanged', () {
       group('pointer', () {
         test('hover', () {

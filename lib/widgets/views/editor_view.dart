@@ -247,9 +247,8 @@ class _EditorViewState extends State<EditorView> {
 
   MouseCursor _canvasCursor() {
     if (controller.pointerOverSelection) return SystemMouseCursors.move;
-    if (controller.drawsPointer) return SystemMouseCursors.none;
     if (controller.toolKind == ToolKind.text) return SystemMouseCursors.text;
-    return SystemMouseCursors.precise;
+    return SystemMouseCursors.basic;
   }
 
   String _cursorText() {
