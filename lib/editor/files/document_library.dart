@@ -71,6 +71,22 @@ class DocumentLibrary extends ChangeNotifier {
     await refresh();
   }
 
+  Future<void> duplicate({required StoredDocument entry}) async {
+    final bytes = await store.load(id: entry.id);
+    if (bytes == null) throw DocumentFormatException.missing();
+    final modified = now();
+    await store.save(
+      entry: StoredDocument(
+        id: '${modified.microsecondsSinceEpoch}',
+        name: '${entry.name} copy',
+        modified: modified,
+        thumbnail: entry.thumbnail,
+      ),
+      bytes: bytes,
+    );
+    await refresh();
+  }
+
   Future<void> delete({required StoredDocument entry}) async {
     await store.delete(id: entry.id);
     await refresh();

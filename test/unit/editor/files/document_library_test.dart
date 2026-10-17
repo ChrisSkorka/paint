@@ -196,6 +196,43 @@ void main() {
       });
     });
 
+    group('method duplicate', () {
+      group('entries', () {
+        test('stored', () async {
+          final stubStore = StubDocumentStore()
+            ..entries['1'] = storedDocument(id: '1', minute: 4)
+            ..files['1'] = Uint8List.fromList([1]);
+          final library = documentLibrary(stubStore: stubStore);
+          await library.duplicate(entry: storedDocument(id: '1', minute: 4));
+          final id = '${start.microsecondsSinceEpoch}';
+          final actual = [library.documents, stubStore.files];
+          final expected = [
+            [
+              storedDocument(id: '1', minute: 4),
+              storedDocument(id: id, name: 'Cat copy'),
+            ],
+            {
+              '1': Uint8List.fromList([1]),
+              id: Uint8List.fromList([1]),
+            },
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('errors', () {
+        test('missing', () async {
+          final library = documentLibrary(stubStore: StubDocumentStore());
+          Future<void> event() =>
+              library.duplicate(entry: storedDocument(id: '1'));
+          await expectLater(
+            event,
+            throwsA(equals(DocumentFormatException.missing())),
+          );
+        });
+      });
+    });
+
     group('method delete', () {
       group('entries', () {
         test('stored', () async {

@@ -944,6 +944,62 @@ void main() {
           const expected = 1;
           expect(actual, equals(expected));
         });
+        testWidgets('duplicate', (tester) async {
+          void stubOnCreate(Document document) {}
+          final stubStore = StubDocumentStore()
+            ..entries['1'] = storedDocument(id: '1', name: 'Cat')
+            ..files['1'] = Uint8List.fromList([1]);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: NewDocumentView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(store: stubStore),
+                  clipboard: StubImageClipboard(),
+                  onCreate: stubOnCreate,
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+          await tester.tap(find.byTooltip('Duplicate Cat'));
+          await tester.pumpAndSettle();
+          final actual = [
+            [for (final entry in stubStore.entries.values) entry.name],
+            find.text('Cat copy').evaluate().length,
+          ];
+          const expected = [
+            ['Cat', 'Cat copy'],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('duplicate missing', (tester) async {
+          void stubOnCreate(Document document) {}
+          final stubStore = StubDocumentStore()
+            ..entries['1'] = storedDocument(id: '1', name: 'Cat');
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: NewDocumentView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(store: stubStore),
+                  clipboard: StubImageClipboard(),
+                  onCreate: stubOnCreate,
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+          await tester.tap(find.byTooltip('Duplicate Cat'));
+          await tester.pumpAndSettle();
+          final actual = find
+              .text('Document no longer exists')
+              .evaluate()
+              .length;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
         testWidgets('delete confirmed', (tester) async {
           void stubOnCreate(Document document) {}
           final stubStore = StubDocumentStore()

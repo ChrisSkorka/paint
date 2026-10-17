@@ -451,16 +451,17 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - new doc tab docs list has rename icon button left of delete
   - button triggers text input dialog
   - saves immediately upon closing dialog
-- [ ] allow duplicating docs
-  - new doc tab docs list has duplicate button between rename & delete
-  - increase saved doc list width by aprox 2 buttons
 
 ### phase 9.3: files & document
 
-- [ ] new docs tab: in-app docs have duplicate button
+- [x] new docs tab: in-app docs have duplicate button
+  - new doc tab docs list has duplicate button between rename & delete
+  - increase saved doc list width by aprox 2 buttons
 - [ ] file open & save remember last location for doc (instead of default to code project)
-- [ ] new docs tab shows loading indicator when loading takes longer than 1s
-- [ ] save real file when opening real files on native system
+- [ ] editor canvas shows `Loading...` text in center until image is loaded
+- [ ] clicking the download primary button auto overrides a saved path, only secondary drop down options trigger path selection
+- [ ] new doc tabs open file file-picker defaults to last folder
+  - can we approximate last opened folder by getting the path of the most recent doc?
 
 ### phase 9.3: misc
 

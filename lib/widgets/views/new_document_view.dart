@@ -139,6 +139,10 @@ class _NewDocumentViewState extends State<NewDocumentView> {
     await _attempt(() => widget.library.rename(entry: entry, name: name));
   }
 
+  Future<void> _duplicateStored(StoredDocument entry) async {
+    await _attempt(() => widget.library.duplicate(entry: entry));
+  }
+
   Future<void> _deleteStored(StoredDocument entry) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -181,7 +185,7 @@ class _NewDocumentViewState extends State<NewDocumentView> {
                 ),
                 _Card(
                   title: 'Saved documents',
-                  width: 320,
+                  width: 400,
                   maxHeight: cardHeight,
                   child: ListenableBuilder(
                     listenable: widget.library,
@@ -189,6 +193,7 @@ class _NewDocumentViewState extends State<NewDocumentView> {
                       documents: widget.library.documents,
                       onOpen: _openStored,
                       onRename: _renameStored,
+                      onDuplicate: _duplicateStored,
                       onDelete: _deleteStored,
                     ),
                   ),

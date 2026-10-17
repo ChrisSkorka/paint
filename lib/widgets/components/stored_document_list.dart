@@ -12,6 +12,7 @@ class StoredDocumentList extends StatelessWidget {
     required this.documents,
     required this.onOpen,
     required this.onRename,
+    required this.onDuplicate,
     required this.onDelete,
   });
 
@@ -20,6 +21,7 @@ class StoredDocumentList extends StatelessWidget {
   final List<StoredDocument> documents;
   final ValueChanged<StoredDocument> onOpen;
   final ValueChanged<StoredDocument> onRename;
+  final ValueChanged<StoredDocument> onDuplicate;
   final ValueChanged<StoredDocument> onDelete;
 
   static String formatModified(DateTime modified) {
@@ -75,6 +77,11 @@ class StoredDocumentList extends StatelessWidget {
                       icon: FontAwesomeIcons.a,
                       tooltip: 'Rename ${document.name}',
                       onPressed: () => onRename(document),
+                    ),
+                    PaintIconButton(
+                      icon: FontAwesomeIcons.clone,
+                      tooltip: 'Duplicate ${document.name}',
+                      onPressed: () => onDuplicate(document),
                     ),
                     PaintIconButton(
                       icon: FontAwesomeIcons.trashCan,

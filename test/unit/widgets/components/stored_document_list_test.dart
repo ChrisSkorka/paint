@@ -21,6 +21,7 @@ void main() {
                 documents: const [],
                 onOpen: (_) {},
                 onRename: (_) {},
+                onDuplicate: (_) {},
                 onDelete: (_) {},
               ),
             ),
@@ -39,6 +40,7 @@ void main() {
                 ],
                 onOpen: (_) {},
                 onRename: (_) {},
+                onDuplicate: (_) {},
                 onDelete: (_) {},
               ),
             ),
@@ -68,6 +70,7 @@ void main() {
                 ],
                 onOpen: opened.add,
                 onRename: (_) {},
+                onDuplicate: (_) {},
                 onDelete: (_) {},
               ),
             ),
@@ -89,6 +92,7 @@ void main() {
                 ],
                 onOpen: opened.add,
                 onRename: renamed.add,
+                onDuplicate: (_) {},
                 onDelete: (_) {},
               ),
             ),
@@ -98,6 +102,31 @@ void main() {
           final expected = [
             [],
             [storedDocument(id: '2', name: 'Dog')],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('duplicate', (tester) async {
+          final opened = <StoredDocument>[];
+          final duplicated = <StoredDocument>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: StoredDocumentList(
+                documents: [
+                  storedDocument(id: '1', name: 'Cat'),
+                  storedDocument(id: '2', name: 'Dog'),
+                ],
+                onOpen: opened.add,
+                onRename: (_) {},
+                onDuplicate: duplicated.add,
+                onDelete: (_) {},
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Duplicate Cat'));
+          final actual = [opened, duplicated];
+          final expected = [
+            [],
+            [storedDocument(id: '1', name: 'Cat')],
           ];
           expect(actual, equals(expected));
         });
@@ -113,6 +142,7 @@ void main() {
                 ],
                 onOpen: opened.add,
                 onRename: (_) {},
+                onDuplicate: (_) {},
                 onDelete: deleted.add,
               ),
             ),
