@@ -392,12 +392,13 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - selects next recent preset after current selection (regardless of wether it was used or not)
   - skip locked presets (skip to first recent preset)
   - scroll new selection into view
-- [ ] split favorite/locked and recent lists
+- [x] split favorite/locked and recent lists
   - separator between lists
   - both allow up to 9 items
   - 1-9 shortcut apply to favorites only
   - tab / shift+tab applies to recents only (I think this is already implemented)
   - change lock/unlock icons for solid & outline star
+  - favorite button show number for secondary action when not hovered
 - [ ] re-add system cursor for tools
 
 ### phase 8: right pane refinement

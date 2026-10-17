@@ -311,6 +311,12 @@ class EditorController extends ChangeNotifier {
     selectTool(preset.kind);
   }
 
+  void applyLockedToolPreset({required int index}) {
+    if (document.toolPresets.isLocked(index: index)) {
+      applyToolPreset(index: index);
+    }
+  }
+
   void stepToolPreset({required bool forward}) {
     final ToolPresets(:locked, :recent) = document.toolPresets;
     if (recent.isEmpty) return;

@@ -15,7 +15,7 @@ class ToolPresets {
       recent: recent
           .toSet()
           .where((preset) => !kept.contains(preset))
-          .take(limit - kept.length)
+          .take(limit)
           .toList(),
     );
   }
@@ -27,13 +27,15 @@ class ToolPresets {
 
   List<ToolPreset> get all => [...locked, ...recent];
 
+  bool get canLock => locked.length < limit;
+
   bool isLocked({required int index}) => index < locked.length;
 
   ToolPresets use(ToolPreset preset) =>
       ToolPresets.limited(locked: locked, recent: [preset, ...recent]);
 
   ToolPresets lock({required int index}) {
-    if (isLocked(index: index) || index >= all.length) return this;
+    if (!canLock || isLocked(index: index) || index >= all.length) return this;
     final preset = recent[index - locked.length];
     return ToolPresets(
       locked: [...locked, preset],
@@ -44,7 +46,7 @@ class ToolPresets {
   ToolPresets unlock({required int index}) {
     if (!isLocked(index: index)) return this;
     final preset = locked[index];
-    return ToolPresets(
+    return ToolPresets.limited(
       locked: [...locked]..remove(preset),
       recent: [preset, ...recent],
     );

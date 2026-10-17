@@ -497,7 +497,7 @@ class _EditorViewState extends State<EditorView> {
       return KeyEventResult.ignored;
     }
     if (shortcut == EditorShortcut.toolPreset) {
-      controller.applyToolPreset(index: shortcut.activatorIndex(event));
+      controller.applyLockedToolPreset(index: shortcut.activatorIndex(event));
     } else {
       _shortcutActions[shortcut]!();
     }

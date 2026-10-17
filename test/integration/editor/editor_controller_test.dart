@@ -1057,6 +1057,37 @@ void main() {
       });
     });
 
+    group('method applyLockedToolPreset', () {
+      group('index', () {
+        final toolPresets = ToolPresets(
+          locked: const [ToolPreset(kind: ToolKind.eraser, size: 1)],
+          recent: const [
+            ToolPreset(kind: ToolKind.bucketFill, color: PixelColor.black),
+          ],
+        );
+        test('locked', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3)
+              ..toolPresets = toolPresets,
+          );
+          editorController.applyLockedToolPreset(index: 0);
+          final actual = editorController.toolKind;
+          const expected = ToolKind.eraser;
+          expect(actual, equals(expected));
+        });
+        test('recent', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 3, height: 3)
+              ..toolPresets = toolPresets,
+          );
+          editorController.applyLockedToolPreset(index: 1);
+          final actual = editorController.toolKind;
+          const expected = ToolKind.pen;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method stepToolPreset', () {
       group('current preset', () {
         test('forward', () {

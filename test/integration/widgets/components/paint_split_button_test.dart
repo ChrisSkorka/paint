@@ -284,6 +284,63 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('secondary placeholder', () {
+        testWidgets('idle', (tester) async {
+          void stubOnPressed() {}
+          void stubOnSecondaryPressed() {}
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: PaintSplitButton(
+                  icon: FontAwesomeIcons.pencil,
+                  tooltip: 'Pen',
+                  onPressed: stubOnPressed,
+                  secondaryIcon: FontAwesomeIcons.star,
+                  onSecondaryPressed: stubOnSecondaryPressed,
+                  secondaryOnHover: true,
+                  secondaryPlaceholder: const Text('1'),
+                ),
+              ),
+            ),
+          );
+          final actual = [
+            for (final opacity in tester.widgetList<Opacity>(
+              find.byType(Opacity),
+            ))
+              opacity.opacity,
+          ];
+          const expected = [0.0, 1.0];
+          expect(actual, equals(expected));
+        });
+        testWidgets('hovered', (tester) async {
+          void stubOnPressed() {}
+          void stubOnSecondaryPressed() {}
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: PaintSplitButton(
+                  icon: FontAwesomeIcons.pencil,
+                  tooltip: 'Pen',
+                  onPressed: stubOnPressed,
+                  secondaryIcon: FontAwesomeIcons.star,
+                  onSecondaryPressed: stubOnSecondaryPressed,
+                  secondaryOnHover: true,
+                  secondaryPlaceholder: const Text('1'),
+                ),
+              ),
+            ),
+          );
+          await hoverOver(tester, find.byTooltip('Pen'));
+          final actual = [
+            for (final opacity in tester.widgetList<Opacity>(
+              find.byType(Opacity),
+            ))
+              opacity.opacity,
+          ];
+          const expected = [1.0, 0.0];
+          expect(actual, equals(expected));
+        });
+      });
       group('icon shadows', () {
         testWidgets('none', (tester) async {
           void stubOnPressed() {}

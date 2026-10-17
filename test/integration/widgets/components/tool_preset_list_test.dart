@@ -10,6 +10,8 @@ import 'package:paint/widgets/components/paint_split_button.dart';
 import 'package:paint/widgets/components/paint_style.dart';
 import 'package:paint/widgets/components/tool_preset_list.dart';
 
+import '../../../support/desktop_view.dart';
+
 void main() {
   const pen = ToolPreset(
     kind: ToolKind.pen,
@@ -83,7 +85,7 @@ void main() {
             for (final text in tester.widgetList<Text>(find.byType(Text)))
               text.data,
           ];
-          const expected = ['3 px', '2 px'];
+          const expected = ['3 px', '1', '2 px'];
           expect(actual, equals(expected));
         });
         testWidgets('icons', (tester) async {
@@ -205,7 +207,7 @@ void main() {
             ),
           );
           final actual = [
-            tester.widget<Text>(find.byType(Text)).data,
+            tester.widget<Text>(find.byType(Text).first).data,
             buttons(tester).single.icon.codePoint,
             buttons(tester).single.color,
           ];
@@ -239,9 +241,9 @@ void main() {
               [button.tooltip, button.shortcut, button.secondaryTooltip],
           ];
           const expected = [
-            ['Pen', '1', 'Unlock'],
-            ['Eraser', '2', 'Lock'],
-            ['Fill', '3', 'Lock'],
+            ['Pen', '1', 'Remove from favorites'],
+            ['Eraser', null, 'Add to favorites'],
+            ['Fill', null, 'Add to favorites'],
           ];
           expect(actual, equals(expected));
         });
@@ -254,10 +256,79 @@ void main() {
               button.secondaryIcon.codePoint,
           ];
           final expected = [
-            FontAwesomeIcons.lock.codePoint,
-            FontAwesomeIcons.lock.codePoint,
-            FontAwesomeIcons.lockOpen.codePoint,
+            FontAwesomeIcons.solidStar.codePoint,
+            FontAwesomeIcons.solidStar.codePoint,
+            FontAwesomeIcons.star.codePoint,
           ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('on hover', (tester) async {
+          await tester.pumpWidget(toolPresetList());
+          final actual = [
+            for (final button in buttons(tester)) button.secondaryOnHover,
+          ];
+          const expected = [true, true, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('placeholders', (tester) async {
+          await tester.pumpWidget(toolPresetList(lockedCount: 2));
+          final actual = [
+            for (final button in buttons(tester))
+              (button.secondaryPlaceholder as Text?)?.data,
+          ];
+          const expected = ['1', '2', null];
+          expect(actual, equals(expected));
+        });
+        testWidgets('full', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            toolPresetList(
+              presets: [
+                for (var size = 1; size <= 10; size++)
+                  ToolPreset(kind: ToolKind.eraser, size: size),
+              ],
+              lockedCount: 9,
+            ),
+          );
+          final actual = [
+            buttons(tester).last.secondaryTooltip,
+            buttons(tester).last.onSecondaryPressed,
+          ];
+          const expected = ['Favorites full', null];
+          expect(actual, equals(expected));
+        });
+      });
+      group('separator', () {
+        testWidgets('both lists', (tester) async {
+          await tester.pumpWidget(toolPresetList());
+          final actual = tester
+              .getCenter(find.byKey(ToolPresetList.separatorKey))
+              .dx;
+          final lockedRight = tester
+              .getTopRight(find.byType(PaintSplitButton).first)
+              .dx;
+          final recentLeft = tester
+              .getTopLeft(find.byType(PaintSplitButton).at(1))
+              .dx;
+          final expected = (lockedRight + recentLeft) / 2;
+          expect(actual, equals(expected));
+        });
+        testWidgets('only recent', (tester) async {
+          await tester.pumpWidget(toolPresetList(lockedCount: 0));
+          final actual = find
+              .byKey(ToolPresetList.separatorKey)
+              .evaluate()
+              .length;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+        testWidgets('only locked', (tester) async {
+          await tester.pumpWidget(toolPresetList(lockedCount: 3));
+          final actual = find
+              .byKey(ToolPresetList.separatorKey)
+              .evaluate()
+              .length;
+          const expected = 0;
           expect(actual, equals(expected));
         });
       });
@@ -371,7 +442,7 @@ void main() {
         testWidgets('apply', (tester) async {
           final applied = <int>[];
           await tester.pumpWidget(toolPresetList(onApply: applied.add));
-          await tester.tap(find.byTooltip('Eraser (2)'));
+          await tester.tap(find.byTooltip('Eraser'));
           final actual = applied;
           const expected = [1];
           expect(actual, equals(expected));
@@ -384,7 +455,7 @@ void main() {
                   changes.add([index, locked]),
             ),
           );
-          await tester.tap(find.byTooltip('Lock').last);
+          await tester.tap(find.byTooltip('Add to favorites').last);
           final actual = changes;
           const expected = [
             [2, true],
@@ -399,7 +470,7 @@ void main() {
                   changes.add([index, locked]),
             ),
           );
-          await tester.tap(find.byTooltip('Unlock'));
+          await tester.tap(find.byTooltip('Remove from favorites'));
           final actual = changes;
           const expected = [
             [0, false],

@@ -18,6 +18,7 @@ class PaintSplitButton extends StatefulWidget {
     this.secondaryIcon = FontAwesomeIcons.angleDown,
     this.secondaryTooltip,
     this.secondaryOnHover = false,
+    this.secondaryPlaceholder,
     this.color = PaintStyle.iconColor,
     this.iconShadows,
     this.selected = false,
@@ -34,6 +35,7 @@ class PaintSplitButton extends StatefulWidget {
   final FaIconData secondaryIcon;
   final String? secondaryTooltip;
   final bool secondaryOnHover;
+  final Widget? secondaryPlaceholder;
   final Color color;
   final List<Shadow>? iconShadows;
   final bool selected;
@@ -113,10 +115,7 @@ class _PaintSplitButtonState extends State<PaintSplitButton> {
             right: Radius.circular(5),
           ),
           padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-          child: Opacity(
-            opacity: hovered || !widget.secondaryOnHover ? 1 : 0,
-            child: FaIcon(widget.secondaryIcon, size: 12),
-          ),
+          child: _buildSecondaryContent(),
         ),
       ),
     );
@@ -126,6 +125,23 @@ class _PaintSplitButtonState extends State<PaintSplitButton> {
       alignmentOffset: const Offset(0, 4),
       menuChildren: [dropdown],
       child: button,
+    );
+  }
+
+  Widget _buildSecondaryContent() {
+    final iconShown = hovered || !widget.secondaryOnHover;
+    final icon = Opacity(
+      opacity: iconShown ? 1 : 0,
+      child: FaIcon(widget.secondaryIcon, size: 12),
+    );
+    final placeholder = widget.secondaryPlaceholder;
+    if (placeholder == null) return icon;
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        icon,
+        Opacity(opacity: iconShown ? 0 : 1, child: placeholder),
+      ],
     );
   }
 }

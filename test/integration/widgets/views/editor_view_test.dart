@@ -2218,7 +2218,7 @@ void main() {
           await tester.pump();
           await tester.tap(find.byTooltip('Eraser (E)'));
           await tester.pump();
-          await tester.tap(find.byTooltip('Pen (1)'));
+          await tester.tap(find.byTooltip('Pen'));
           await tester.pump();
           final actual = allSelectedTools(tester);
           const expected = [
@@ -2252,7 +2252,7 @@ void main() {
           final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
           await tester.tapAt(topLeft + const Offset(1, 1));
           await tester.pump();
-          await tester.tap(find.byTooltip('Lock'));
+          await tester.tap(find.byTooltip('Add to favorites'));
           await tester.pump();
           final actual = [
             toolPresetList(tester).lockedCount,
@@ -5436,7 +5436,7 @@ void main() {
                   clipboard: StubImageClipboard(),
                   document: Document.blank(width: 2, height: 2)
                     ..toolPresets = const ToolPresets(
-                      recent: [ToolPreset(kind: ToolKind.eraser, size: 1)],
+                      locked: [ToolPreset(kind: ToolKind.eraser, size: 1)],
                     ),
                 ),
               ),
@@ -5457,7 +5457,7 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
-        testWidgets('missing preset', (tester) async {
+        testWidgets('recent preset', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
             MaterialApp(
@@ -5474,7 +5474,7 @@ void main() {
               ),
             ),
           );
-          await pressShortcut(tester, key: LogicalKeyboardKey.digit2);
+          await pressShortcut(tester, key: LogicalKeyboardKey.digit1);
           final actual = allSelectedTools(tester);
           const expected = [
             true,

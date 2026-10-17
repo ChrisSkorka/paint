@@ -32,6 +32,7 @@ void main() {
           );
           final expected = ToolPresets(
             locked: [for (var size = 1; size <= 9; size++) eraser(size)],
+            recent: [eraser(11)],
           );
           expect(actual, equals(expected));
         });
@@ -63,7 +64,7 @@ void main() {
           );
           final expected = ToolPresets(
             locked: [eraser(1), eraser(2)],
-            recent: [for (var size = 3; size <= 9; size++) eraser(size)],
+            recent: [for (var size = 3; size <= 11; size++) eraser(size)],
           );
           expect(actual, equals(expected));
         });
@@ -83,6 +84,25 @@ void main() {
             recent: [eraser(2)],
           ).all;
           final expected = [eraser(1), eraser(2)];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter canLock', () {
+      group('locked', () {
+        test('room left', () {
+          final actual = ToolPresets(
+            locked: [for (var size = 1; size <= 8; size++) eraser(size)],
+          ).canLock;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        test('full', () {
+          final actual = ToolPresets(
+            locked: [for (var size = 1; size <= 9; size++) eraser(size)],
+          ).canLock;
+          const expected = false;
           expect(actual, equals(expected));
         });
       });
@@ -161,6 +181,7 @@ void main() {
           final actual = toolPresets.use(eraser(10));
           final expected = ToolPresets(
             locked: [for (var size = 1; size <= 9; size++) eraser(size)],
+            recent: [eraser(10)],
           );
           expect(actual, equals(expected));
         });
@@ -198,9 +219,37 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('limit', () {
+        test('full locked', () {
+          final toolPresets = ToolPresets(
+            locked: [for (var size = 1; size <= 9; size++) eraser(size)],
+            recent: [eraser(10)],
+          );
+          final actual = toolPresets.lock(index: 9);
+          final expected = toolPresets;
+          expect(actual, equals(expected));
+        });
+      });
     });
 
     group('method unlock', () {
+      group('limit', () {
+        test('full recent', () {
+          final toolPresets = ToolPresets(
+            locked: [eraser(1)],
+            recent: [for (var size = 2; size <= 10; size++) eraser(size)],
+          );
+          final actual = toolPresets.unlock(index: 0);
+          final expected = ToolPresets(
+            recent: [
+              eraser(1),
+              for (var size = 2; size <= 9; size++) eraser(size),
+            ],
+          );
+          expect(actual, equals(expected));
+        });
+      });
+
       group('index', () {
         final toolPresets = ToolPresets(
           locked: [eraser(1), eraser(2)],
