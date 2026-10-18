@@ -384,9 +384,34 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - xy values is the bounding box size (not including boarders) of the selection/shape
   - for constraint mode, use the shapes actual corner points
   - size display has constant width
-- [ ] arrow keys move selection
+- [x] arrow keys move selection
   - default: 1px in document space
   - modifier: shift: 10px in document space
+- [x] remove paste to new layer:
+  - position pasted content centered relative to selection (when content is too large or small)
+  - when pasting into smaller selection, clip paste value to selection
+- [ ] multi frame selections:
+  - film icon button in selection ribbon:
+    - enabled on a per-frame layer
+    - a toggle that switches between this-frame, and all frames mode
+    - remember value between selections
+  - any actions performed on selection, are performed in all frames
+  - transformations, erasures, & clipboard actions are applied per frame using the respective layers pixels
+  - copy, cut, & paste:
+    - new app internal multi frame clipboard
+    - internal clipboard stores images for all frames + which frame or image was visible
+    - system clipboard receives one image from the current frame
+    - detect external pastes overriding multi frame copy
+      - on paste, compare the system clipboard & visible internal clipboard frame
+      - if same, paste internal clipboard value on all frames
+      - if different, paste system clipboard and clear internal clipboard
+  - frame alignment: relative to selected frame (to allow temporal movements)
+  - mismatched frame counts:
+    - multi frame: ignore overflow, don't change underflow frames
+    - single: paste to all frames
+    - pasting multi frame in single mode: paste frame that was visible when copying
+  - history items: each item hols the changes for all frames
+- [ ] maintain selection when switching layers?
 
 ### phase 7.6: misc tool refinements
 

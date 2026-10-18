@@ -1069,28 +1069,34 @@ class EditorController extends ChangeNotifier {
     unawaited(commitText());
     _toolKind = ToolKind.select;
     _drawingToolKind = ToolKind.select;
-    final centered = PixelPoint(
-      x: center.x - image.width ~/ 2,
-      y: center.y - image.height ~/ 2,
-    );
     final area = _selection?.area;
-    if (area != null &&
-        (image.width > area.width || image.height > area.height)) {
-      _changeStructure(
-        name: 'Paste as layer',
-        change: () => _selection = Selection.pasted(
-          layer: _insertLayer(),
-          content: image,
-          at: centered,
-        ),
-      );
-      return;
-    }
+    final placement = area == null
+        ? PixelRectangle(
+            left: center.x - image.width ~/ 2,
+            top: center.y - image.height ~/ 2,
+            width: image.width,
+            height: image.height,
+          )
+        : PixelRectangle(
+            left: area.left + (area.width - image.width) ~/ 2,
+            top: area.top + (area.height - image.height) ~/ 2,
+            width: image.width,
+            height: image.height,
+          );
+    final clipped = area == null ? placement : placement.intersection(area);
     final before = Layer.copyOf(document.activeLayer);
     final pasted = Selection.pasted(
       layer: document.activeLayer,
-      content: image,
-      at: area == null ? centered : PixelPoint(x: area.left, y: area.top),
+      content: Layer.cropped(
+        layer: image,
+        area: PixelRectangle(
+          left: clipped.left - placement.left,
+          top: clipped.top - placement.top,
+          width: clipped.width,
+          height: clipped.height,
+        ),
+      ),
+      at: PixelPoint(x: clipped.left, y: clipped.top),
     );
     _selection = pasted;
     _record(name: 'Paste', before: before, area: pasted.area);
@@ -1122,6 +1128,16 @@ class EditorController extends ChangeNotifier {
       ),
     );
   }
+
+  void moveSelection({required int offsetX, required int offsetY}) =>
+      _transformSelection(
+        name: 'Move selection',
+        transform: (selection) => selection.moved(
+          layer: document.activeLayer,
+          offsetX: offsetX,
+          offsetY: offsetY,
+        ),
+      );
 
   void _orientText(TextOrientation orientation) {
     _textOrientation = orientation;

@@ -63,6 +63,8 @@ void main() {
             'Ctrl+A',
             'Del / Backspace',
             'Esc',
+            'Arrows',
+            'Shift+Arrows',
             'P',
             'E',
             'G',

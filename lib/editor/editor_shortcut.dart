@@ -125,6 +125,28 @@ enum EditorShortcut {
       SingleActivator(LogicalKeyboardKey.escape, includeRepeats: false),
     ],
   ),
+  moveSelection(
+    label: 'Move selection',
+    group: ShortcutGroup.selection,
+    activators: [
+      SingleActivator(LogicalKeyboardKey.arrowLeft),
+      SingleActivator(LogicalKeyboardKey.arrowRight),
+      SingleActivator(LogicalKeyboardKey.arrowUp),
+      SingleActivator(LogicalKeyboardKey.arrowDown),
+    ],
+    keysLabel: 'Arrows',
+  ),
+  moveSelectionFar(
+    label: 'Move selection 10px',
+    group: ShortcutGroup.selection,
+    activators: [
+      SingleActivator(LogicalKeyboardKey.arrowLeft, shift: true),
+      SingleActivator(LogicalKeyboardKey.arrowRight, shift: true),
+      SingleActivator(LogicalKeyboardKey.arrowUp, shift: true),
+      SingleActivator(LogicalKeyboardKey.arrowDown, shift: true),
+    ],
+    keysLabel: 'Shift+Arrows',
+  ),
   pen(
     label: 'Pen',
     group: ShortcutGroup.tools,

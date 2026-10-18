@@ -3060,6 +3060,139 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
+        testWidgets('right and down arrows', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 3, height: 3);
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
+          await tester.pump();
+          await pressShortcut(tester, key: LogicalKeyboardKey.arrowRight);
+          await pressShortcut(tester, key: LogicalKeyboardKey.arrowDown);
+          final actual = [
+            pixelRows(document.activeLayer),
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              [transparent, transparent, transparent],
+              [transparent, black, transparent],
+              [transparent, transparent, transparent],
+            ],
+            [
+              ['Start', 'Move selection', 'Move selection'],
+              2,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('left and up arrows', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 3, height: 3);
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 2, y: 2),
+            color: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
+          await tester.pump();
+          await pressShortcut(tester, key: LogicalKeyboardKey.arrowLeft);
+          await pressShortcut(tester, key: LogicalKeyboardKey.arrowUp);
+          final actual = [
+            pixelRows(document.activeLayer),
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              [transparent, transparent, transparent],
+              [transparent, black, transparent],
+              [transparent, transparent, transparent],
+            ],
+            [
+              ['Start', 'Move selection', 'Move selection'],
+              2,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('shift arrow', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 11, height: 1);
+          document.activeLayer.setPixel(
+            point: const PixelPoint(x: 0, y: 0),
+            color: PixelColor.black,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
+          await tester.pump();
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.arrowRight,
+            modifiers: [LogicalKeyboardKey.shiftLeft],
+          );
+          final actual = [
+            pixelRows(document.activeLayer),
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              [
+                transparent,
+                transparent,
+                transparent,
+                transparent,
+                transparent,
+                transparent,
+                transparent,
+                transparent,
+                transparent,
+                transparent,
+                black,
+              ],
+            ],
+            [
+              ['Start', 'Move selection'],
+              1,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
         testWidgets('other key', (tester) async {
           useDesktopView(tester);
           final document = Document.blank(

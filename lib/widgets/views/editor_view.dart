@@ -523,12 +523,32 @@ class _EditorViewState extends State<EditorView> {
     if (shortcut == null || shortcut.group == ShortcutGroup.tabs) {
       return KeyEventResult.ignored;
     }
-    if (shortcut == EditorShortcut.toolPreset) {
-      controller.applyLockedToolPreset(index: shortcut.activatorIndex(event));
-    } else {
-      _shortcutActions[shortcut]!();
+    switch (shortcut) {
+      case EditorShortcut.toolPreset:
+        controller.applyLockedToolPreset(index: shortcut.activatorIndex(event));
+      case EditorShortcut.moveSelection:
+        _moveSelection(index: shortcut.activatorIndex(event), distance: 1);
+      case EditorShortcut.moveSelectionFar:
+        _moveSelection(index: shortcut.activatorIndex(event), distance: 10);
+      default:
+        _shortcutActions[shortcut]!();
     }
     return KeyEventResult.handled;
+  }
+
+  static const _arrowDirections = [
+    PixelPoint(x: -1, y: 0),
+    PixelPoint(x: 1, y: 0),
+    PixelPoint(x: 0, y: -1),
+    PixelPoint(x: 0, y: 1),
+  ];
+
+  void _moveSelection({required int index, required int distance}) {
+    final direction = _arrowDirections[index];
+    controller.moveSelection(
+      offsetX: direction.x * distance,
+      offsetY: direction.y * distance,
+    );
   }
 
   bool _editingText() =>
