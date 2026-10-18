@@ -7,6 +7,7 @@ import '../../editor/canvas/document.dart';
 import '../../editor/editor_shortcut.dart';
 import '../../editor/files/document_library.dart';
 import '../../editor/files/file_access.dart';
+import '../../editor/files/frame_clipboard.dart';
 import '../../editor/files/image_clipboard.dart';
 import '../components/document_tab_bar.dart';
 import 'editor_view.dart';
@@ -30,6 +31,7 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   final tabs = [_OpenTab(key: UniqueKey())];
+  final frameClipboard = FrameClipboard();
   var selectedIndex = 0;
 
   @override
@@ -150,6 +152,7 @@ class _HomeViewState extends State<HomeView> {
     return EditorView(
       document: document,
       clipboard: widget.clipboard,
+      frameClipboard: frameClipboard,
       files: widget.files,
       library: widget.library,
       active: active,

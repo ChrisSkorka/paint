@@ -412,3 +412,13 @@ Offset canvasPixelCenter(WidgetTester tester, PixelPoint point) {
   return tester.getTopLeft(canvas) +
       Offset(point.x + 0.5, point.y + 0.5) * scale;
 }
+
+List<bool> allFramesButtonState(WidgetTester tester) {
+  final button = tester.widget<PaintIconButton>(
+    find.ancestor(
+      of: find.byTooltip('All frames'),
+      matching: find.byType(PaintIconButton),
+    ),
+  );
+  return [button.onPressed != null, button.selected];
+}

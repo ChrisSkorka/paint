@@ -15,13 +15,16 @@ import '../../editor/files/document_library.dart';
 import '../../editor/files/export_format.dart';
 import '../../editor/files/file_access.dart';
 import '../../editor/files/file_location.dart';
+import '../../editor/files/frame_clipboard.dart';
 import '../../editor/files/image_clipboard.dart';
 import '../../editor/files/save_status.dart';
 import '../../editor/canvas/layer.dart';
 import '../../editor/history/history.dart';
 import '../../editor/history/history_entry.dart';
+import '../../editor/history/multi_frame_history_entry.dart';
 import '../../editor/history/pixel_history_entry.dart';
 import '../../editor/pointer_button.dart';
+import '../../editor/selection/selection_clip.dart';
 import '../../editor/tools/brush_tip.dart';
 import '../../editor/tools/color_palettes.dart';
 import '../../editor/tools/text_format.dart';
@@ -66,6 +69,7 @@ class EditorView extends StatefulWidget {
     required this.clipboard,
     required this.files,
     required this.library,
+    this.frameClipboard,
     this.active = true,
     this.fitOnOpen = false,
     this.onUnsavedChanged,
@@ -76,6 +80,7 @@ class EditorView extends StatefulWidget {
   final ImageClipboard clipboard;
   final FileAccess files;
   final DocumentLibrary library;
+  final FrameClipboard? frameClipboard;
   final bool active;
   final bool fitOnOpen;
   final ValueChanged<bool>? onUnsavedChanged;
@@ -93,6 +98,7 @@ class _EditorViewState extends State<EditorView> {
   late final controller = EditorController.forDocument(
     document: widget.document,
   );
+  late final frameClipboard = widget.frameClipboard ?? FrameClipboard();
   var exportFormat = ExportFormat.png;
   Timer? playback;
   final focusNode = FocusNode(debugLabel: 'Editor');
@@ -295,8 +301,12 @@ class _EditorViewState extends State<EditorView> {
   ];
 
   Rect? _thumbnailOutline(HistoryEntry entry) {
-    if (entry is! PixelHistoryEntry) return null;
-    final outline = entry.outline;
+    final outline = switch (entry) {
+      PixelHistoryEntry() => entry.outline,
+      MultiFrameHistoryEntry() => entry.outline,
+      _ => null,
+    };
+    if (outline == null) return null;
     final width = entry.thumbnail.width;
     final height = entry.thumbnail.height;
     return Rect.fromLTRB(
@@ -337,20 +347,23 @@ class _EditorViewState extends State<EditorView> {
   }
 
   Future<void> _copySelection() async {
-    final content = controller.selectionContent;
-    if (content != null) await widget.clipboard.write(content);
+    final clip = controller.selectionClip;
+    if (clip != null) await _writeClip(clip);
   }
 
   Future<void> _cutSelection() async {
-    final content = controller.selectionContent;
+    final clip = controller.selectionClip;
     controller.cutSelection();
-    if (content != null) await widget.clipboard.write(content);
+    if (clip != null) await _writeClip(clip);
   }
 
+  Future<void> _writeClip(SelectionClip clip) =>
+      frameClipboard.write(system: widget.clipboard, clip: clip);
+
   Future<void> _paste() async {
-    final image = await widget.clipboard.read();
-    if (image != null && mounted) {
-      controller.paste(image: image, center: _pasteCenter());
+    final clip = await frameClipboard.read(system: widget.clipboard);
+    if (clip != null && mounted) {
+      controller.paste(clip: clip, center: _pasteCenter());
     }
   }
 
@@ -1283,7 +1296,16 @@ class _EditorViewState extends State<EditorView> {
                                 controller.cropToSelection,
                               ),
                             ),
-                            const SizedBox(),
+                            PaintIconButton(
+                              icon: FontAwesomeIcons.film,
+                              tooltip: 'All frames',
+                              selected: controller.selectingAllFrames,
+                              onPressed: controller.allFramesSelectable
+                                  ? () => controller.setSelectingAllFrames(
+                                      !controller.selectingAllFrames,
+                                    )
+                                  : null,
+                            ),
                           ],
                         ),
                       ],

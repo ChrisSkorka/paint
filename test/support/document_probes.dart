@@ -5,6 +5,8 @@ import 'package:paint/editor/canvas/layer_timeframe.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
 
+import 'layer_probes.dart';
+
 Document layeredDocument({
   required List<String> names,
   required int activeLayerIndex,
@@ -66,3 +68,27 @@ List<Object> frameStructure(Document document) => [
       ],
   ],
 ];
+
+Document filmDocument({
+  required List<List<List<int>>> frames,
+  required int activeFrameIndex,
+}) => Document(
+  width: frames.first.first.length,
+  height: frames.first.length,
+  layers: [filmLayer(frames: frames)],
+  activeLayerIndex: 0,
+  frameHolds: [for (final _ in frames) 1],
+  activeFrameIndex: activeFrameIndex,
+);
+
+List<List<List<int>>> framePixelRows(Document document) => [
+  for (final image in document.layers[document.activeLayerIndex].images)
+    pixelRows(image),
+];
+
+DocumentLayer filmLayer({required List<List<List<int>>> frames}) =>
+    DocumentLayer(
+      name: 'Film',
+      images: [for (final rows in frames) layerFromRows(rows)],
+      timeframe: LayerTimeframe.perFrame,
+    );

@@ -390,18 +390,19 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [x] remove paste to new layer:
   - position pasted content centered relative to selection (when content is too large or small)
   - when pasting into smaller selection, clip paste value to selection
-- [ ] multi frame selections:
+- [x] multi frame selections:
   - film icon button in selection ribbon:
     - enabled on a per-frame layer
     - a toggle that switches between this-frame, and all frames mode
+    - toggling commits any current selections
     - remember value between selections
   - any actions performed on selection, are performed in all frames
-  - transformations, erasures, & clipboard actions are applied per frame using the respective layers pixels
+  - transformations, erasures, & clipboard actions are applied per frame using the respective frames pixels
   - copy, cut, & paste:
     - new app internal multi frame clipboard
     - internal clipboard stores images for all frames + which frame or image was visible
     - system clipboard receives one image from the current frame
-    - detect external pastes overriding multi frame copy
+    - detect external pastes overriding multi frame clips
       - on paste, compare the system clipboard & visible internal clipboard frame
       - if same, paste internal clipboard value on all frames
       - if different, paste system clipboard and clear internal clipboard
@@ -411,7 +412,14 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
     - single: paste to all frames
     - pasting multi frame in single mode: paste frame that was visible when copying
   - history items: each item hols the changes for all frames
-- [ ] maintain selection when switching layers?
+  - switching frames with a selection active: 
+    - keep all selections lifted
+    - when copying & pasting, the currently active frame is the reference frame
+- [ ] multi frame selection modes:
+  - mode button is split button
+  - secondary action opens a popup
+  - popup has toggle buttons to independently select forward and backward directions
+  - only frames in the enabled directions will be included/affected
 
 ### phase 7.6: misc tool refinements
 

@@ -12,10 +12,11 @@ PixelHistoryEntry pixelEntry({
   required int x,
   required int before,
   required int after,
+  int frameIndex = 0,
 }) => PixelHistoryEntry(
   name: name,
   layerIndex: 0,
-  frameIndex: 0,
+  frameIndex: frameIndex,
   before: LayerSnapshot(
     area: PixelRectangle(left: x, top: 0, width: 1, height: 1),
     rgba: Uint8List.fromList([before, before, before, before]),

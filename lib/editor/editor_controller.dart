@@ -16,11 +16,14 @@ import 'files/save_status.dart';
 import 'history/document_structure.dart';
 import 'history/history.dart';
 import 'history/layer_snapshot.dart';
+import 'history/multi_frame_history_entry.dart';
 import 'history/pixel_history_entry.dart';
 import 'history/structure_history_entry.dart';
 import 'pointer_button.dart';
 import 'pointer_preview.dart';
+import 'selection/multi_frame_selection.dart';
 import 'selection/selection.dart';
+import 'selection/selection_clip.dart';
 import 'tools/brush_tip.dart';
 import 'tools/bucket_fill.dart';
 import 'tools/eraser.dart';
@@ -73,11 +76,12 @@ class EditorController extends ChangeNotifier {
   PixelPoint? _strokePoint;
   var _strokeColor = PixelColor.black;
   var _strokeButton = PointerButton.primary;
-  Layer? _strokeBefore;
+  Map<int, Layer>? _strokeBefore;
   var _strokeName = '';
   var _selectionOrigin = const PixelPoint(x: 0, y: 0);
   PixelRectangle? _selectingArea;
-  Selection? _selection;
+  MultiFrameSelection? _selection;
+  var _selectingAllFramesEnabled = false;
   var _strokeArea = _noArea;
   late var _layerCount = document.layers.length;
   String _savedName;
@@ -171,7 +175,58 @@ class EditorController extends ChangeNotifier {
   }
 
   bool get canTransform => hasSelection || _textOrigin != null;
-  Layer? get selectionContent => _selection?.content;
+  Layer? get selectionContent =>
+      _selection?.frames[document.activeFrameIndex]?.content;
+  SelectionClip? get selectionClip {
+    final selection = _selection;
+    if (selection == null) return null;
+    final active = document.activeFrameIndex;
+    final image =
+        selectionContent ??
+        Layer.filled(
+          width: selection.area.width,
+          height: selection.area.height,
+          color: PixelColor.transparent,
+        );
+    if (!selectingAllFrames) return SelectionClip(image: image);
+    return SelectionClip(
+      image: image,
+      frames: {
+        for (final MapEntry(key: frame, value: frameSelection)
+            in selection.frames.entries)
+          frame - active: frameSelection.content,
+        0: image,
+      },
+    );
+  }
+
+  bool get allFramesSelectable =>
+      document.layers[document.activeLayerIndex].timeframe ==
+      LayerTimeframe.perFrame;
+  bool get selectingAllFrames =>
+      _selectingAllFramesEnabled && allFramesSelectable;
+
+  void setSelectingAllFrames(bool selecting) {
+    if (_strokePoint != null) return;
+    _selection = null;
+    _selectingAllFramesEnabled = selecting;
+    notifyListeners();
+  }
+
+  DocumentLayer get _activeDocumentLayer =>
+      document.layers[document.activeLayerIndex];
+
+  List<int> get _selectableFrames => selectingAllFrames
+      ? [for (var frame = 0; frame < document.frameCount; frame++) frame]
+      : [document.activeFrameIndex];
+
+  Map<int, Layer> _captureFrames(Iterable<int> frames) => {
+    for (final frame in frames)
+      frame: Layer.copyOf(_activeDocumentLayer.imageAt(frame)),
+  };
+
+  Map<int, Layer> _captureActiveFrame() =>
+      _captureFrames([document.activeFrameIndex]);
   bool get pointerOverSelection {
     final cursor = pointerPreview.cursor;
     final selection = _selection;
@@ -489,7 +544,7 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
     final orientation = _textOrientation;
     final image = orientation.apply(await stamp.rasterize());
-    final before = Layer.copyOf(document.activeLayer);
+    final before = _captureActiveFrame();
     document.activeLayer.composite(source: image, at: origin);
     _record(
       name: 'Text',
@@ -595,7 +650,7 @@ class EditorController extends ChangeNotifier {
 
   void selectFrame(int index) {
     if (_strokePoint != null) return;
-    _selection = null;
+    if (!selectingAllFrames) _selection = null;
     document.activeFrameIndex = index;
     notifyListeners();
   }
@@ -970,7 +1025,7 @@ class EditorController extends ChangeNotifier {
     if (_toolKind == ToolKind.select) _startSelecting(point);
     final tool = _tool;
     if (tool != null) {
-      _strokeBefore = Layer.copyOf(document.activeLayer);
+      _strokeBefore = _captureActiveFrame();
       _strokeArea = tool.start(
         layer: document.activeLayer,
         point: point,
@@ -1034,8 +1089,9 @@ class EditorController extends ChangeNotifier {
     unawaited(commitText());
     _toolKind = ToolKind.select;
     _drawingToolKind = ToolKind.select;
-    _selection = Selection.lift(
-      layer: document.activeLayer,
+    _selection = MultiFrameSelection.lift(
+      layer: _activeDocumentLayer,
+      frames: _selectableFrames,
       area: document.activeLayer.bounds,
     );
     notifyListeners();
@@ -1054,21 +1110,26 @@ class EditorController extends ChangeNotifier {
   void _eraseSelection({required String name}) {
     final selection = _selection;
     if (selection == null || _strokePoint != null) return;
-    final before = Layer.copyOf(document.activeLayer);
-    document.activeLayer.fillRectangle(
-      rectangle: selection.area,
-      color: PixelColor.transparent,
-    );
+    final before = _captureFrames(selection.frames.keys);
+    for (final frame in selection.frames.keys) {
+      _activeDocumentLayer
+          .imageAt(frame)
+          .fillRectangle(
+            rectangle: selection.area,
+            color: PixelColor.transparent,
+          );
+    }
     _selection = null;
     _record(name: name, before: before, area: selection.area);
     notifyListeners();
   }
 
-  void paste({required Layer image, required PixelPoint center}) {
+  void paste({required SelectionClip clip, required PixelPoint center}) {
     if (_strokePoint != null) return;
     unawaited(commitText());
     _toolKind = ToolKind.select;
     _drawingToolKind = ToolKind.select;
+    final image = clip.image;
     final area = _selection?.area;
     final placement = area == null
         ? PixelRectangle(
@@ -1084,23 +1145,39 @@ class EditorController extends ChangeNotifier {
             height: image.height,
           );
     final clipped = area == null ? placement : placement.intersection(area);
-    final before = Layer.copyOf(document.activeLayer);
-    final pasted = Selection.pasted(
-      layer: document.activeLayer,
-      content: Layer.cropped(
-        layer: image,
-        area: PixelRectangle(
-          left: clipped.left - placement.left,
-          top: clipped.top - placement.top,
-          width: clipped.width,
-          height: clipped.height,
-        ),
-      ),
+    final crop = PixelRectangle(
+      left: clipped.left - placement.left,
+      top: clipped.top - placement.top,
+      width: clipped.width,
+      height: clipped.height,
+    );
+    final contents = _pastedContents(clip);
+    final before = _captureFrames(contents.keys);
+    final pasted = MultiFrameSelection.pasted(
+      layer: _activeDocumentLayer,
+      contents: {
+        for (final MapEntry(key: frame, value: content) in contents.entries)
+          frame: Layer.cropped(layer: content, area: crop),
+      },
       at: PixelPoint(x: clipped.left, y: clipped.top),
     );
     _selection = pasted;
     _record(name: 'Paste', before: before, area: pasted.area);
     notifyListeners();
+  }
+
+  Map<int, Layer> _pastedContents(SelectionClip clip) {
+    final active = document.activeFrameIndex;
+    final frames = clip.frames;
+    if (!selectingAllFrames) return {active: clip.image};
+    if (frames == null) {
+      return {for (final frame in _selectableFrames) frame: clip.image};
+    }
+    return {
+      for (final MapEntry(key: offset, value: image) in frames.entries)
+        if (active + offset >= 0 && active + offset < document.frameCount)
+          active + offset: image,
+    };
   }
 
   void rotateSelection({required bool clockwise}) {
@@ -1110,8 +1187,8 @@ class EditorController extends ChangeNotifier {
     }
     _transformSelection(
       name: clockwise ? 'Rotate right' : 'Rotate left',
-      transform: (selection) =>
-          selection.rotated(layer: document.activeLayer, clockwise: clockwise),
+      transform: (selection, image) =>
+          selection.rotated(layer: image, clockwise: clockwise),
     );
   }
 
@@ -1122,21 +1199,16 @@ class EditorController extends ChangeNotifier {
     }
     _transformSelection(
       name: horizontally ? 'Mirror horizontally' : 'Mirror vertically',
-      transform: (selection) => selection.mirrored(
-        layer: document.activeLayer,
-        horizontally: horizontally,
-      ),
+      transform: (selection, image) =>
+          selection.mirrored(layer: image, horizontally: horizontally),
     );
   }
 
   void moveSelection({required int offsetX, required int offsetY}) =>
       _transformSelection(
         name: 'Move selection',
-        transform: (selection) => selection.moved(
-          layer: document.activeLayer,
-          offsetX: offsetX,
-          offsetY: offsetY,
-        ),
+        transform: (selection, image) =>
+            selection.moved(layer: image, offsetX: offsetX, offsetY: offsetY),
       );
 
   void _orientText(TextOrientation orientation) {
@@ -1146,12 +1218,15 @@ class EditorController extends ChangeNotifier {
 
   void _transformSelection({
     required String name,
-    required Selection Function(Selection selection) transform,
+    required Selection Function(Selection selection, Layer image) transform,
   }) {
     final selection = _selection;
     if (selection == null || _strokePoint != null) return;
-    final before = Layer.copyOf(document.activeLayer);
-    final transformed = transform(selection);
+    final before = _captureFrames(selection.frames.keys);
+    final transformed = selection.transformed(
+      layer: _activeDocumentLayer,
+      transform: transform,
+    );
     _selection = transformed;
     _record(
       name: name,
@@ -1165,7 +1240,7 @@ class EditorController extends ChangeNotifier {
     final selection = _selection;
     if (selection != null && selection.area.contains(point)) {
       _strokeName = 'Move selection';
-      _strokeBefore = Layer.copyOf(document.activeLayer);
+      _strokeBefore = _captureFrames(selection.frames.keys);
       _strokeArea = selection.area;
       return;
     }
@@ -1185,10 +1260,13 @@ class EditorController extends ChangeNotifier {
       ).intersection(document.activeLayer.bounds);
       return;
     }
-    final moved = selection.moved(
-      layer: document.activeLayer,
-      offsetX: point.x - previous.x,
-      offsetY: point.y - previous.y,
+    final moved = selection.transformed(
+      layer: _activeDocumentLayer,
+      transform: (selection, image) => selection.moved(
+        layer: image,
+        offsetX: point.x - previous.x,
+        offsetY: point.y - previous.y,
+      ),
     );
     _strokeArea = _strokeArea.union(moved.area);
     _selection = moved;
@@ -1198,8 +1276,9 @@ class EditorController extends ChangeNotifier {
     final selectingArea = _selectingArea;
     _selectingArea = null;
     if (selectingArea == null || selectingArea.isEmpty) return;
-    _selection = Selection.lift(
-      layer: document.activeLayer,
+    _selection = MultiFrameSelection.lift(
+      layer: _activeDocumentLayer,
+      frames: _selectableFrames,
       area: selectingArea,
     );
   }
@@ -1213,23 +1292,37 @@ class EditorController extends ChangeNotifier {
 
   void _record({
     required String name,
-    required Layer before,
+    required Map<int, Layer> before,
     required PixelRectangle area,
   }) {
-    final entry = PixelHistoryEntry.recorded(
-      name: name,
-      layerIndex: document.activeLayerIndex,
-      frameIndex: document.activeFrameIndex,
-      before: LayerSnapshot.capture(layer: before, area: area),
-      after: LayerSnapshot.capture(layer: document.activeLayer, area: area),
-      thumbnail: Layer.thumbnail(
-        layer: document.activeLayer,
-        maximumSize: History.thumbnailSize,
-      ),
-      canvasWidth: document.width,
-      canvasHeight: document.height,
+    final thumbnail = Layer.thumbnail(
+      layer: document.activeLayer,
+      maximumSize: History.thumbnailSize,
     );
-    if (entry.before != entry.after) history.record(entry);
+    final entries = [
+      for (final MapEntry(key: frame, value: image) in before.entries)
+        PixelHistoryEntry.recorded(
+          name: name,
+          layerIndex: document.activeLayerIndex,
+          frameIndex: frame,
+          before: LayerSnapshot.capture(layer: image, area: area),
+          after: LayerSnapshot.capture(
+            layer: _activeDocumentLayer.imageAt(frame),
+            area: area,
+          ),
+          thumbnail: thumbnail,
+          canvasWidth: document.width,
+          canvasHeight: document.height,
+        ),
+    ].where((entry) => entry.before != entry.after).toList();
+    switch (entries) {
+      case []:
+        return;
+      case [final entry]:
+        history.record(entry);
+      default:
+        history.record(MultiFrameHistoryEntry(entries: entries));
+    }
   }
 
   void _sampleColor({required PixelPoint point}) {

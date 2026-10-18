@@ -53,6 +53,9 @@ void main() {
   const transparent = 0x00000000;
   const black = 0xFF000000;
   const white = 0xFFFFFFFF;
+  const red = 0xFFFF0000;
+  const green = 0xFF00FF00;
+  const blue = 0xFF0000FF;
 
   group('class EditorView', () {
     group('render', () {
@@ -254,6 +257,84 @@ void main() {
             ],
             [false, false],
           ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('all frames button', () {
+        testWidgets('per frame layer', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: filmDocument(
+                    frames: [
+                      [
+                        [red, transparent],
+                      ],
+                      [
+                        [green, transparent],
+                      ],
+                    ],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          final actual = allFramesButtonState(tester);
+          const expected = [true, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('constant layer', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 1),
+                ),
+              ),
+            ),
+          );
+          final actual = allFramesButtonState(tester);
+          const expected = [false, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('selected', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: filmDocument(
+                    frames: [
+                      [
+                        [red, transparent],
+                      ],
+                      [
+                        [green, transparent],
+                      ],
+                    ],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('All frames'));
+          await tester.pump();
+          final actual = allFramesButtonState(tester);
+          const expected = [true, true];
           expect(actual, equals(expected));
         });
       });
@@ -5248,6 +5329,172 @@ void main() {
         });
       });
 
+      group('all frames', () {
+        testWidgets('toggle off', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: filmDocument(
+                    frames: [
+                      [
+                        [red, transparent],
+                      ],
+                      [
+                        [green, transparent],
+                      ],
+                    ],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('All frames'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('All frames'));
+          await tester.pump();
+          final actual = allFramesButtonState(tester);
+          const expected = [true, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('copy delete paste', (tester) async {
+          final document = filmDocument(
+            frames: [
+              [
+                [red, transparent],
+              ],
+              [
+                [green, transparent],
+              ],
+            ],
+            activeFrameIndex: 0,
+          );
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                  fitOnOpen: true,
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+          await tester.tap(find.byTooltip('All frames'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Copy (Ctrl+C)'));
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+          await tester.tap(find.byTooltip('Paste (Ctrl+V)'));
+          await tester.pump();
+          final actual = framePixelRows(document);
+          const expected = [
+            [
+              [red, transparent],
+            ],
+            [
+              [green, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('external override', (tester) async {
+          final stubClipboard = StubImageClipboard();
+          final document = filmDocument(
+            frames: [
+              [
+                [red, transparent],
+              ],
+              [
+                [green, transparent],
+              ],
+            ],
+            activeFrameIndex: 0,
+          );
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: stubClipboard,
+                  document: document,
+                  fitOnOpen: true,
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+          await tester.tap(find.byTooltip('All frames'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('Copy (Ctrl+C)'));
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+          stubClipboard.image = layerFromRows([
+            [blue, blue],
+          ]);
+          await tester.tap(find.byTooltip('Paste (Ctrl+V)'));
+          await tester.pump();
+          final actual = framePixelRows(document);
+          const expected = [
+            [
+              [blue, blue],
+            ],
+            [
+              [blue, blue],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('history thumbnail', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: filmDocument(
+                    frames: [
+                      [
+                        [red, transparent],
+                      ],
+                      [
+                        [green, transparent],
+                      ],
+                    ],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('All frames'));
+          await tester.tap(find.byTooltip('Select all (Ctrl+A)'));
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+          await tester.pump();
+          final actual = historyThumbnails(tester)[1];
+          final expected = [
+            Layer.filled(width: 2, height: 1, color: PixelColor.transparent),
+            const Rect.fromLTRB(0, 0, 2, 1),
+          ];
+          expect(actual, equals(expected));
+        });
+      });
       group('history thumbnails', () {
         testWidgets('start', (tester) async {
           useDesktopView(tester);
