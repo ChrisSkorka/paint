@@ -1040,11 +1040,15 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void paste(Layer image) {
+  void paste({required Layer image, required PixelPoint center}) {
     if (_strokePoint != null) return;
     unawaited(commitText());
     _toolKind = ToolKind.select;
     _drawingToolKind = ToolKind.select;
+    final centered = PixelPoint(
+      x: center.x - image.width ~/ 2,
+      y: center.y - image.height ~/ 2,
+    );
     final area = _selection?.area;
     if (area != null &&
         (image.width > area.width || image.height > area.height)) {
@@ -1053,7 +1057,7 @@ class EditorController extends ChangeNotifier {
         change: () => _selection = Selection.pasted(
           layer: _insertLayer(),
           content: image,
-          at: const PixelPoint(x: 0, y: 0),
+          at: centered,
         ),
       );
       return;
@@ -1062,7 +1066,7 @@ class EditorController extends ChangeNotifier {
     final pasted = Selection.pasted(
       layer: document.activeLayer,
       content: image,
-      at: PixelPoint(x: area?.left ?? 0, y: area?.top ?? 0),
+      at: area == null ? centered : PixelPoint(x: area.left, y: area.top),
     );
     _selection = pasted;
     _record(name: 'Paste', before: before, area: pasted.area);

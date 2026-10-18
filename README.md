@@ -489,11 +489,15 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] text inputs with label use different label looks
 - [ ] text inputs have unit text on right side
 - [ ] right click on web triggers system context menu
-- [ ] Pen ribbon becomes dynamic current tool settings ribbon
+- [ ] pen ribbon becomes dynamic current tool settings ribbon
   - for pen & eraser: Pen ribbon
   - for text: Text ribbon - todo: text has lot's of settings taking up lots of space
   - for select: Selection ribbon: rotate, mirror, select all, crop
   - others: ?
+  - constant width
+- [x] pasting inserts content centered
+  - when cursor is in viewport, center around cursor
+  - otherwise center in viewport
 
 ### phase x: todo
 
@@ -507,6 +511,7 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 ### phase y: vector graphics
 
 - docs are either pixel or vector type
+- support infinite zoom for recursive art
 - tools
   - node
   - pen

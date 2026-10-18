@@ -8611,9 +8611,10 @@ void main() {
           );
           editorController.editText('a');
           editorController.paste(
-            layerFromRows([
+            image: layerFromRows([
               [red],
             ]),
+            center: const PixelPoint(x: 0, y: 0),
           );
           await nextNotification(editorController);
           final actual = [
@@ -8647,9 +8648,10 @@ void main() {
           var notifications = 0;
           editorController.addListener(() => notifications++);
           editorController.paste(
-            layerFromRows([
+            image: layerFromRows([
               [red],
             ]),
+            center: const PixelPoint(x: 0, y: 0),
           );
           final actual = [
             pixelRows(document.activeLayer),
@@ -8676,9 +8678,10 @@ void main() {
           );
           editorController.selectAll();
           editorController.paste(
-            layerFromRows([
+            image: layerFromRows([
               [red, white],
             ]),
+            center: const PixelPoint(x: 0, y: 0),
           );
           final actual = [
             pixelRows(document.activeLayer),
@@ -8703,9 +8706,10 @@ void main() {
           );
           editorController.selectAll();
           editorController.paste(
-            layerFromRows([
+            image: layerFromRows([
               [red],
             ]),
+            center: const PixelPoint(x: 0, y: 0),
           );
           editorController.pointerDown(
             point: const PixelPoint(x: 0, y: 0),
@@ -8731,9 +8735,10 @@ void main() {
             document: document,
           );
           editorController.paste(
-            layerFromRows([
+            image: layerFromRows([
               [red],
             ]),
+            center: const PixelPoint(x: 0, y: 0),
           );
           final actual = [
             layerStructure(document),
@@ -8762,9 +8767,10 @@ void main() {
             document: document,
           );
           editorController.paste(
-            layerFromRows([
+            image: layerFromRows([
               [red, white],
             ]),
+            center: const PixelPoint(x: 1, y: 0),
           );
           final actual = [
             pixelRows(document.activeLayer),
@@ -8778,8 +8784,98 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
+        test('centered', () {
+          final document = Document.blank(
+            width: 5,
+            height: 3,
+            background: PixelColor.black,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.paste(
+            image: layerFromRows([
+              [red, red, red],
+            ]),
+            center: const PixelPoint(x: 2, y: 1),
+          );
+          final actual = editorController.selectionArea;
+          const expected = PixelRectangle(left: 1, top: 1, width: 3, height: 1);
+          expect(actual, equals(expected));
+        });
+        test('centered even', () {
+          final document = Document.blank(width: 4, height: 4);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.paste(
+            image: layerFromRows([
+              [red, red],
+              [red, red],
+            ]),
+            center: const PixelPoint(x: 2, y: 2),
+          );
+          final actual = editorController.selectionArea;
+          const expected = PixelRectangle(left: 1, top: 1, width: 2, height: 2);
+          expect(actual, equals(expected));
+        });
+        test('partly outside', () {
+          final document = Document.blank(
+            width: 2,
+            height: 1,
+            background: PixelColor.black,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.paste(
+            image: layerFromRows([
+              [red, white, red],
+            ]),
+            center: const PixelPoint(x: 0, y: 0),
+          );
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.selectionArea,
+          ];
+          const expected = [
+            [
+              [white, red],
+            ],
+            PixelRectangle(left: -1, top: 0, width: 3, height: 1),
+          ];
+          expect(actual, equals(expected));
+        });
       });
       group('as layer', () {
+        test('centered', () {
+          final document = Document.blank(width: 4, height: 3);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.select);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 1));
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 1));
+          editorController.paste(
+            image: layerFromRows([
+              [red, red, red],
+            ]),
+            center: const PixelPoint(x: 2, y: 1),
+          );
+          final actual = [
+            document.layers.length,
+            editorController.selectionArea,
+          ];
+          const expected = [
+            2,
+            PixelRectangle(left: 1, top: 1, width: 3, height: 1),
+          ];
+          expect(actual, equals(expected));
+        });
         test('wider than selection', () {
           final document = Document.blank(width: 2, height: 2);
           final editorController = EditorController.forDocument(
@@ -8793,9 +8889,10 @@ void main() {
           editorController.pointerMove(point: const PixelPoint(x: 2, y: 2));
           editorController.pointerUp(point: const PixelPoint(x: 2, y: 2));
           editorController.paste(
-            layerFromRows([
+            image: layerFromRows([
               [red, red],
             ]),
+            center: const PixelPoint(x: 1, y: 0),
           );
           final actual = [
             document.layers.length,
@@ -8823,10 +8920,11 @@ void main() {
           editorController.pointerMove(point: const PixelPoint(x: 2, y: 2));
           editorController.pointerUp(point: const PixelPoint(x: 2, y: 2));
           editorController.paste(
-            layerFromRows([
+            image: layerFromRows([
               [red],
               [red],
             ]),
+            center: const PixelPoint(x: 0, y: 1),
           );
           final actual = [
             document.layers.length,
@@ -8854,9 +8952,10 @@ void main() {
           editorController.pointerMove(point: const PixelPoint(x: 2, y: 2));
           editorController.pointerUp(point: const PixelPoint(x: 2, y: 2));
           editorController.paste(
-            layerFromRows([
+            image: layerFromRows([
               [red, red],
             ]),
+            center: const PixelPoint(x: 0, y: 0),
           );
           final pasted = [
             layerStructure(document),
@@ -8896,9 +8995,10 @@ void main() {
             button: PointerButton.primary,
           );
           editorController.paste(
-            layerFromRows([
+            image: layerFromRows([
               [red],
             ]),
+            center: const PixelPoint(x: 0, y: 0),
           );
           final actual = [
             document.layers.length,

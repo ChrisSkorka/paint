@@ -103,6 +103,8 @@ class _EditorViewState extends State<EditorView> {
     restingPosition: EditorView.canvasEdge,
   );
   final canvasAreaKey = GlobalKey();
+  final pixelCanvasKey = GlobalKey();
+  Offset? canvasAreaPointer;
   var unsaved = false;
   var textDrag = Offset.zero;
   late var awaitingFit = widget.fitOnOpen;
@@ -339,7 +341,25 @@ class _EditorViewState extends State<EditorView> {
 
   Future<void> _paste() async {
     final image = await widget.clipboard.read();
-    if (image != null && mounted) controller.paste(image);
+    if (image != null && mounted) {
+      controller.paste(image: image, center: _pasteCenter());
+    }
+  }
+
+  PixelPoint _pasteCenter() {
+    final area = _canvasAreaBox();
+    final canvas =
+        pixelCanvasKey.currentContext!.findRenderObject()! as RenderBox;
+    final viewportCenter = Offset(
+      (area.size.width - PaintScrollBehavior.scrollbarTrack) / 2,
+      (area.size.height - PaintScrollBehavior.scrollbarTrack) / 2,
+    );
+    final position =
+        canvas.globalToLocal(
+          canvasAreaPointer ?? area.localToGlobal(viewportCenter),
+        ) /
+        controller.zoom.scale;
+    return PixelPoint(x: position.dx.floor(), y: position.dy.floor());
   }
 
   Future<void> _save() async {
@@ -632,72 +652,79 @@ class _EditorViewState extends State<EditorView> {
           children: [
             Opacity(
               opacity: awaitingFit ? 0 : 1,
-              child: LayoutBuilder(
-                key: canvasAreaKey,
-                builder: (context, constraints) {
-                  final vertical = canvasMargin(
-                    available: constraints.maxHeight,
-                    extent: widget.document.height * controller.zoom.scale,
-                    visible: EditorView.canvasVisible,
-                    scrollbar: PaintScrollBehavior.scrollbarTrack,
-                  );
-                  final horizontal = canvasMargin(
-                    available: constraints.maxWidth,
-                    extent: widget.document.width * controller.zoom.scale,
-                    visible: EditorView.canvasVisible,
-                    scrollbar: PaintScrollBehavior.scrollbarTrack,
-                  );
-                  verticalScroll.leading = vertical.leading;
-                  horizontalScroll.leading = horizontal.leading;
-                  return _buildCanvasScrollbars(
-                    child: SingleChildScrollView(
-                      controller: verticalScroll,
+              child: MouseRegion(
+                opaque: false,
+                onHover: (event) => canvasAreaPointer = event.position,
+                onExit: (_) => canvasAreaPointer = null,
+                child: LayoutBuilder(
+                  key: canvasAreaKey,
+                  builder: (context, constraints) {
+                    final vertical = canvasMargin(
+                      available: constraints.maxHeight,
+                      extent: widget.document.height * controller.zoom.scale,
+                      visible: EditorView.canvasVisible,
+                      scrollbar: PaintScrollBehavior.scrollbarTrack,
+                    );
+                    final horizontal = canvasMargin(
+                      available: constraints.maxWidth,
+                      extent: widget.document.width * controller.zoom.scale,
+                      visible: EditorView.canvasVisible,
+                      scrollbar: PaintScrollBehavior.scrollbarTrack,
+                    );
+                    verticalScroll.leading = vertical.leading;
+                    horizontalScroll.leading = horizontal.leading;
+                    return _buildCanvasScrollbars(
                       child: SingleChildScrollView(
-                        controller: horizontalScroll,
-                        scrollDirection: Axis.horizontal,
-                        child: Listener(
-                          behavior: HitTestBehavior.translucent,
-                          onPointerSignal: _scrollCanvas,
-                          child: Padding(
-                            padding: EdgeInsets.fromLTRB(
-                              horizontal.leading,
-                              vertical.leading,
-                              horizontal.trailing,
-                              vertical.trailing,
-                            ),
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                boxShadow: PaintStyle.faintShadow,
+                        controller: verticalScroll,
+                        child: SingleChildScrollView(
+                          controller: horizontalScroll,
+                          scrollDirection: Axis.horizontal,
+                          child: Listener(
+                            behavior: HitTestBehavior.translucent,
+                            onPointerSignal: _scrollCanvas,
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                horizontal.leading,
+                                vertical.leading,
+                                horizontal.trailing,
+                                vertical.trailing,
                               ),
-                              child: Stack(
-                                children: [
-                                  ListenableBuilder(
-                                    listenable: controller.pointerPreview,
-                                    builder: (context, _) => PixelCanvas(
-                                      width: widget.document.width,
-                                      height: widget.document.height,
-                                      zoom: controller.zoom.scale,
-                                      layers: controller.canvasLayers,
-                                      pointerPreview: controller.pointerPreview,
-                                      layersChanged: controller.layersChanged,
-                                      onPointerDown: _pointerDown,
-                                      onPointerMove: controller.pointerMove,
-                                      onPointerUp: controller.pointerUp,
-                                      onPointerExit: controller.pointerExit,
-                                      selection: controller.selectionArea,
-                                      cursor: _canvasCursor(),
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  boxShadow: PaintStyle.faintShadow,
+                                ),
+                                child: Stack(
+                                  children: [
+                                    ListenableBuilder(
+                                      listenable: controller.pointerPreview,
+                                      builder: (context, _) => PixelCanvas(
+                                        key: pixelCanvasKey,
+                                        width: widget.document.width,
+                                        height: widget.document.height,
+                                        zoom: controller.zoom.scale,
+                                        layers: controller.canvasLayers,
+                                        pointerPreview:
+                                            controller.pointerPreview,
+                                        layersChanged: controller.layersChanged,
+                                        onPointerDown: _pointerDown,
+                                        onPointerMove: controller.pointerMove,
+                                        onPointerUp: controller.pointerUp,
+                                        onPointerExit: controller.pointerExit,
+                                        selection: controller.selectionArea,
+                                        cursor: _canvasCursor(),
+                                      ),
                                     ),
-                                  ),
-                                  ?_buildTextDraft(),
-                                ],
+                                    ?_buildTextDraft(),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
             if (awaitingFit)

@@ -4418,7 +4418,7 @@ void main() {
         });
         testWidgets('paste button', (tester) async {
           useDesktopView(tester);
-          final document = Document.blank(width: 2, height: 1);
+          final document = Document.blank(width: 3, height: 3);
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
@@ -4427,14 +4427,16 @@ void main() {
                   library: stubDocumentLibrary(),
                   clipboard: StubImageClipboard(
                     image: layerFromRows([
-                      [black],
+                      [black, black, black],
                     ]),
                   ),
                   document: document,
+                  fitOnOpen: true,
                 ),
               ),
             ),
           );
+          await tester.pump();
           await tester.tap(find.byTooltip('Paste (Ctrl+V)'));
           await tester.pump();
           final actual = [
@@ -4451,13 +4453,138 @@ void main() {
               0,
             ],
             [
-              [black, transparent],
+              [transparent, transparent, transparent],
+              [black, black, black],
+              [transparent, transparent, transparent],
             ],
             [
               ['Start', 'Paste'],
               1,
             ],
             true,
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('paste at pointer', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 3, height: 3);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(
+                    image: layerFromRows([
+                      [black, black, black],
+                    ]),
+                  ),
+                  document: document,
+                  fitOnOpen: true,
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+          final mouse = await tester.createGesture(
+            kind: PointerDeviceKind.mouse,
+          );
+          await mouse.addPointer(location: Offset.zero);
+          addTearDown(mouse.removePointer);
+          await mouse.moveTo(
+            tester.getTopLeft(find.byType(PixelCanvas)) +
+                const Offset(2.5, 0.5) *
+                    tester.widget<PixelCanvas>(find.byType(PixelCanvas)).zoom,
+          );
+          await tester.tap(find.byTooltip('Paste (Ctrl+V)'));
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, black, black],
+            [transparent, transparent, transparent],
+            [transparent, transparent, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('paste at pointer outside document', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 3, height: 3);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(
+                    image: layerFromRows([
+                      [black, black, black],
+                    ]),
+                  ),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+          final mouse = await tester.createGesture(
+            kind: PointerDeviceKind.mouse,
+          );
+          await mouse.addPointer(location: Offset.zero);
+          addTearDown(mouse.removePointer);
+          await mouse.moveTo(
+            tester.getTopLeft(find.byType(PixelCanvas)) +
+                const Offset(-0.5, 2.5) *
+                    tester.widget<PixelCanvas>(find.byType(PixelCanvas)).zoom,
+          );
+          await tester.tap(find.byTooltip('Paste (Ctrl+V)'));
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, transparent, transparent],
+            [transparent, transparent, transparent],
+            [black, transparent, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('paste after pointer exit', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 3, height: 3);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(
+                    image: layerFromRows([
+                      [black, black, black],
+                    ]),
+                  ),
+                  document: document,
+                  fitOnOpen: true,
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+          final mouse = await tester.createGesture(
+            kind: PointerDeviceKind.mouse,
+          );
+          await mouse.addPointer(location: Offset.zero);
+          addTearDown(mouse.removePointer);
+          await mouse.moveTo(
+            tester.getTopLeft(find.byType(PixelCanvas)) +
+                const Offset(0.5, 0.5) *
+                    tester.widget<PixelCanvas>(find.byType(PixelCanvas)).zoom,
+          );
+          await mouse.moveTo(Offset.zero);
+          await tester.tap(find.byTooltip('Paste (Ctrl+V)'));
+          await tester.pump();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, transparent, transparent],
+            [black, black, black],
+            [transparent, transparent, transparent],
           ];
           expect(actual, equals(expected));
         });
