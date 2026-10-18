@@ -82,6 +82,8 @@ class EditorController extends ChangeNotifier {
   PixelRectangle? _selectingArea;
   MultiFrameSelection? _selection;
   var _selectingAllFramesEnabled = false;
+  var _selectingPreviousFrames = true;
+  var _selectingNextFrames = true;
   var _strokeArea = _noArea;
   late var _layerCount = document.layers.length;
   String _savedName;
@@ -205,6 +207,8 @@ class EditorController extends ChangeNotifier {
       LayerTimeframe.perFrame;
   bool get selectingAllFrames =>
       _selectingAllFramesEnabled && allFramesSelectable;
+  bool get selectingPreviousFrames => _selectingPreviousFrames;
+  bool get selectingNextFrames => _selectingNextFrames;
 
   void setSelectingAllFrames(bool selecting) {
     if (_strokePoint != null) return;
@@ -213,12 +217,34 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setSelectingPreviousFrames(bool selecting) {
+    if (_strokePoint != null) return;
+    if (selectingAllFrames) _selection = null;
+    _selectingPreviousFrames = selecting;
+    notifyListeners();
+  }
+
+  void setSelectingNextFrames(bool selecting) {
+    if (_strokePoint != null) return;
+    if (selectingAllFrames) _selection = null;
+    _selectingNextFrames = selecting;
+    notifyListeners();
+  }
+
   DocumentLayer get _activeDocumentLayer =>
       document.layers[document.activeLayerIndex];
 
-  List<int> get _selectableFrames => selectingAllFrames
-      ? [for (var frame = 0; frame < document.frameCount; frame++) frame]
-      : [document.activeFrameIndex];
+  List<int> get _selectableFrames => [
+    for (var frame = 0; frame < document.frameCount; frame++)
+      if (_selectsFrame(frame)) frame,
+  ];
+
+  bool _selectsFrame(int frame) {
+    final active = document.activeFrameIndex;
+    if (frame == active) return true;
+    if (!selectingAllFrames) return false;
+    return frame < active ? _selectingPreviousFrames : _selectingNextFrames;
+  }
 
   Map<int, Layer> _captureFrames(Iterable<int> frames) => {
     for (final frame in frames)
@@ -1170,13 +1196,12 @@ class EditorController extends ChangeNotifier {
     final active = document.activeFrameIndex;
     final frames = clip.frames;
     if (!selectingAllFrames) return {active: clip.image};
-    if (frames == null) {
-      return {for (final frame in _selectableFrames) frame: clip.image};
-    }
     return {
-      for (final MapEntry(key: offset, value: image) in frames.entries)
-        if (active + offset >= 0 && active + offset < document.frameCount)
-          active + offset: image,
+      for (final frame in _selectableFrames)
+        if (frames == null)
+          frame: clip.image
+        else
+          frame: ?frames[frame - active],
     };
   }
 

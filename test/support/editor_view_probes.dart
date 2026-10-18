@@ -414,11 +414,23 @@ Offset canvasPixelCenter(WidgetTester tester, PixelPoint point) {
 }
 
 List<bool> allFramesButtonState(WidgetTester tester) {
-  final button = tester.widget<PaintIconButton>(
+  final button = tester.widget<PaintSplitButton>(
     find.ancestor(
       of: find.byTooltip('All frames'),
-      matching: find.byType(PaintIconButton),
+      matching: find.byType(PaintSplitButton),
     ),
   );
   return [button.onPressed != null, button.selected];
 }
+
+List<bool> allFramesDirections(WidgetTester tester) => [
+  for (final tooltip in ['Include previous frames', 'Include next frames'])
+    tester
+        .widget<PaintIconButton>(
+          find.ancestor(
+            of: find.byTooltip(tooltip),
+            matching: find.byType(PaintIconButton),
+          ),
+        )
+        .selected,
+];

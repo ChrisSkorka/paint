@@ -55,6 +55,80 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('enabled', () {
+        testWidgets('enabled', (tester) async {
+          void stubOnPressed() {}
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: PaintSplitButton(
+                  icon: FontAwesomeIcons.pencil,
+                  tooltip: 'Pen',
+                  onPressed: stubOnPressed,
+                  dropdown: const Text('dropdown'),
+                ),
+              ),
+            ),
+          );
+          final actual = tester
+              .widgetList<Opacity>(
+                find.descendant(
+                  of: find.byType(PaintSplitButton),
+                  matching: find.byType(Opacity),
+                ),
+              )
+              .map((opacity) => opacity.opacity)
+              .toList();
+          const expected = [1.0];
+          expect(actual, equals(expected));
+        });
+        testWidgets('disabled', (tester) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: PaintSplitButton(
+                  icon: FontAwesomeIcons.pencil,
+                  tooltip: 'Pen',
+                  onPressed: null,
+                  dropdown: const Text('dropdown'),
+                ),
+              ),
+            ),
+          );
+          final actual = tester
+              .widgetList<Opacity>(
+                find.descendant(
+                  of: find.byType(PaintSplitButton),
+                  matching: find.byType(Opacity),
+                ),
+              )
+              .map((opacity) => opacity.opacity)
+              .toList();
+          const expected = [0.4, 1.0];
+          expect(actual, equals(expected));
+        });
+        testWidgets('disabled hover', (tester) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: PaintSplitButton(
+                  icon: FontAwesomeIcons.pencil,
+                  tooltip: 'Pen',
+                  onPressed: null,
+                  dropdown: const Text('dropdown'),
+                ),
+              ),
+            ),
+          );
+          await hoverOver(tester, find.byTooltip('Pen'));
+          final actual = tester
+              .widgetList<HighlightBox>(find.byType(HighlightBox))
+              .map((highlightBox) => highlightBox.highlighted)
+              .toList();
+          const expected = [false, false];
+          expect(actual, equals(expected));
+        });
+      });
       group('dropdown', () {
         testWidgets('initially closed', (tester) async {
           void stubOnPressed() {}
@@ -572,6 +646,72 @@ void main() {
           await tester.pumpAndSettle();
           final actual = find.text('dropdown');
           expect(actual, findsNothing);
+        });
+      });
+      group('disabled', () {
+        testWidgets('main button', (tester) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: PaintSplitButton(
+                  icon: FontAwesomeIcons.pencil,
+                  tooltip: 'Pen',
+                  onPressed: null,
+                  dropdown: const Text('dropdown'),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Pen'), warnIfMissed: false);
+          await tester.pumpAndSettle();
+          final actual = find.text('dropdown').evaluate().length;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+        testWidgets('options button', (tester) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: PaintSplitButton(
+                  icon: FontAwesomeIcons.pencil,
+                  tooltip: 'Pen',
+                  onPressed: null,
+                  dropdown: const Text('dropdown'),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Pen options'), warnIfMissed: false);
+          await tester.pumpAndSettle();
+          final actual = find.text('dropdown').evaluate().length;
+          const expected = 0;
+          expect(actual, equals(expected));
+        });
+        testWidgets('right click', (tester) async {
+          var rightClicked = 0;
+          void stubOnRightClick() => rightClicked++;
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Center(
+                child: PaintSplitButton(
+                  icon: FontAwesomeIcons.pencil,
+                  tooltip: 'Pen',
+                  onPressed: null,
+                  onRightClick: stubOnRightClick,
+                  dropdown: const Text('dropdown'),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(
+            find.byTooltip('Pen'),
+            buttons: kSecondaryMouseButton,
+            kind: PointerDeviceKind.mouse,
+            warnIfMissed: false,
+          );
+          final actual = rightClicked;
+          const expected = 0;
+          expect(actual, equals(expected));
         });
       });
       group('hover', () {

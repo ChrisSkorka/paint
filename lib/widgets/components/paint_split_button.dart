@@ -28,7 +28,7 @@ class PaintSplitButton extends StatefulWidget {
   final Widget? trailing;
   final String tooltip;
   final String? shortcut;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final VoidCallback? onRightClick;
   final Widget? dropdown;
   final VoidCallback? onSecondaryPressed;
@@ -50,9 +50,10 @@ class _PaintSplitButtonState extends State<PaintSplitButton> {
 
   @override
   Widget build(BuildContext context) {
-    final highlighted = widget.selected || hovered;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
+    final enabled = widget.onPressed != null;
+    final highlighted = widget.selected || (enabled && hovered);
+    final button = MouseRegion(
+      cursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
       onEnter: (_) => setState(() => hovered = true),
       onExit: (_) => setState(() => hovered = false),
       child: IntrinsicHeight(
@@ -68,7 +69,7 @@ class _PaintSplitButtonState extends State<PaintSplitButton> {
               waitDuration: const Duration(milliseconds: 500),
               child: GestureDetector(
                 onTap: widget.onPressed,
-                onSecondaryTap: widget.onRightClick,
+                onSecondaryTap: enabled ? widget.onRightClick : null,
                 child: HighlightBox(
                   highlighted: highlighted,
                   borderRadius: const BorderRadius.horizontal(
@@ -91,24 +92,28 @@ class _PaintSplitButtonState extends State<PaintSplitButton> {
                 ),
               ),
             ),
-            _buildSecondary(highlighted: highlighted),
+            _buildSecondary(highlighted: highlighted, enabled: enabled),
           ],
         ),
       ),
     );
+    return enabled ? button : Opacity(opacity: 0.4, child: button);
   }
 
-  Widget _buildSecondary({required bool highlighted}) {
+  Widget _buildSecondary({required bool highlighted, required bool enabled}) {
     final dropdown = widget.dropdown;
     final button = Tooltip(
       message: widget.secondaryTooltip ?? '${widget.tooltip} options',
       waitDuration: const Duration(milliseconds: 500),
       child: GestureDetector(
-        onTap: dropdown == null
-            ? widget.onSecondaryPressed
-            : () => menuController.isOpen
-                  ? menuController.close()
-                  : menuController.open(),
+        onTap: switch ((enabled, dropdown)) {
+          (false, _) => null,
+          (true, null) => widget.onSecondaryPressed,
+          (true, _) =>
+            () => menuController.isOpen
+                ? menuController.close()
+                : menuController.open(),
+        },
         child: HighlightBox(
           highlighted: highlighted,
           borderRadius: const BorderRadius.horizontal(

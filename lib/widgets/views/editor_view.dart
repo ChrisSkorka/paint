@@ -848,6 +848,34 @@ class _EditorViewState extends State<EditorView> {
     ),
   );
 
+  Widget _buildAllFramesOptions() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 4,
+        children: [
+          PaintIconButton(
+            icon: FontAwesomeIcons.backward,
+            tooltip: 'Include previous frames',
+            selected: controller.selectingPreviousFrames,
+            onPressed: () => controller.setSelectingPreviousFrames(
+              !controller.selectingPreviousFrames,
+            ),
+          ),
+          PaintIconButton(
+            icon: FontAwesomeIcons.forward,
+            tooltip: 'Include next frames',
+            selected: controller.selectingNextFrames,
+            onPressed: () => controller.setSelectingNextFrames(
+              !controller.selectingNextFrames,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTextOptions() {
     final format = controller.textFormat;
     return Padding(
@@ -1296,15 +1324,17 @@ class _EditorViewState extends State<EditorView> {
                                 controller.cropToSelection,
                               ),
                             ),
-                            PaintIconButton(
+                            PaintSplitButton(
                               icon: FontAwesomeIcons.film,
                               tooltip: 'All frames',
+                              secondaryTooltip: 'All frames options',
                               selected: controller.selectingAllFrames,
                               onPressed: controller.allFramesSelectable
                                   ? () => controller.setSelectingAllFrames(
                                       !controller.selectingAllFrames,
                                     )
                                   : null,
+                              dropdown: _buildAllFramesOptions(),
                             ),
                           ],
                         ),

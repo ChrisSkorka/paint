@@ -415,7 +415,7 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - switching frames with a selection active: 
     - keep all selections lifted
     - when copying & pasting, the currently active frame is the reference frame
-- [ ] multi frame selection modes:
+- [x] multi frame selection modes:
   - mode button is split button
   - secondary action opens a popup
   - popup has toggle buttons to independently select forward and backward directions

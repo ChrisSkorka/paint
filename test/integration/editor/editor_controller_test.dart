@@ -8731,6 +8731,117 @@ void main() {
     });
 
     group('method selectAll', () {
+      group('directions', () {
+        test('previous only', () {
+          final document = filmDocument(
+            frames: [
+              [
+                [red, transparent],
+              ],
+              [
+                [green, transparent],
+              ],
+              [
+                [blue, transparent],
+              ],
+            ],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setSelectingAllFrames(true);
+          editorController.setSelectingNextFrames(false);
+          editorController.selectAll();
+          editorController.deleteSelection();
+          final actual = framePixelRows(document);
+          const expected = [
+            [
+              [transparent, transparent],
+            ],
+            [
+              [transparent, transparent],
+            ],
+            [
+              [blue, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('next only', () {
+          final document = filmDocument(
+            frames: [
+              [
+                [red, transparent],
+              ],
+              [
+                [green, transparent],
+              ],
+              [
+                [blue, transparent],
+              ],
+            ],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setSelectingAllFrames(true);
+          editorController.setSelectingPreviousFrames(false);
+          editorController.selectAll();
+          editorController.deleteSelection();
+          final actual = framePixelRows(document);
+          const expected = [
+            [
+              [red, transparent],
+            ],
+            [
+              [transparent, transparent],
+            ],
+            [
+              [transparent, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('neither', () {
+          final document = filmDocument(
+            frames: [
+              [
+                [red, transparent],
+              ],
+              [
+                [green, transparent],
+              ],
+              [
+                [blue, transparent],
+              ],
+            ],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setSelectingAllFrames(true);
+          editorController.setSelectingPreviousFrames(false);
+          editorController.setSelectingNextFrames(false);
+          editorController.selectAll();
+          editorController.deleteSelection();
+          final actual = framePixelRows(document);
+          const expected = [
+            [
+              [red, transparent],
+            ],
+            [
+              [transparent, transparent],
+            ],
+            [
+              [blue, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
       group('all frames', () {
         test('lifted', () {
           final document = filmDocument(
@@ -9106,6 +9217,103 @@ void main() {
     });
 
     group('method paste', () {
+      group('directions', () {
+        test('single clip', () {
+          final document = filmDocument(
+            frames: [
+              [
+                [transparent, transparent],
+              ],
+              [
+                [transparent, transparent],
+              ],
+              [
+                [transparent, transparent],
+              ],
+            ],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setSelectingAllFrames(true);
+          editorController.setSelectingPreviousFrames(false);
+          editorController.paste(
+            clip: SelectionClip(
+              image: layerFromRows([
+                [red],
+              ]),
+            ),
+            center: const PixelPoint(x: 0, y: 0),
+          );
+          final actual = framePixelRows(document);
+          const expected = [
+            [
+              [transparent, transparent],
+            ],
+            [
+              [red, transparent],
+            ],
+            [
+              [red, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('multi frame clip', () {
+          final document = filmDocument(
+            frames: [
+              [
+                [transparent, transparent],
+              ],
+              [
+                [transparent, transparent],
+              ],
+              [
+                [transparent, transparent],
+              ],
+            ],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setSelectingAllFrames(true);
+          editorController.setSelectingNextFrames(false);
+          editorController.paste(
+            clip: SelectionClip(
+              image: layerFromRows([
+                [green],
+              ]),
+              frames: {
+                -1: layerFromRows([
+                  [red],
+                ]),
+                0: layerFromRows([
+                  [green],
+                ]),
+                1: layerFromRows([
+                  [blue],
+                ]),
+              },
+            ),
+            center: const PixelPoint(x: 0, y: 0),
+          );
+          final actual = framePixelRows(document);
+          const expected = [
+            [
+              [red, transparent],
+            ],
+            [
+              [green, transparent],
+            ],
+            [
+              [transparent, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
       group('all frames', () {
         test('single clip', () {
           final document = filmDocument(
@@ -10395,6 +10603,228 @@ void main() {
           editorController.setSelectingAllFrames(true);
           final actual = editorController.selectingAllFrames;
           const expected = false;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter selectingPreviousFrames', () {
+      group('defaults', () {
+        test('enabled', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          final actual = editorController.selectingPreviousFrames;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter selectingNextFrames', () {
+      group('defaults', () {
+        test('enabled', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          final actual = editorController.selectingNextFrames;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method setSelectingPreviousFrames', () {
+      group('toggled', () {
+        test('disabled', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.setSelectingPreviousFrames(false);
+          final actual = editorController.selectingPreviousFrames;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('all frames', () {
+          final document = filmDocument(
+            frames: [
+              [
+                [red, transparent],
+              ],
+              [
+                [green, transparent],
+              ],
+              [
+                [blue, transparent],
+              ],
+            ],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setSelectingAllFrames(true);
+          editorController.selectAll();
+          editorController.moveSelection(offsetX: 1, offsetY: 0);
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setSelectingPreviousFrames(false);
+          final actual = [
+            framePixelRows(document),
+            editorController.hasSelection,
+            notifications,
+          ];
+          const expected = [
+            [
+              [
+                [transparent, red],
+              ],
+              [
+                [transparent, green],
+              ],
+              [
+                [transparent, blue],
+              ],
+            ],
+            false,
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('this frame', () {
+          final editorController = EditorController.forDocument(
+            document: filmDocument(
+              frames: [
+                [
+                  [red, transparent],
+                ],
+                [
+                  [green, transparent],
+                ],
+                [
+                  [blue, transparent],
+                ],
+              ],
+              activeFrameIndex: 1,
+            ),
+          );
+          editorController.selectAll();
+          editorController.setSelectingPreviousFrames(false);
+          final actual = editorController.hasSelection;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+      });
+      group('ignored', () {
+        test('during stroke', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.setSelectingPreviousFrames(false);
+          final actual = editorController.selectingPreviousFrames;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method setSelectingNextFrames', () {
+      group('toggled', () {
+        test('disabled', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.setSelectingNextFrames(false);
+          final actual = editorController.selectingNextFrames;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('all frames', () {
+          final document = filmDocument(
+            frames: [
+              [
+                [red, transparent],
+              ],
+              [
+                [green, transparent],
+              ],
+              [
+                [blue, transparent],
+              ],
+            ],
+            activeFrameIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setSelectingAllFrames(true);
+          editorController.selectAll();
+          editorController.moveSelection(offsetX: 1, offsetY: 0);
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setSelectingNextFrames(false);
+          final actual = [
+            framePixelRows(document),
+            editorController.hasSelection,
+            notifications,
+          ];
+          const expected = [
+            [
+              [
+                [transparent, red],
+              ],
+              [
+                [transparent, green],
+              ],
+              [
+                [transparent, blue],
+              ],
+            ],
+            false,
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('this frame', () {
+          final editorController = EditorController.forDocument(
+            document: filmDocument(
+              frames: [
+                [
+                  [red, transparent],
+                ],
+                [
+                  [green, transparent],
+                ],
+                [
+                  [blue, transparent],
+                ],
+              ],
+              activeFrameIndex: 1,
+            ),
+          );
+          editorController.selectAll();
+          editorController.setSelectingNextFrames(false);
+          final actual = editorController.hasSelection;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+      });
+      group('ignored', () {
+        test('during stroke', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 2, height: 1),
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.setSelectingNextFrames(false);
+          final actual = editorController.selectingNextFrames;
+          const expected = true;
           expect(actual, equals(expected));
         });
       });

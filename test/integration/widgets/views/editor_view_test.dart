@@ -338,6 +338,38 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('all frames options', () {
+        testWidgets('defaults', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: filmDocument(
+                    frames: [
+                      [
+                        [red, transparent],
+                      ],
+                      [
+                        [green, transparent],
+                      ],
+                    ],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('All frames options'));
+          await tester.pumpAndSettle();
+          final actual = allFramesDirections(tester);
+          const expected = [true, true];
+          expect(actual, equals(expected));
+        });
+      });
       group('pen settings', () {
         testWidgets('pen', (tester) async {
           useDesktopView(tester);
@@ -4276,13 +4308,12 @@ void main() {
               ),
             ),
           );
-          await tester.drag(
-            find.descendant(
-              of: find.byType(Timeline),
-              matching: find.byType(Slider),
-            ),
-            const Offset(2000, 0),
+          final slider = find.descendant(
+            of: find.byType(Timeline),
+            matching: find.byType(Slider),
           );
+          await tester.ensureVisible(slider);
+          await tester.drag(slider, const Offset(2000, 0));
           await tester.pump();
           final actual = timelineState(tester);
           const expected = [
@@ -5492,6 +5523,72 @@ void main() {
             Layer.filled(width: 2, height: 1, color: PixelColor.transparent),
             const Rect.fromLTRB(0, 0, 2, 1),
           ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('all frames options', () {
+        testWidgets('toggle previous', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: filmDocument(
+                    frames: [
+                      [
+                        [red, transparent],
+                      ],
+                      [
+                        [green, transparent],
+                      ],
+                    ],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('All frames options'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Include previous frames'));
+          await tester.pump();
+          final actual = allFramesDirections(tester);
+          const expected = [false, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('toggle next', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: filmDocument(
+                    frames: [
+                      [
+                        [red, transparent],
+                      ],
+                      [
+                        [green, transparent],
+                      ],
+                    ],
+                    activeFrameIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('All frames options'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Include next frames'));
+          await tester.pump();
+          final actual = allFramesDirections(tester);
+          const expected = [true, false];
           expect(actual, equals(expected));
         });
       });
