@@ -258,6 +258,14 @@ class _EditorViewState extends State<EditorView> {
     return cursor == null ? '-' : '${cursor.x}, ${cursor.y}';
   }
 
+  String _sizeText() {
+    final offset = controller.dragOffset;
+    if (offset == null) {
+      return '${widget.document.width} × ${widget.document.height}';
+    }
+    return '${offset.x} × ${offset.y}';
+  }
+
   List<HistoryListItem> _historyItems() => [
     HistoryListItem(
       name: 'Start',
@@ -1620,8 +1628,14 @@ class _EditorViewState extends State<EditorView> {
                   onPressed: _resizeImage,
                   child: _buildStatusContent(
                     icon: FontAwesomeIcons.upRightAndDownLeftFromCenter,
-                    child: Text(
-                      '${widget.document.width} × ${widget.document.height}',
+                    child: ListenableBuilder(
+                      listenable: controller.pointerPreview,
+                      builder: (context, _) => StableText(
+                        text: _sizeText(),
+                        alternatives: [
+                          '${widget.document.width} × ${widget.document.height}',
+                        ],
+                      ),
                     ),
                   ),
                 ),

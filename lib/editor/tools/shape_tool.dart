@@ -76,11 +76,7 @@ class ShapeTool implements Tool {
     required PixelPoint point,
     required PixelColor color,
   }) {
-    final start = origin ?? point;
-    final to = constrained ? shape.constrain(from: start, to: point) : point;
-    final from = centered
-        ? PixelPoint(x: 2 * start.x - to.x, y: 2 * start.y - to.y)
-        : start;
+    final (:from, :to) = span(point: point);
     return shape.draw(
       layer: layer,
       from: from,
@@ -91,6 +87,15 @@ class ShapeTool implements Tool {
       outlined: outlined,
       fillColor: fillColor,
     );
+  }
+
+  ({PixelPoint from, PixelPoint to}) span({required PixelPoint point}) {
+    final start = origin ?? point;
+    final to = constrained ? shape.constrain(from: start, to: point) : point;
+    final from = centered
+        ? PixelPoint(x: 2 * start.x - to.x, y: 2 * start.y - to.y)
+        : start;
+    return (from: from, to: to);
   }
 
   PixelRectangle _emptyAt(PixelPoint point) =>

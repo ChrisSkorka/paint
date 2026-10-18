@@ -2242,6 +2242,237 @@ void main() {
       });
     });
 
+    group('getter dragOffset', () {
+      group('states', () {
+        test('idle', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 9, height: 9),
+          );
+          final actual = editorController.dragOffset;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+        test('pen', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 9, height: 9),
+          );
+          editorController
+            ..pointerDown(
+              point: const PixelPoint(x: 1, y: 1),
+              button: PointerButton.primary,
+            )
+            ..pointerMove(point: const PixelPoint(x: 4, y: 3));
+          final actual = editorController.dragOffset;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+        test('selecting', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 9, height: 9),
+          )..selectTool(ToolKind.select);
+          editorController
+            ..pointerDown(
+              point: const PixelPoint(x: 1, y: 2),
+              button: PointerButton.primary,
+            )
+            ..pointerMove(point: const PixelPoint(x: 4, y: 7));
+          final actual = editorController.dragOffset;
+          const expected = PixelPoint(x: 4, y: 6);
+          expect(actual, equals(expected));
+        });
+        test('selecting backwards', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 9, height: 9),
+          )..selectTool(ToolKind.select);
+          editorController
+            ..pointerDown(
+              point: const PixelPoint(x: 6, y: 5),
+              button: PointerButton.primary,
+            )
+            ..pointerMove(point: const PixelPoint(x: 2, y: 4));
+          final actual = editorController.dragOffset;
+          const expected = PixelPoint(x: 5, y: 2);
+          expect(actual, equals(expected));
+        });
+        test('moving selection', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 9, height: 9),
+          )..selectAll();
+          editorController
+            ..pointerDown(
+              point: const PixelPoint(x: 1, y: 1),
+              button: PointerButton.primary,
+            )
+            ..pointerMove(point: const PixelPoint(x: 3, y: 3));
+          final actual = editorController.dragOffset;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+        test('released', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 9, height: 9),
+          )..selectTool(ToolKind.select);
+          editorController
+            ..pointerDown(
+              point: const PixelPoint(x: 1, y: 2),
+              button: PointerButton.primary,
+            )
+            ..pointerMove(point: const PixelPoint(x: 4, y: 7))
+            ..pointerUp(point: const PixelPoint(x: 4, y: 7));
+          final actual = editorController.dragOffset;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+      group('constraints', () {
+        test('square', () {
+          final editorController =
+              EditorController.forDocument(
+                  document: Document.blank(width: 9, height: 9),
+                )
+                ..selectTool(ToolKind.rectangle)
+                ..holdShapeConstraint(held: true);
+          editorController
+            ..pointerDown(
+              point: const PixelPoint(x: 2, y: 1),
+              button: PointerButton.primary,
+            )
+            ..pointerMove(point: const PixelPoint(x: 7, y: 3));
+          final actual = editorController.dragOffset;
+          const expected = PixelPoint(x: 6, y: 6);
+          expect(actual, equals(expected));
+        });
+        test('horizontal line', () {
+          final editorController =
+              EditorController.forDocument(
+                  document: Document.blank(width: 9, height: 9),
+                )
+                ..selectTool(ToolKind.line)
+                ..holdShapeConstraint(held: true);
+          editorController
+            ..pointerDown(
+              point: const PixelPoint(x: 2, y: 1),
+              button: PointerButton.primary,
+            )
+            ..pointerMove(point: const PixelPoint(x: 7, y: 2));
+          final actual = editorController.dragOffset;
+          const expected = PixelPoint(x: 6, y: 1);
+          expect(actual, equals(expected));
+        });
+        test('centered', () {
+          final editorController =
+              EditorController.forDocument(
+                  document: Document.blank(width: 9, height: 9),
+                )
+                ..selectTool(ToolKind.rectangle)
+                ..holdShapeCentered(held: true);
+          editorController
+            ..pointerDown(
+              point: const PixelPoint(x: 4, y: 4),
+              button: PointerButton.primary,
+            )
+            ..pointerMove(point: const PixelPoint(x: 6, y: 5));
+          final actual = editorController.dragOffset;
+          const expected = PixelPoint(x: 5, y: 3);
+          expect(actual, equals(expected));
+        });
+        test('centered square', () {
+          final editorController =
+              EditorController.forDocument(
+                  document: Document.blank(width: 9, height: 9),
+                )
+                ..selectTool(ToolKind.rectangle)
+                ..holdShapeConstraint(held: true)
+                ..holdShapeCentered(held: true);
+          editorController
+            ..pointerDown(
+              point: const PixelPoint(x: 4, y: 4),
+              button: PointerButton.primary,
+            )
+            ..pointerMove(point: const PixelPoint(x: 6, y: 5));
+          final actual = editorController.dragOffset;
+          const expected = PixelPoint(x: 5, y: 5);
+          expect(actual, equals(expected));
+        });
+        test('selecting', () {
+          final editorController =
+              EditorController.forDocument(
+                  document: Document.blank(width: 9, height: 9),
+                )
+                ..selectTool(ToolKind.select)
+                ..holdShapeConstraint(held: true)
+                ..holdShapeCentered(held: true);
+          editorController
+            ..pointerDown(
+              point: const PixelPoint(x: 1, y: 2),
+              button: PointerButton.primary,
+            )
+            ..pointerMove(point: const PixelPoint(x: 4, y: 7));
+          final actual = editorController.dragOffset;
+          const expected = PixelPoint(x: 4, y: 6);
+          expect(actual, equals(expected));
+        });
+      });
+      group('shapes', () {
+        test('line', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 9, height: 9),
+          )..selectTool(ToolKind.line);
+          editorController
+            ..pointerDown(
+              point: const PixelPoint(x: 2, y: 1),
+              button: PointerButton.primary,
+            )
+            ..pointerMove(point: const PixelPoint(x: 7, y: 3));
+          final actual = editorController.dragOffset;
+          const expected = PixelPoint(x: 6, y: 3);
+          expect(actual, equals(expected));
+        });
+        test('rectangle', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 9, height: 9),
+          )..selectTool(ToolKind.rectangle);
+          editorController
+            ..pointerDown(
+              point: const PixelPoint(x: 2, y: 1),
+              button: PointerButton.primary,
+            )
+            ..pointerMove(point: const PixelPoint(x: 7, y: 3));
+          final actual = editorController.dragOffset;
+          const expected = PixelPoint(x: 6, y: 3);
+          expect(actual, equals(expected));
+        });
+        test('circle', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 9, height: 9),
+          )..selectTool(ToolKind.circle);
+          editorController
+            ..pointerDown(
+              point: const PixelPoint(x: 2, y: 1),
+              button: PointerButton.primary,
+            )
+            ..pointerMove(point: const PixelPoint(x: 7, y: 3));
+          final actual = editorController.dragOffset;
+          const expected = PixelPoint(x: 6, y: 3);
+          expect(actual, equals(expected));
+        });
+        test('arrow', () {
+          final editorController = EditorController.forDocument(
+            document: Document.blank(width: 9, height: 9),
+          )..selectTool(ToolKind.arrow);
+          editorController
+            ..pointerDown(
+              point: const PixelPoint(x: 2, y: 1),
+              button: PointerButton.primary,
+            )
+            ..pointerMove(point: const PixelPoint(x: 7, y: 3));
+          final actual = editorController.dragOffset;
+          const expected = PixelPoint(x: 6, y: 3);
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method commitText', () {
       group('no draft', () {
         test('idle', () async {

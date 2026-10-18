@@ -327,6 +327,101 @@ void main() {
       });
     });
 
+    group('method span', () {
+      group('modes', () {
+        test('hovering', () {
+          const tool = ShapeTool(
+            shape: Shape.rectangle,
+            width: 1,
+            tip: BrushTip.square,
+            origin: null,
+            constrained: false,
+            centered: false,
+            outlined: true,
+            fillColor: null,
+          );
+          final actual = tool.span(point: const PixelPoint(x: 6, y: 5));
+          const expected = (
+            from: PixelPoint(x: 6, y: 5),
+            to: PixelPoint(x: 6, y: 5),
+          );
+          expect(actual, equals(expected));
+        });
+        test('dragging', () {
+          const tool = ShapeTool(
+            shape: Shape.rectangle,
+            width: 1,
+            tip: BrushTip.square,
+            origin: PixelPoint(x: 4, y: 4),
+            constrained: false,
+            centered: false,
+            outlined: true,
+            fillColor: null,
+          );
+          final actual = tool.span(point: const PixelPoint(x: 6, y: 5));
+          const expected = (
+            from: PixelPoint(x: 4, y: 4),
+            to: PixelPoint(x: 6, y: 5),
+          );
+          expect(actual, equals(expected));
+        });
+        test('constrained', () {
+          const tool = ShapeTool(
+            shape: Shape.rectangle,
+            width: 1,
+            tip: BrushTip.square,
+            origin: PixelPoint(x: 4, y: 4),
+            constrained: true,
+            centered: false,
+            outlined: true,
+            fillColor: null,
+          );
+          final actual = tool.span(point: const PixelPoint(x: 6, y: 5));
+          const expected = (
+            from: PixelPoint(x: 4, y: 4),
+            to: PixelPoint(x: 6, y: 6),
+          );
+          expect(actual, equals(expected));
+        });
+        test('centered', () {
+          const tool = ShapeTool(
+            shape: Shape.rectangle,
+            width: 1,
+            tip: BrushTip.square,
+            origin: PixelPoint(x: 4, y: 4),
+            constrained: false,
+            centered: true,
+            outlined: true,
+            fillColor: null,
+          );
+          final actual = tool.span(point: const PixelPoint(x: 6, y: 5));
+          const expected = (
+            from: PixelPoint(x: 2, y: 3),
+            to: PixelPoint(x: 6, y: 5),
+          );
+          expect(actual, equals(expected));
+        });
+        test('centered constrained', () {
+          const tool = ShapeTool(
+            shape: Shape.rectangle,
+            width: 1,
+            tip: BrushTip.square,
+            origin: PixelPoint(x: 4, y: 4),
+            constrained: true,
+            centered: true,
+            outlined: true,
+            fillColor: null,
+          );
+          final actual = tool.span(point: const PixelPoint(x: 6, y: 5));
+          const expected = (
+            from: PixelPoint(x: 2, y: 2),
+            to: PixelPoint(x: 6, y: 6),
+          );
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('constrained', () {
       group('points', () {
         test('square', () {

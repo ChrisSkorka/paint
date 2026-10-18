@@ -100,6 +100,13 @@ class EditorController extends ChangeNotifier {
   late final layersChanged = Listenable.merge([this, _strokeProgress]);
 
   static const _noArea = PixelRectangle(left: 0, top: 0, width: 0, height: 0);
+  static const _dragSizedToolKinds = {
+    ToolKind.select,
+    ToolKind.line,
+    ToolKind.rectangle,
+    ToolKind.circle,
+    ToolKind.arrow,
+  };
   static const minimumToolSize = ToolPreset.minimumSize;
   static const maximumToolSize = ToolPreset.maximumSize;
 
@@ -146,6 +153,23 @@ class EditorController extends ChangeNotifier {
   );
   PixelRectangle? get selectionArea => _selectingArea ?? _selection?.area;
   bool get hasSelection => _selection != null;
+  PixelPoint? get dragOffset {
+    final origin = _strokeOrigin;
+    final point = _strokePoint;
+    if (origin == null || point == null) return null;
+    if (!_dragSizedToolKinds.contains(_toolKind) || _selection != null) {
+      return null;
+    }
+    final (:from, :to) = switch (_tool) {
+      final ShapeTool shapeTool => shapeTool.span(point: point),
+      _ => (from: origin, to: point),
+    };
+    return PixelPoint(
+      x: (to.x - from.x).abs() + 1,
+      y: (to.y - from.y).abs() + 1,
+    );
+  }
+
   bool get canTransform => hasSelection || _textOrigin != null;
   Layer? get selectionContent => _selection?.content;
   bool get pointerOverSelection {

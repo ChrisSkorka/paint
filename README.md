@@ -375,7 +375,20 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - maintain hex text input
   - maintain org v new color
 
-### phase 7.5: misc tool refinements
+### phase 7.5: selection
+
+- [x] pasting inserts content centered
+  - when cursor is in viewport, center around cursor
+  - otherwise center in viewport
+- [x] status bar size indicator shows selection and shape sizes when in those modes
+  - xy values is the bounding box size (not including boarders) of the selection/shape
+  - for constraint mode, use the shapes actual corner points
+  - size display has constant width
+- [ ] arrow keys move selection
+  - default: 1px in document space
+  - modifier: shift: 10px in document space
+
+### phase 7.6: misc tool refinements
 
 - [x] right-click tool/setting for auto reverting tool/setting selection:
   - when right clicking a tool or color, then the tool-config is temporary and after one use we switch back to the previous tool/setting preset
@@ -414,9 +427,27 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [ ] history & layer item preview enlarges on hover?
 - [ ] or hovering over previews in layers, frames, and history switches the canvas to show just that layer, frame, or history
 
+- [ ] right panel list item layout:
+  - select checkbox?
+  - drag handle
+  - preview image
+  - name
+  - action buttons
+- [ ] right list item actions:
+  - layers: frame mode, visibility + opacity
+  - frames: hold -#+
+  - history: revert
+- [ ] right panel actions:
+  - layers: add, clone, merge, rename, delete
+  - frames: add, clone, delete
+  - history: layerize
+
+
 ### phase 8.2: layers
 
-- [ ] merge down layers
+- [ ] merge down layers:
+  - button between copy & merge
+  - merges selected layer with layer below
 - [ ] allow renaming layers
 
 ### phase 8.3: history
@@ -495,9 +526,6 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - for select: Selection ribbon: rotate, mirror, select all, crop
   - others: ?
   - constant width
-- [x] pasting inserts content centered
-  - when cursor is in viewport, center around cursor
-  - otherwise center in viewport
 
 ### phase x: todo
 

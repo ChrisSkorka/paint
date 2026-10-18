@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:paint/widgets/components/paint_scroll_behavior.dart';
 import 'package:paint/widgets/components/paint_bar.dart';
 import 'package:paint/editor/canvas/layer.dart';
+import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/editor/canvas/onion_skin.dart';
 import 'package:paint/editor/canvas/layer_timeframe.dart';
 import 'package:paint/widgets/components/edge_shadow.dart';
@@ -402,4 +403,12 @@ Offset canvasOffCenter(WidgetTester tester) {
     area.height - PaintScrollBehavior.scrollbarTrack,
   ).center;
   return tester.getCenter(find.byType(PixelCanvas)) - visibleCenter;
+}
+
+Offset canvasPixelCenter(WidgetTester tester, PixelPoint point) {
+  final canvas = find.byType(PixelCanvas);
+  final scale =
+      tester.getSize(canvas).width / tester.widget<PixelCanvas>(canvas).width;
+  return tester.getTopLeft(canvas) +
+      Offset(point.x + 0.5, point.y + 0.5) * scale;
 }

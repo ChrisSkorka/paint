@@ -795,6 +795,34 @@ void main() {
           final expected = [initial, initial];
           expect(actual, equals(expected));
         });
+        testWidgets('status widths while sizing', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 128, height: 64),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select (M)'));
+          await tester.pump();
+          final initial = statusSectionWidths(tester);
+          final dragging = await tester.startGesture(
+            canvasPixelCenter(tester, const PixelPoint(x: 0, y: 0)),
+          );
+          await dragging.moveTo(
+            canvasPixelCenter(tester, const PixelPoint(x: 5, y: 3)),
+          );
+          await tester.pump();
+          final actual = statusSectionWidths(tester);
+          final expected = initial;
+          expect(actual, equals(expected));
+        });
         testWidgets('shape buttons', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
@@ -2481,6 +2509,178 @@ void main() {
               .descendant(
                 of: find.byType(PaintStatusButton),
                 matching: find.text('3 × 2'),
+              )
+              .evaluate()
+              .length;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        testWidgets('status bar selecting', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 9, height: 9),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select (M)'));
+          await tester.pump();
+          final dragging = await tester.startGesture(
+            canvasPixelCenter(tester, const PixelPoint(x: 1, y: 2)),
+          );
+          await dragging.moveTo(
+            canvasPixelCenter(tester, const PixelPoint(x: 4, y: 7)),
+          );
+          await tester.pump();
+          final actual = find
+              .descendant(
+                of: find.byType(PaintStatusButton),
+                matching: find.text('4 × 6'),
+              )
+              .evaluate()
+              .length;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        testWidgets('status bar shape', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 9, height: 9),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rectangle (R)'));
+          await tester.pump();
+          final dragging = await tester.startGesture(
+            canvasPixelCenter(tester, const PixelPoint(x: 6, y: 5)),
+          );
+          await dragging.moveTo(
+            canvasPixelCenter(tester, const PixelPoint(x: 2, y: 4)),
+          );
+          await tester.pump();
+          final actual = find
+              .descendant(
+                of: find.byType(PaintStatusButton),
+                matching: find.text('5 × 2'),
+              )
+              .evaluate()
+              .length;
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        testWidgets('status bar constrained', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 9, height: 9),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rectangle (R)'));
+          await tester.pump();
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          final dragging = await tester.startGesture(
+            canvasPixelCenter(tester, const PixelPoint(x: 2, y: 1)),
+          );
+          await dragging.moveTo(
+            canvasPixelCenter(tester, const PixelPoint(x: 7, y: 3)),
+          );
+          await tester.pump();
+          final actual = find
+              .descendant(
+                of: find.byType(PaintStatusButton),
+                matching: find.text('6 × 6'),
+              )
+              .evaluate()
+              .length;
+          await dragging.up();
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        testWidgets('status bar centered', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 9, height: 9),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Rectangle (R)'));
+          await tester.pump();
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          final dragging = await tester.startGesture(
+            canvasPixelCenter(tester, const PixelPoint(x: 4, y: 4)),
+          );
+          await dragging.moveTo(
+            canvasPixelCenter(tester, const PixelPoint(x: 6, y: 5)),
+          );
+          await tester.pump();
+          final actual = find
+              .descendant(
+                of: find.byType(PaintStatusButton),
+                matching: find.text('5 × 3'),
+              )
+              .evaluate()
+              .length;
+          await dragging.up();
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          const expected = 1;
+          expect(actual, equals(expected));
+        });
+        testWidgets('status bar released', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 9, height: 9),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Select (M)'));
+          await tester.pump();
+          final dragging = await tester.startGesture(
+            canvasPixelCenter(tester, const PixelPoint(x: 1, y: 2)),
+          );
+          await dragging.moveTo(
+            canvasPixelCenter(tester, const PixelPoint(x: 4, y: 7)),
+          );
+          await dragging.up();
+          await tester.pump();
+          final actual = find
+              .descendant(
+                of: find.byType(PaintStatusButton),
+                matching: find.text('9 × 9'),
               )
               .evaluate()
               .length;

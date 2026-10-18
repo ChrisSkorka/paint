@@ -110,6 +110,10 @@ coverage/
 # Symbols
 app.*.symbols
 
+# Affinity temporary files
+assets/launcher/icon.af~lock~:com.dropbox.ignored
+assets/launcher/icon.af~lock~
+
 # Exceptions to above rules.
 !**/ios/**/default.mode1v3
 !**/ios/**/default.mode2v3
