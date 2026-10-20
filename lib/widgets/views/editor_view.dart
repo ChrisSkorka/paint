@@ -89,6 +89,7 @@ class EditorView extends StatefulWidget {
   static const canvasEdge = 15.0;
   static const canvasVisible = 48.0;
   static const penSizeWidth = 56.0;
+  static const scaleZoomThreshold = 0.03;
 
   @override
   State<EditorView> createState() => _EditorViewState();
@@ -113,6 +114,7 @@ class _EditorViewState extends State<EditorView> {
   Offset? canvasAreaPointer;
   var unsaved = false;
   var textDrag = Offset.zero;
+  var scaleZoomProgress = 0.0;
   late var awaitingFit = widget.fitOnOpen;
 
   @override
@@ -582,6 +584,13 @@ class _EditorViewState extends State<EditorView> {
   }
 
   void _scrollCanvas(PointerSignalEvent event) {
+    if (event is PointerScaleEvent) {
+      GestureBinding.instance.pointerSignalResolver.register(
+        event,
+        (_) => _scaleZoom(scale: event.scale, position: event.position),
+      );
+      return;
+    }
     if (event is! PointerScrollEvent || event.scrollDelta.dy == 0) return;
     final forward = event.scrollDelta.dy > 0;
     if (EditorShortcut.primaryModifierPressed) {
@@ -598,6 +607,14 @@ class _EditorViewState extends State<EditorView> {
         (_) => controller.stepFrame(forward: forward),
       );
     }
+  }
+
+  void _scaleZoom({required double scale, required Offset position}) {
+    scaleZoomProgress += log(scale);
+    if (scaleZoomProgress.abs() < EditorView.scaleZoomThreshold) return;
+    final larger = scaleZoomProgress > 0;
+    scaleZoomProgress = 0;
+    _stepZoom(larger: larger, focus: _canvasAreaBox().globalToLocal(position));
   }
 
   RenderBox _canvasAreaBox() =>

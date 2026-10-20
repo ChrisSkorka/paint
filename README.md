@@ -548,11 +548,17 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 - [x] new doc tabs open file file-picker defaults to last folder
   - approximate last opened folder by getting the path of the most recent doc
 
-### phase 9.3: misc
+### phase 9.4: bugs
+
+- [x] ctrl/cmd+scroll zooming not working on web
+- [ ] right click on web triggers system context menu
+- [ ] touch inputs both move canvas & draw
+- [ ] stylus doesn't seem to work properly
+
+### phase 9.53: misc
 
 - [ ] text inputs with label use different label looks
 - [ ] text inputs have unit text on right side
-- [ ] right click on web triggers system context menu
 - [ ] pen ribbon becomes dynamic current tool settings ribbon
   - for pen & eraser: Pen ribbon
   - for text: Text ribbon - todo: text has lot's of settings taking up lots of space

@@ -9720,29 +9720,6 @@ void main() {
           const expected = Size(8, 8);
           expect(actual, equals(expected));
         });
-        testWidgets('scale signal', (tester) async {
-          useDesktopView(tester);
-          await tester.pumpWidget(
-            MaterialApp(
-              home: Scaffold(
-                body: EditorView(
-                  files: StubFileAccess(),
-                  library: stubDocumentLibrary(),
-                  clipboard: StubImageClipboard(),
-                  document: Document.blank(width: 2, height: 2),
-                ),
-              ),
-            ),
-          );
-          final center = tester.getCenter(find.byType(PixelCanvas));
-          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-          await scaleWheel(tester, at: center, scale: 2);
-          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-          await tester.pump();
-          final actual = canvasSize(tester);
-          const expected = Size(8, 8);
-          expect(actual, equals(expected));
-        });
         testWidgets(
           'cmd on macos',
           (tester) async {
@@ -9851,6 +9828,176 @@ void main() {
             canvasSize(tester),
           ];
           const expected = [Offset(17.5, 17.5), Size(120, 120)];
+          expect(actual, equals(expected));
+        });
+      });
+      group('scale zoom', () {
+        testWidgets('scale up', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await scaleWheel(tester, at: center, scale: 2);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          final actual = canvasSize(tester);
+          const expected = Size(12, 12);
+          expect(actual, equals(expected));
+        });
+        testWidgets('scale down', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await scaleWheel(tester, at: center, scale: 0.5);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          final actual = canvasSize(tester);
+          const expected = Size(6, 6);
+          expect(actual, equals(expected));
+        });
+        testWidgets('small scales accumulate', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await scaleWheel(tester, at: center, scale: 1.01);
+          await scaleWheel(tester, at: center, scale: 1.01);
+          await scaleWheel(tester, at: center, scale: 1.01);
+          await scaleWheel(tester, at: center, scale: 1.01);
+          final actual = canvasSize(tester);
+          const expected = Size(12, 12);
+          expect(actual, equals(expected));
+        });
+        testWidgets('single small scale', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await scaleWheel(tester, at: center, scale: 1.01);
+          final actual = canvasSize(tester);
+          const expected = Size(8, 8);
+          expect(actual, equals(expected));
+        });
+        testWidgets('scale without modifier', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          final center = tester.getCenter(find.byType(PixelCanvas));
+          await scaleWheel(tester, at: center, scale: 2);
+          final actual = canvasSize(tester);
+          const expected = Size(12, 12);
+          expect(actual, equals(expected));
+        });
+        testWidgets('scale at maximum', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.enterText(
+            find.descendant(
+              of: find.ancestor(
+                of: find.text('Zoom:'),
+                matching: find.byType(NumericValueRange),
+              ),
+              matching: find.byType(TextField),
+            ),
+            '96',
+          );
+          await tester.pump();
+          await scaleWheel(
+            tester,
+            at: tester.getCenter(canvasArea()),
+            scale: 2,
+          );
+          final actual = canvasSize(tester);
+          const expected = Size(192, 192);
+          expect(actual, equals(expected));
+        });
+        testWidgets('scale keeps cursor pixel', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 400, height: 400),
+                ),
+              ),
+            ),
+          );
+          final cursor =
+              tester.getTopLeft(find.byType(PixelCanvas)) +
+              const Offset(300, 200);
+          await scaleWheel(tester, at: cursor, scale: 2);
+          final actual = [
+            canvasPixelAt(tester, point: cursor),
+            canvasSize(tester),
+          ];
+          const expected = [Offset(75, 50), Size(2400, 2400)];
           expect(actual, equals(expected));
         });
       });
