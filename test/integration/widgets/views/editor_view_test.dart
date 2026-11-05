@@ -1385,7 +1385,7 @@ void main() {
           await tester.tap(find.byTooltip('More layer options'));
           await tester.pumpAndSettle();
           final actual = layerOptionsEnabled(tester);
-          const expected = [false];
+          const expected = [false, false];
           expect(actual, equals(expected));
         });
         testWidgets('layer options with multiple layers', (tester) async {
@@ -1407,7 +1407,30 @@ void main() {
           await tester.tap(find.byTooltip('More layer options'));
           await tester.pumpAndSettle();
           final actual = layerOptionsEnabled(tester);
-          const expected = [true];
+          const expected = [true, true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('layer options on bottom layer', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: layeredDocument(
+                    names: ['Background', 'Sketch'],
+                    activeLayerIndex: 0,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('More layer options'));
+          await tester.pumpAndSettle();
+          final actual = layerOptionsEnabled(tester);
+          const expected = [false, true];
           expect(actual, equals(expected));
         });
         testWidgets('close layer options', (tester) async {
@@ -7396,6 +7419,35 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
+        testWidgets('ctrl e', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: layeredDocument(
+                    names: ['Background', 'Middle', 'Top'],
+                    activeLayerIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(
+            tester,
+            key: LogicalKeyboardKey.keyE,
+            modifiers: [LogicalKeyboardKey.controlLeft],
+          );
+          final actual = [layerState(tester).first, layerState(tester).last];
+          const expected = [
+            ['Background', 'Top'],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
         testWidgets('shift delete', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
@@ -9243,6 +9295,46 @@ void main() {
             [
               ['Start', 'Add layer'],
               1,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('merge layer down', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Add layer (Shift+N)'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('More layer options'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Merge layer down (Ctrl+E)'));
+          await tester.pumpAndSettle();
+          final actual = [
+            layerState(tester),
+            layerOptionsEnabled(tester),
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              ['Background'],
+              [true],
+              [100],
+              0,
+            ],
+            <bool>[],
+            [
+              ['Start', 'Add layer', 'Merge layer down'],
+              2,
             ],
           ];
           expect(actual, equals(expected));

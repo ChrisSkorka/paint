@@ -920,6 +920,141 @@ void main() {
       });
     });
 
+    group('method blend', () {
+      group('opacity', () {
+        test('full', () {
+          final layer = layerFromRows([
+            [red],
+          ]);
+          layer.blend(
+            source: layerFromRows([
+              [blue],
+            ]),
+            opacity: 1,
+          );
+          final actual = pixelRows(layer);
+          const expected = [
+            [blue],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('half', () {
+          final layer = layerFromRows([
+            [red],
+          ]);
+          layer.blend(
+            source: layerFromRows([
+              [blue],
+            ]),
+            opacity: 0.5,
+          );
+          final actual = pixelRows(layer);
+          const expected = [
+            [0xFF800080],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('zero', () {
+          final layer = layerFromRows([
+            [red],
+          ]);
+          layer.blend(
+            source: layerFromRows([
+              [blue],
+            ]),
+            opacity: 0,
+          );
+          final actual = pixelRows(layer);
+          const expected = [
+            [red],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('pixels', () {
+        test('opaque over opaque', () {
+          final layer = layerFromRows([
+            [red, green],
+          ]);
+          layer.blend(
+            source: layerFromRows([
+              [blue, transparent],
+            ]),
+            opacity: 1,
+          );
+          final actual = pixelRows(layer);
+          const expected = [
+            [blue, green],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('translucent over opaque', () {
+          final layer = layerFromRows([
+            [red],
+          ]);
+          layer.blend(
+            source: layerFromRows([
+              [0x800000FF],
+            ]),
+            opacity: 1,
+          );
+          final actual = pixelRows(layer);
+          const expected = [
+            [0xFF7F0080],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('translucent over transparent', () {
+          final layer = layerFromRows([
+            [transparent],
+          ]);
+          layer.blend(
+            source: layerFromRows([
+              [0x800000FF],
+            ]),
+            opacity: 1,
+          );
+          final actual = pixelRows(layer);
+          const expected = [
+            [0x800000FF],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('translucent over translucent', () {
+          final layer = layerFromRows([
+            [0x80FF0000],
+          ]);
+          layer.blend(
+            source: layerFromRows([
+              [0x800000FF],
+            ]),
+            opacity: 1,
+          );
+          final actual = pixelRows(layer);
+          const expected = [
+            [0xC05500AA],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('transparent source', () {
+          final layer = layerFromRows([
+            [red, green],
+          ]);
+          layer.blend(
+            source: layerFromRows([
+              [transparent, transparent],
+            ]),
+            opacity: 1,
+          );
+          final actual = pixelRows(layer);
+          const expected = [
+            [red, green],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('operator ==', () {
       group('equals', () {
         test('same fields', () {

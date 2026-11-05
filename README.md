@@ -455,10 +455,14 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - icon buttons: add, copy, move up, move down, more
   - more options drop down menu: merge down, rename, delete
   - drop down items have a hover tooltip for shortcut hints
-- [ ] merge down layers:
-  - button between copy & merge
+- [x] merge down layers:
+  - button in more options drop down before delete
   - merges selected layer with layer below
+  - the top layers pixels are reduced by the top layers opacity, bottom layer opacity is not considered
 - [ ] allow renaming layers
+  - button in more options drop down between merge & delete
+  - renames are undo-able actions
+  - renames are saved when the document is saved
 
 ### phase 8.2: ui feel
 

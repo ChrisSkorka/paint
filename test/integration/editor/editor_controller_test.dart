@@ -3759,6 +3759,44 @@ void main() {
       });
     });
 
+    group('getter canMergeLayerDown', () {
+      group('active layer', () {
+        test('only', () {
+          final editorController = EditorController.forDocument(
+            document: layeredDocument(
+              names: ['Background'],
+              activeLayerIndex: 0,
+            ),
+          );
+          final actual = editorController.canMergeLayerDown;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('bottom', () {
+          final editorController = EditorController.forDocument(
+            document: layeredDocument(
+              names: ['Background', 'Sketch'],
+              activeLayerIndex: 0,
+            ),
+          );
+          final actual = editorController.canMergeLayerDown;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('top', () {
+          final editorController = EditorController.forDocument(
+            document: layeredDocument(
+              names: ['Background', 'Sketch'],
+              activeLayerIndex: 1,
+            ),
+          );
+          final actual = editorController.canMergeLayerDown;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('getter canRemoveLayer', () {
       group('layer count', () {
         test('one', () {
@@ -4348,6 +4386,268 @@ void main() {
             [
               ['Background'],
               0,
+            ],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method mergeLayerDown', () {
+      group('position', () {
+        test('top layer', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.mergeLayerDown();
+          final actual = [layerStructure(document), notifications];
+          const expected = [
+            [
+              ['Background'],
+              0,
+            ],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('middle layer', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch', 'Ink'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.mergeLayerDown();
+          final actual = layerStructure(document);
+          const expected = [
+            ['Background', 'Ink'],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('bottom layer', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.mergeLayerDown();
+          final actual = [
+            layerStructure(document),
+            editorController.history.entries.length,
+            notifications,
+          ];
+          const expected = [
+            [
+              ['Background', 'Sketch'],
+              0,
+            ],
+            0,
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('layers', () {
+        test('constant layers', () {
+          final document = Document(
+            width: 2,
+            height: 1,
+            layers: [
+              DocumentLayer(
+                name: 'Background',
+                images: [
+                  layerFromRows([
+                    [red, red],
+                  ]),
+                ],
+              ),
+              DocumentLayer(
+                name: 'Sketch',
+                images: [
+                  layerFromRows([
+                    [blue, transparent],
+                  ]),
+                ],
+                opacity: 50,
+              ),
+            ],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.mergeLayerDown();
+          final actual = document.layers;
+          final expected = [
+            DocumentLayer(
+              name: 'Background',
+              images: [
+                layerFromRows([
+                  [0xFF800080, red],
+                ]),
+              ],
+            ),
+          ];
+          expect(actual, equals(expected));
+        });
+        test('per frame layer', () {
+          final document = animatedDocument(
+            spriteColors: [red, green],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.mergeLayerDown();
+          final actual = document.layers;
+          final expected = [
+            DocumentLayer(
+              name: 'Background',
+              images: [
+                layerFromRows([
+                  [red],
+                ]),
+                layerFromRows([
+                  [green],
+                ]),
+              ],
+              timeframe: LayerTimeframe.perFrame,
+            ),
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('recorded', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.mergeLayerDown();
+          final actual = editorController.history.entries.map(
+            (entry) => entry.name,
+          );
+          const expected = ['Merge layer down'];
+          expect(actual, equals(expected));
+        });
+        test('undo', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.mergeLayerDown();
+          editorController.undo();
+          final actual = layerStructure(document);
+          const expected = [
+            ['Background', 'Sketch'],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('undo restores pixels', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 0));
+          editorController.mergeLayerDown();
+          editorController.undo();
+          final actual = [
+            for (final layer in document.layers) pixelRows(layer.images.first),
+          ];
+          const expected = [
+            [
+              [transparent, transparent],
+            ],
+            [
+              [transparent, black],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('redo', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.mergeLayerDown();
+          editorController.undo();
+          editorController.redo();
+          final actual = layerStructure(document);
+          const expected = [
+            ['Background'],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('selection', () {
+        test('cleared', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectAll();
+          editorController.mergeLayerDown();
+          final actual = editorController.selectionArea;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+      group('stroke', () {
+        test('during stroke', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.mergeLayerDown();
+          final actual = [
+            layerStructure(document),
+            editorController.history.entries.length,
+          ];
+          const expected = [
+            [
+              ['Background', 'Sketch'],
+              1,
             ],
             0,
           ];

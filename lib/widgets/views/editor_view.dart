@@ -511,6 +511,7 @@ class _EditorViewState extends State<EditorView> {
     EditorShortcut.moreHolds: () => _stepHolds(more: true),
     EditorShortcut.addLayer: controller.addLayer,
     EditorShortcut.copyLayer: controller.copyLayer,
+    EditorShortcut.mergeLayerDown: controller.mergeLayerDown,
     EditorShortcut.removeLayer: controller.removeLayer,
     EditorShortcut.layerAbove: () => controller.stepLayer(up: true),
     EditorShortcut.layerBelow: () => controller.stepLayer(up: false),
@@ -1107,6 +1108,23 @@ class _EditorViewState extends State<EditorView> {
     return MenuAnchor(
       alignmentOffset: const Offset(0, 4),
       menuChildren: [
+        Tooltip(
+          message: shortcutTooltip(
+            tooltip: 'Merge layer down',
+            shortcut: EditorShortcut.mergeLayerDown.keys,
+          ),
+          waitDuration: const Duration(milliseconds: 500),
+          child: MenuItemButton(
+            leadingIcon: const FaIcon(
+              FontAwesomeIcons.arrowsDownToLine,
+              size: 16,
+            ),
+            onPressed: controller.canMergeLayerDown
+                ? controller.mergeLayerDown
+                : null,
+            child: const Text('Merge layer down'),
+          ),
+        ),
         Tooltip(
           message: shortcutTooltip(
             tooltip: 'Remove layer',

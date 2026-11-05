@@ -381,6 +381,17 @@ enum EditorShortcut {
       ),
     ],
   ),
+  mergeLayerDown(
+    label: 'Merge layer down',
+    group: ShortcutGroup.layers,
+    activators: [
+      SingleActivator(
+        LogicalKeyboardKey.keyE,
+        control: true,
+        includeRepeats: false,
+      ),
+    ],
+  ),
   removeLayer(
     label: 'Remove layer',
     group: ShortcutGroup.layers,

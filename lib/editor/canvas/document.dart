@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:collection/collection.dart';
 
 import '../tools/tool_presets.dart';
@@ -102,9 +100,8 @@ class Document {
       color: background,
     );
     for (final layer in layers.where((layer) => layer.visible)) {
-      _blend(
-        target: flattened.rgba,
-        source: layer.imageAt(frame).rgba,
+      flattened.blend(
+        source: layer.imageAt(frame),
         opacity: layer.opacity / DocumentLayer.maximumOpacity,
       );
     }
@@ -132,35 +129,12 @@ class Document {
       color: PixelColor.transparent,
     );
     for (final layer in thumbnails) {
-      _blend(
-        target: thumbnail.rgba,
-        source: layer.image.rgba,
+      thumbnail.blend(
+        source: layer.image,
         opacity: layer.opacity / DocumentLayer.maximumOpacity,
       );
     }
     return thumbnail;
-  }
-
-  static void _blend({
-    required Uint8List target,
-    required Uint8List source,
-    required double opacity,
-  }) {
-    for (var offset = 0; offset < target.length; offset += 4) {
-      final sourceAlpha = source[offset + 3] / 255 * opacity;
-      if (sourceAlpha == 0) continue;
-      final targetAlpha = target[offset + 3] / 255;
-      final targetWeight = targetAlpha * (1 - sourceAlpha);
-      final alpha = sourceAlpha + targetWeight;
-      for (var channel = 0; channel < 3; channel++) {
-        target[offset + channel] =
-            ((source[offset + channel] * sourceAlpha +
-                        target[offset + channel] * targetWeight) /
-                    alpha)
-                .round();
-      }
-      target[offset + 3] = (alpha * 255).round();
-    }
   }
 
   @override

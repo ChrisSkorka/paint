@@ -102,6 +102,7 @@ void main() {
             'Alt+=',
             'Shift+N',
             'Shift+D',
+            'Ctrl+E',
             'Shift+Del',
             'PgUp',
             'PgDn',

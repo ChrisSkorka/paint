@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:collection/collection.dart';
 
 import 'layer.dart';
@@ -11,6 +13,27 @@ class DocumentLayer {
     this.visible = true,
     this.opacity = maximumOpacity,
   });
+
+  factory DocumentLayer.merged({
+    required DocumentLayer bottom,
+    required DocumentLayer top,
+  }) {
+    final frames = max(bottom.images.length, top.images.length);
+    return bottom.copyWith(
+      images: [
+        for (var frame = 0; frame < frames; frame++)
+          Layer.copyOf(bottom.imageAt(frame))..blend(
+            source: top.imageAt(frame),
+            opacity: top.opacity / maximumOpacity,
+          ),
+      ],
+      timeframe:
+          bottom.timeframe == LayerTimeframe.perFrame ||
+              top.timeframe == LayerTimeframe.perFrame
+          ? LayerTimeframe.perFrame
+          : LayerTimeframe.constant,
+    );
+  }
 
   static const minimumOpacity = 0;
   static const maximumOpacity = 100;

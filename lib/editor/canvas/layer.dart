@@ -200,6 +200,24 @@ class Layer {
     }
   }
 
+  void blend({required Layer source, required double opacity}) {
+    for (var offset = 0; offset < rgba.length; offset += 4) {
+      final sourceAlpha = source.rgba[offset + 3] / 255 * opacity;
+      if (sourceAlpha == 0) continue;
+      final targetAlpha = rgba[offset + 3] / 255;
+      final targetWeight = targetAlpha * (1 - sourceAlpha);
+      final alpha = sourceAlpha + targetWeight;
+      for (var channel = 0; channel < 3; channel++) {
+        rgba[offset + channel] =
+            ((source.rgba[offset + channel] * sourceAlpha +
+                        rgba[offset + channel] * targetWeight) /
+                    alpha)
+                .round();
+      }
+      rgba[offset + 3] = (alpha * 255).round();
+    }
+  }
+
   int _offset({required int x, required int y}) => (y * width + x) * 4;
 
   void _write({required int offset, required PixelColor color}) {

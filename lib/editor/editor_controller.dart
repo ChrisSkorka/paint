@@ -261,6 +261,7 @@ class EditorController extends ChangeNotifier {
         selection.area.contains(cursor);
   }
 
+  bool get canMergeLayerDown => document.activeLayerIndex > 0;
   bool get canRemoveLayer => document.layers.length > 1;
   bool get canMoveLayerUp =>
       document.activeLayerIndex < document.layers.length - 1;
@@ -879,6 +880,23 @@ class EditorController extends ChangeNotifier {
     );
     document.activeLayerIndex = index;
     return pixels;
+  }
+
+  void mergeLayerDown() {
+    if (!canMergeLayerDown) return;
+    _changeStructure(
+      name: 'Merge layer down',
+      change: () {
+        _selection = null;
+        final top = document.layers.removeAt(document.activeLayerIndex);
+        final index = document.activeLayerIndex - 1;
+        document.layers[index] = DocumentLayer.merged(
+          bottom: document.layers[index],
+          top: top,
+        );
+        document.activeLayerIndex = index;
+      },
+    );
   }
 
   void removeLayer() {
