@@ -459,7 +459,7 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - button in more options drop down before delete
   - merges selected layer with layer below
   - the top layers pixels are reduced by the top layers opacity, bottom layer opacity is not considered
-- [ ] allow renaming layers
+- [x] allow renaming layers
   - button in more options drop down between merge & delete
   - renames are undo-able actions
   - renames are saved when the document is saved

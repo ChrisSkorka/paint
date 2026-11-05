@@ -103,6 +103,7 @@ void main() {
             'Shift+N',
             'Shift+D',
             'Ctrl+E',
+            'F2',
             'Shift+Del',
             'PgUp',
             'PgDn',

@@ -348,6 +348,18 @@ class _EditorViewState extends State<EditorView> {
     widget.onRenamed?.call();
   }
 
+  Future<void> _renameLayer() async {
+    final name = await showTextInputDialog(
+      context: context,
+      title: 'Rename layer',
+      label: 'Name',
+      initialText:
+          widget.document.layers[widget.document.activeLayerIndex].name,
+    );
+    if (name == null) return;
+    controller.renameLayer(name: name);
+  }
+
   Future<void> _copySelection() async {
     final clip = controller.selectionClip;
     if (clip != null) await _writeClip(clip);
@@ -512,6 +524,7 @@ class _EditorViewState extends State<EditorView> {
     EditorShortcut.addLayer: controller.addLayer,
     EditorShortcut.copyLayer: controller.copyLayer,
     EditorShortcut.mergeLayerDown: controller.mergeLayerDown,
+    EditorShortcut.renameLayer: _renameLayer,
     EditorShortcut.removeLayer: controller.removeLayer,
     EditorShortcut.layerAbove: () => controller.stepLayer(up: true),
     EditorShortcut.layerBelow: () => controller.stepLayer(up: false),
@@ -1123,6 +1136,18 @@ class _EditorViewState extends State<EditorView> {
                 ? controller.mergeLayerDown
                 : null,
             child: const Text('Merge layer down'),
+          ),
+        ),
+        Tooltip(
+          message: shortcutTooltip(
+            tooltip: 'Rename layer',
+            shortcut: EditorShortcut.renameLayer.keys,
+          ),
+          waitDuration: const Duration(milliseconds: 500),
+          child: MenuItemButton(
+            leadingIcon: const FaIcon(FontAwesomeIcons.pen, size: 16),
+            onPressed: _renameLayer,
+            child: const Text('Rename layer'),
           ),
         ),
         Tooltip(

@@ -899,6 +899,17 @@ class EditorController extends ChangeNotifier {
     );
   }
 
+  void renameLayer({required String name}) {
+    final layer = document.layers[document.activeLayerIndex];
+    if (layer.name == name) return;
+    _changeStructure(
+      name: 'Rename layer',
+      change: () => document.layers[document.activeLayerIndex] = layer.copyWith(
+        name: name,
+      ),
+    );
+  }
+
   void removeLayer() {
     if (!canRemoveLayer) return;
     _changeStructure(

@@ -392,6 +392,11 @@ enum EditorShortcut {
       ),
     ],
   ),
+  renameLayer(
+    label: 'Rename layer',
+    group: ShortcutGroup.layers,
+    activators: [SingleActivator(LogicalKeyboardKey.f2, includeRepeats: false)],
+  ),
   removeLayer(
     label: 'Remove layer',
     group: ShortcutGroup.layers,

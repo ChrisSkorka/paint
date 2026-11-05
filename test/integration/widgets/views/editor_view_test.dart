@@ -12,6 +12,7 @@ import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
 import 'package:paint/editor/canvas/pixel_rectangle.dart';
 import 'package:paint/editor/files/export_format.dart';
+import 'package:paint/editor/files/ora_codec.dart';
 import 'package:paint/editor/tools/brush_tip.dart';
 import 'package:paint/editor/tools/tool_kind.dart';
 import 'package:paint/editor/tools/tool_preset.dart';
@@ -1385,7 +1386,7 @@ void main() {
           await tester.tap(find.byTooltip('More layer options'));
           await tester.pumpAndSettle();
           final actual = layerOptionsEnabled(tester);
-          const expected = [false, false];
+          const expected = [false, true, false];
           expect(actual, equals(expected));
         });
         testWidgets('layer options with multiple layers', (tester) async {
@@ -1407,7 +1408,7 @@ void main() {
           await tester.tap(find.byTooltip('More layer options'));
           await tester.pumpAndSettle();
           final actual = layerOptionsEnabled(tester);
-          const expected = [true, true];
+          const expected = [true, true, true];
           expect(actual, equals(expected));
         });
         testWidgets('layer options on bottom layer', (tester) async {
@@ -1430,7 +1431,7 @@ void main() {
           await tester.tap(find.byTooltip('More layer options'));
           await tester.pumpAndSettle();
           final actual = layerOptionsEnabled(tester);
-          const expected = [false, true];
+          const expected = [false, true, true];
           expect(actual, equals(expected));
         });
         testWidgets('close layer options', (tester) async {
@@ -7448,6 +7449,35 @@ void main() {
           ];
           expect(actual, equals(expected));
         });
+        testWidgets('f2', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: layeredDocument(
+                    names: ['Background', 'Middle', 'Top'],
+                    activeLayerIndex: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await pressShortcut(tester, key: LogicalKeyboardKey.f2);
+          await tester.pumpAndSettle();
+          await tester.enterText(find.byKey(const Key('Name')), 'Ink');
+          await tester.testTextInput.receiveAction(TextInputAction.done);
+          await tester.pumpAndSettle();
+          final actual = [layerState(tester).first, layerState(tester).last];
+          const expected = [
+            ['Background', 'Ink', 'Top'],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
         testWidgets('shift delete', (tester) async {
           useDesktopView(tester);
           await tester.pumpWidget(
@@ -9335,6 +9365,111 @@ void main() {
             [
               ['Start', 'Add layer', 'Merge layer down'],
               2,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('rename layer', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('More layer options'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Rename layer (F2)'));
+          await tester.pumpAndSettle();
+          await tester.enterText(find.byKey(const Key('Name')), 'Ink');
+          await tester.pump();
+          await tester.tap(find.byTooltip('OK'));
+          await tester.pumpAndSettle();
+          final actual = [layerState(tester).first, historyState(tester)];
+          const expected = [
+            ['Ink'],
+            [
+              ['Start', 'Rename layer'],
+              1,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('rename layer cancelled', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('More layer options'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Rename layer (F2)'));
+          await tester.pumpAndSettle();
+          await tester.enterText(find.byKey(const Key('Name')), 'Ink');
+          await tester.pump();
+          await tester.tap(find.byTooltip('Cancel'));
+          await tester.pumpAndSettle();
+          final actual = [layerState(tester).first, historyState(tester)];
+          const expected = [
+            ['Background'],
+            [
+              ['Start'],
+              0,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('save renamed layer', (tester) async {
+          useDesktopView(tester);
+          final stubStore = StubDocumentStore();
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(store: stubStore),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('More layer options'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Rename layer (F2)'));
+          await tester.pumpAndSettle();
+          await tester.enterText(find.byKey(const Key('Name')), 'Ink');
+          await tester.testTextInput.receiveAction(TextInputAction.done);
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Save (Ctrl+S)'));
+          await tester.pump();
+          final saved = OraCodec.decode(
+            name: 'Untitled',
+            bytes: stubStore.files.values.single,
+          );
+          final actual = [
+            find.text('Saved').evaluate().length,
+            layerStructure(saved),
+          ];
+          const expected = [
+            1,
+            [
+              ['Ink'],
+              0,
             ],
           ];
           expect(actual, equals(expected));

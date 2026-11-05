@@ -4656,6 +4656,218 @@ void main() {
       });
     });
 
+    group('method renameLayer', () {
+      group('layers', () {
+        test('top layer', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.renameLayer(name: 'Ink');
+          final actual = [layerStructure(document), notifications];
+          const expected = [
+            [
+              ['Background', 'Ink'],
+              1,
+            ],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('bottom layer', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.renameLayer(name: 'Ink');
+          final actual = layerStructure(document);
+          const expected = [
+            ['Ink', 'Sketch'],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('settings kept', () {
+          final document = Document(
+            width: 1,
+            height: 1,
+            layers: [
+              DocumentLayer(
+                name: 'Background',
+                images: [
+                  layerFromRows([
+                    [red],
+                  ]),
+                  layerFromRows([
+                    [green],
+                  ]),
+                ],
+                timeframe: LayerTimeframe.perFrame,
+                visible: false,
+                opacity: 40,
+              ),
+            ],
+            activeLayerIndex: 0,
+            frameHolds: [1, 1],
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.renameLayer(name: 'Ink');
+          final actual = document.layers;
+          final expected = [
+            DocumentLayer(
+              name: 'Ink',
+              images: [
+                layerFromRows([
+                  [red],
+                ]),
+                layerFromRows([
+                  [green],
+                ]),
+              ],
+              timeframe: LayerTimeframe.perFrame,
+              visible: false,
+              opacity: 40,
+            ),
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('name', () {
+        test('same name', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.renameLayer(name: 'Sketch');
+          final actual = [
+            layerStructure(document),
+            editorController.history.entries.length,
+            notifications,
+          ];
+          const expected = [
+            [
+              ['Background', 'Sketch'],
+              1,
+            ],
+            0,
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('history', () {
+        test('recorded', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.renameLayer(name: 'Ink');
+          final actual = editorController.history.entries.map(
+            (entry) => entry.name,
+          );
+          const expected = ['Rename layer'];
+          expect(actual, equals(expected));
+        });
+        test('undo', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.renameLayer(name: 'Ink');
+          editorController.undo();
+          final actual = layerStructure(document);
+          const expected = [
+            ['Background', 'Sketch'],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('redo', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.renameLayer(name: 'Ink');
+          editorController.undo();
+          editorController.redo();
+          final actual = layerStructure(document);
+          const expected = [
+            ['Background', 'Ink'],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('selection', () {
+        test('kept', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectAll();
+          editorController.renameLayer(name: 'Ink');
+          final actual = editorController.selectionArea;
+          const expected = PixelRectangle(left: 0, top: 0, width: 2, height: 1);
+          expect(actual, equals(expected));
+        });
+      });
+      group('stroke', () {
+        test('during stroke', () {
+          final document = layeredDocument(
+            names: ['Background', 'Sketch'],
+            activeLayerIndex: 1,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.renameLayer(name: 'Ink');
+          final actual = [
+            layerStructure(document),
+            editorController.history.entries.length,
+          ];
+          const expected = [
+            [
+              ['Background', 'Sketch'],
+              1,
+            ],
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
     group('method removeLayer', () {
       group('position', () {
         test('top layer', () {
