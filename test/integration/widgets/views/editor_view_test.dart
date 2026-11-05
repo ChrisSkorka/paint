@@ -37,6 +37,7 @@ import '../../../support/color_dialog_probes.dart';
 import '../../../support/desktop_view.dart';
 import '../../../support/document_probes.dart';
 import '../../../support/editor_view_probes.dart';
+import '../../../support/scroll_probes.dart';
 import '../../../support/hover.dart';
 import '../../../support/keyboard.dart';
 import '../../../support/right_click.dart';
@@ -1393,6 +1394,128 @@ void main() {
         });
       });
 
+      group('touch and stylus', () {
+        testWidgets('touch drag', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 8, height: 1);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          final initialOffsets = scrollOffsets(tester);
+          final gesture = await tester.startGesture(
+            canvasPixelCenter(tester, const PixelPoint(x: 0, y: 0)),
+            kind: PointerDeviceKind.touch,
+          );
+          for (var x = 1; x < 8; x++) {
+            await gesture.moveTo(
+              canvasPixelCenter(tester, PixelPoint(x: x, y: 0)),
+            );
+            await tester.pump();
+          }
+          await gesture.up();
+          await tester.pump();
+          final actual = [
+            scrollOffsets(tester),
+            pixelRows(document.activeLayer),
+          ];
+          final expected = [
+            initialOffsets,
+            [
+              [black, black, black, black, black, black, black, black],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('stylus drag', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 8, height: 1);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          final initialOffsets = scrollOffsets(tester);
+          final gesture = await tester.startGesture(
+            canvasPixelCenter(tester, const PixelPoint(x: 0, y: 0)),
+            kind: PointerDeviceKind.stylus,
+          );
+          for (var x = 1; x < 8; x++) {
+            await gesture.moveTo(
+              canvasPixelCenter(tester, PixelPoint(x: x, y: 0)),
+            );
+            await tester.pump();
+          }
+          await gesture.up();
+          await tester.pump();
+          final actual = [
+            scrollOffsets(tester),
+            pixelRows(document.activeLayer),
+          ];
+          final expected = [
+            initialOffsets,
+            [
+              [black, black, black, black, black, black, black, black],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('invertedStylus drag', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 8, height: 1);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          final initialOffsets = scrollOffsets(tester);
+          final gesture = await tester.startGesture(
+            canvasPixelCenter(tester, const PixelPoint(x: 0, y: 0)),
+            kind: PointerDeviceKind.invertedStylus,
+          );
+          for (var x = 1; x < 8; x++) {
+            await gesture.moveTo(
+              canvasPixelCenter(tester, PixelPoint(x: x, y: 0)),
+            );
+            await tester.pump();
+          }
+          await gesture.up();
+          await tester.pump();
+          final actual = [
+            scrollOffsets(tester),
+            pixelRows(document.activeLayer),
+          ];
+          final expected = [
+            initialOffsets,
+            [
+              [black, black, black, black, black, black, black, black],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
       group('drawing', () {
         testWidgets('primary click', (tester) async {
           useDesktopView(tester);

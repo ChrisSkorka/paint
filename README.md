@@ -449,7 +449,18 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 8: right pane refinement
 
-### phase 8.1: ui feel
+### phase 8.1: layers
+
+- [ ] layer actions (below list of layers):
+  - icon buttons: add, copy, move up, move down, more
+  - more options drop down menu: merge down, rename, delete
+  - drop down items
+- [ ] merge down layers:
+  - button between copy & merge
+  - merges selected layer with layer below
+- [ ] allow renaming layers
+
+### phase 8.2: ui feel
 
 - [ ] history previews show entire picture, not just modified layer
   - how? save full image, recompute from all the diffs?
@@ -474,14 +485,6 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
   - layers: add, clone, merge, rename, delete
   - frames: add, clone, delete
   - history: layerize
-
-
-### phase 8.2: layers
-
-- [ ] merge down layers:
-  - button between copy & merge
-  - merges selected layer with layer below
-- [ ] allow renaming layers
 
 ### phase 8.3: history
 

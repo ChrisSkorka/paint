@@ -1040,9 +1040,10 @@ class _EditorViewState extends State<EditorView> {
           thickness: PaintScrollBehavior.scrollbarThickness,
           notificationPredicate: (notification) => notification.depth == 1,
           child: ScrollConfiguration(
-            behavior: ScrollConfiguration.of(
-              context,
-            ).copyWith(scrollbars: false),
+            behavior: ScrollConfiguration.of(context).copyWith(
+              scrollbars: false,
+              dragDevices: {PointerDeviceKind.trackpad},
+            ),
             child: child,
           ),
         ),
