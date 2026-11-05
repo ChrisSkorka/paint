@@ -208,7 +208,6 @@ Layer layerThumbnail(WidgetTester tester) =>
 List<bool> layerActionsEnabled(WidgetTester tester) => [
   for (final tooltip in [
     'Add layer (Shift+N)',
-    'Remove layer (Shift+Del)',
     'Move layer up (Alt+PgUp)',
     'Move layer down (Alt+PgDn)',
   ])
@@ -221,6 +220,13 @@ List<bool> layerActionsEnabled(WidgetTester tester) => [
             )
             .onPressed !=
         null,
+];
+
+List<bool> layerOptionsEnabled(WidgetTester tester) => [
+  for (final menuItem in tester.widgetList<MenuItemButton>(
+    find.byType(MenuItemButton),
+  ))
+    menuItem.onPressed != null,
 ];
 
 List<bool> clipboardActionsEnabled(WidgetTester tester) => [

@@ -1081,14 +1081,6 @@ class _EditorViewState extends State<EditorView> {
               onPressed: controller.copyLayer,
             ),
             PaintIconButton(
-              icon: FontAwesomeIcons.trashCan,
-              tooltip: 'Remove layer',
-              shortcut: EditorShortcut.removeLayer.keys,
-              onPressed: controller.canRemoveLayer
-                  ? controller.removeLayer
-                  : null,
-            ),
-            PaintIconButton(
               icon: FontAwesomeIcons.arrowUp,
               tooltip: 'Move layer up',
               shortcut: EditorShortcut.moveLayerUp.keys,
@@ -1104,9 +1096,37 @@ class _EditorViewState extends State<EditorView> {
                   ? () => controller.moveLayer(up: false)
                   : null,
             ),
+            _buildLayerOptions(),
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildLayerOptions() {
+    return MenuAnchor(
+      alignmentOffset: const Offset(0, 4),
+      menuChildren: [
+        Tooltip(
+          message: shortcutTooltip(
+            tooltip: 'Remove layer',
+            shortcut: EditorShortcut.removeLayer.keys,
+          ),
+          waitDuration: const Duration(milliseconds: 500),
+          child: MenuItemButton(
+            leadingIcon: const FaIcon(FontAwesomeIcons.trashCan, size: 16),
+            onPressed: controller.canRemoveLayer
+                ? controller.removeLayer
+                : null,
+            child: const Text('Remove layer'),
+          ),
+        ),
+      ],
+      builder: (context, menu, child) => PaintIconButton(
+        icon: FontAwesomeIcons.ellipsis,
+        tooltip: 'More layer options',
+        onPressed: () => menu.isOpen ? menu.close() : menu.open(),
+      ),
     );
   }
 

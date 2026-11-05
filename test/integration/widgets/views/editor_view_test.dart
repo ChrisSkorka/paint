@@ -1365,7 +1365,71 @@ void main() {
             ),
           );
           final actual = layerActionsEnabled(tester);
-          const expected = [true, false, false, false];
+          const expected = [true, false, false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('layer options', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('More layer options'));
+          await tester.pumpAndSettle();
+          final actual = layerOptionsEnabled(tester);
+          const expected = [false];
+          expect(actual, equals(expected));
+        });
+        testWidgets('layer options with multiple layers', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('Add layer (Shift+N)'));
+          await tester.pump();
+          await tester.tap(find.byTooltip('More layer options'));
+          await tester.pumpAndSettle();
+          final actual = layerOptionsEnabled(tester);
+          const expected = [true];
+          expect(actual, equals(expected));
+        });
+        testWidgets('close layer options', (tester) async {
+          useDesktopView(tester);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: Document.blank(width: 2, height: 2),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.byTooltip('More layer options'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('More layer options'));
+          await tester.pumpAndSettle();
+          final actual = layerOptionsEnabled(tester);
+          const expected = <bool>[];
           expect(actual, equals(expected));
         });
         testWidgets('thumbnail', (tester) async {
@@ -9175,7 +9239,7 @@ void main() {
               [100, 100],
               1,
             ],
-            [true, true, false, true],
+            [true, false, true],
             [
               ['Start', 'Add layer'],
               1,
@@ -9199,11 +9263,14 @@ void main() {
           );
           await tester.tap(find.byTooltip('Add layer (Shift+N)'));
           await tester.pump();
+          await tester.tap(find.byTooltip('More layer options'));
+          await tester.pumpAndSettle();
           await tester.tap(find.byTooltip('Remove layer (Shift+Del)'));
-          await tester.pump();
+          await tester.pumpAndSettle();
           final actual = [
             layerState(tester),
             layerActionsEnabled(tester),
+            layerOptionsEnabled(tester),
             historyState(tester),
           ];
           const expected = [
@@ -9213,7 +9280,8 @@ void main() {
               [100],
               0,
             ],
-            [true, false, false, false],
+            [true, false, false],
+            <bool>[],
             [
               ['Start', 'Add layer', 'Remove layer'],
               2,
@@ -9251,7 +9319,7 @@ void main() {
               [100, 100],
               0,
             ],
-            [true, true, true, false],
+            [true, true, false],
             [
               ['Start', 'Add layer', 'Move layer down'],
               2,
@@ -9291,7 +9359,7 @@ void main() {
               [100, 100],
               1,
             ],
-            [true, true, false, true],
+            [true, false, true],
             [
               ['Start', 'Add layer', 'Move layer down', 'Move layer up'],
               3,
@@ -9329,7 +9397,7 @@ void main() {
               [100, 100],
               0,
             ],
-            [true, true, true, false],
+            [true, true, false],
             [
               ['Start', 'Add layer'],
               1,
@@ -9367,7 +9435,7 @@ void main() {
               [100],
               0,
             ],
-            [true, false, false, false],
+            [true, false, false],
             [
               ['Start', 'Add layer'],
               0,

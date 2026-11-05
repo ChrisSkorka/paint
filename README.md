@@ -451,10 +451,10 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 8.1: layers
 
-- [ ] layer actions (below list of layers):
+- [x] layer actions (below list of layers):
   - icon buttons: add, copy, move up, move down, more
   - more options drop down menu: merge down, rename, delete
-  - drop down items
+  - drop down items have a hover tooltip for shortcut hints
 - [ ] merge down layers:
   - button between copy & merge
   - merges selected layer with layer below
