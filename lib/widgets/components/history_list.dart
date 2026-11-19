@@ -13,11 +13,15 @@ class HistoryListItem {
     required this.name,
     required this.thumbnail,
     required this.outline,
+    this.checkable = false,
+    this.checked = false,
   });
 
   final String name;
   final Layer thumbnail;
   final Rect? outline;
+  final bool checkable;
+  final bool checked;
 }
 
 class HistoryList extends StatelessWidget {
@@ -26,43 +30,61 @@ class HistoryList extends StatelessWidget {
     required this.items,
     required this.position,
     required this.onSelect,
+    required this.onCheckedChanged,
   });
 
   final List<HistoryListItem> items;
   final int position;
   final ValueChanged<int> onSelect;
+  final void Function({required int index, required bool checked})
+  onCheckedChanged;
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      children: [
-        for (var index = 0; index < items.length; index++)
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: () => onSelect(index),
-              child: HighlightBox(
-                highlighted: index == position,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                child: Opacity(
-                  opacity: index > position ? 0.4 : 1,
-                  child: Row(
-                    children: [
-                      Expanded(child: Text(items[index].name)),
-                      HistoryThumbnail(
-                        thumbnail: items[index].thumbnail,
-                        outline: items[index].outline,
-                      ),
-                    ],
+    return Material(
+      type: MaterialType.transparency,
+      child: ListView(
+        children: [
+          for (var index = 0; index < items.length; index++)
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () => onSelect(index),
+                child: HighlightBox(
+                  highlighted: index == position,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  child: Opacity(
+                    opacity: index > position ? 0.4 : 1,
+                    child: Row(
+                      children: [
+                        Checkbox(
+                          value: items[index].checked,
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                          onChanged: items[index].checkable
+                              ? (checked) => onCheckedChanged(
+                                  index: index,
+                                  checked: checked == true,
+                                )
+                              : null,
+                        ),
+                        Expanded(child: Text(items[index].name)),
+                        HistoryThumbnail(
+                          thumbnail: items[index].thumbnail,
+                          outline: items[index].outline,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }

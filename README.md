@@ -492,15 +492,31 @@ Each step lands with unit tests for `lib/editor` and widget tests for `lib/widge
 
 ### phase 8.3: history
 
-- [ ] delete/revert history items: append new history item that applies the reverse diff
-  - how to handle erasure?
-- [ ] convert history items into layer: append convert to layer at end of history that applies all required changes
-  - how to treat deletions at start of selection? apply inversion bitmap in layer above?
-  - can we layerize selective actions, or just from an action until end?
-  - how about layer CRUD ops? disallow layerization?
-  - what if i've gone back (undid) some items? drop residual items?
-  - how to handle edits in per-frame layers
-- [ ] revert/layerize should push new items, not actually remove/edit history (so that you can undo a history edit)
+- [ ] principles
+  - revert & layerize never edit or remove history items, they append one new item (`Revert`, `Layerize`) that can be undone & redone like any action
+  - like any new action, appending discards undone (redo) items
+  - pixel items are resolved to their target image (layer + frame) by identity, walking back through structure items, so later layer & frame reorders don't break them
+- [ ] UI
+  - history items have checkboxes on left side, clicking the row still jumps to it
+  - checkable: pixel items at or before the current position whose target image still exists
+  - not checkable (disabled checkbox): start item, structure items (layer, frame, opacity, resize, crop, ...), undone items, items whose image was replaced (layer removed or merged, frame removed, resized, cropped)
+  - undoing past a checked item unchecks it
+  - bottom of list has action row with icon buttons: layerize, revert (tooltip explains why when disabled)
+  - checks are cleared after an action
+- [ ] pixel ownership: shared rule for revert & layerize, evaluated per pixel of each target image
+  - a pixel is changed by an item when the item's before & after snapshots differ there
+  - owned: the newest item that changed the pixel is checked
+  - fallback value: the pixel as if the checked items were skipped, i.e. the after value of its newest unchecked change, or its value before its first change
+  - pixels whose newest change is unchecked are left alone (later edits win)
+  - multi-frame items count as one item, ownership is resolved per frame image
+- [ ] revert checked items: owned pixels are set to their fallback value
+  - erasures need no special case: snapshots are full before & after values, so reverting an erase restores the erased pixels
+  - a revert item is a pixel item itself, so reverting a revert re-applies it
+- [ ] layerize checked items: owned pixels move to a new layer directly above the source layer, the source layer gets the fallback values
+  - enabled when all checked items target the same layer
+  - new layer copies the source's timeframe mode, frame count, visibility & opacity, is named `<source> layerized`, & becomes active
+  - a layer above can only cover, not remove, so a pixel moves only when it's opaque or its fallback is transparent, otherwise it stays in the source layer (erasures & semi-transparent paint over existing content), no inversion bitmap needed
+  - at 100% layer opacity the result looks identical, below that the source content shows through moved pixels
 
 ### phase 9: polish
 

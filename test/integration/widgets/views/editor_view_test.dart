@@ -9261,6 +9261,142 @@ void main() {
         });
       });
 
+      group('history actions', () {
+        testWidgets('buttons disabled', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          final actual = [historyChecks(tester), historyActionsEnabled(tester)];
+          const expected = [
+            [
+              [false, false],
+              [false, true],
+            ],
+            [false, false],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('item checked', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          await tester.tap(find.byType(Checkbox).last);
+          await tester.pump();
+          final actual = [historyChecks(tester), historyActionsEnabled(tester)];
+          const expected = [
+            [
+              [false, false],
+              [true, true],
+            ],
+            [true, true],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('revert pressed', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          await tester.tap(find.byType(Checkbox).last);
+          await tester.pump();
+          await tester.tap(find.byTooltip('Revert checked items'));
+          await tester.pump();
+          final actual = [
+            pixelRows(document.activeLayer),
+            historyState(tester),
+          ];
+          const expected = [
+            [
+              [transparent, transparent],
+              [transparent, transparent],
+            ],
+            [
+              ['Start', 'Pen', 'Revert'],
+              2,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('layerize pressed', (tester) async {
+          useDesktopView(tester);
+          final document = Document.blank(width: 2, height: 2);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: EditorView(
+                  files: StubFileAccess(),
+                  library: stubDocumentLibrary(),
+                  clipboard: StubImageClipboard(),
+                  document: document,
+                ),
+              ),
+            ),
+          );
+          final topLeft = tester.getTopLeft(find.byType(PixelCanvas));
+          await tester.tapAt(topLeft + const Offset(1, 1));
+          await tester.pump();
+          await tester.tap(find.byType(Checkbox).last);
+          await tester.pump();
+          await tester.tap(find.byTooltip('Layerize checked items'));
+          await tester.pump();
+          final actual = [layerState(tester), historyState(tester)];
+          const expected = [
+            [
+              ['Background', 'Background layerized'],
+              [true, true],
+              [100, 100],
+              1,
+            ],
+            [
+              ['Start', 'Pen', 'Layerize'],
+              2,
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
       group('layers pane', () {
         testWidgets('copy layer', (tester) async {
           useDesktopView(tester);

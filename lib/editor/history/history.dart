@@ -1,6 +1,12 @@
 import '../canvas/document.dart';
+import '../canvas/document_layer.dart';
 import '../canvas/layer.dart';
+import 'composite_history_entry.dart';
 import 'history_entry.dart';
+import 'image_edit.dart';
+import 'multi_frame_history_entry.dart';
+import 'pixel_history_entry.dart';
+import 'structure_history_entry.dart';
 
 typedef HistoryPoint = ({int position, HistoryEntry? entry});
 
@@ -36,6 +42,37 @@ class History {
   bool get isAtSavedPoint =>
       _savedPoint.position == _position &&
       identical(_savedPoint.entry, point.entry);
+
+  List<ImageEdit> get imageEdits {
+    final edits = <ImageEdit>[];
+    List<DocumentLayer> layers = document.layers;
+    for (var index = _position - 1; index >= 0; index--) {
+      for (final entry in _leaves(_entries[index]).reversed) {
+        switch (entry) {
+          case PixelHistoryEntry():
+            edits.add(
+              ImageEdit(
+                entryIndex: index,
+                image: layers[entry.layerIndex].imageAt(entry.frameIndex),
+                before: entry.before,
+                after: entry.after,
+              ),
+            );
+          case StructureHistoryEntry():
+            layers = entry.before.layers;
+        }
+      }
+    }
+    return edits.reversed.toList();
+  }
+
+  static List<HistoryEntry> _leaves(HistoryEntry entry) => switch (entry) {
+    MultiFrameHistoryEntry() => entry.entries,
+    CompositeHistoryEntry() => [
+      for (final child in entry.entries) ..._leaves(child),
+    ],
+    _ => [entry],
+  };
 
   void markSaved(HistoryPoint point) => _savedPoint = point;
 

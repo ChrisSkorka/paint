@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:paint/editor/canvas/layer.dart';
 import 'package:paint/editor/canvas/pixel_color.dart';
 import 'package:paint/editor/canvas/pixel_point.dart';
@@ -26,3 +28,12 @@ Layer layerFromRows(List<List<int>> rows) {
   }
   return layer;
 }
+
+Uint8List rgbaOf(List<int> colors) => Uint8List.fromList([
+  for (final argb in colors) ...[
+    PixelColor(argb: argb).red,
+    PixelColor(argb: argb).green,
+    PixelColor(argb: argb).blue,
+    PixelColor(argb: argb).alpha,
+  ],
+]);

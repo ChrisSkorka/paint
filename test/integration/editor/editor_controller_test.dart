@@ -29,6 +29,7 @@ import '../../support/document_probes.dart';
 import '../../support/layer_probes.dart';
 import '../../support/notifications.dart';
 import '../../support/selection_probes.dart';
+import '../../support/strokes.dart';
 import '../../support/tool_settings_probes.dart';
 
 void main() {
@@ -7430,6 +7431,963 @@ void main() {
             ],
             1,
             0,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+      group('checks', () {
+        test('undo past checked item', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0);
+          strokePixel(editorController, x: 1);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.setHistoryChecked(index: 1, checked: true);
+          editorController.undo();
+          final actual = editorController.checkedHistory;
+          const expected = {0};
+          expect(actual, equals(expected));
+        });
+        test('redo after undo', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0);
+          strokePixel(editorController, x: 1);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.setHistoryChecked(index: 1, checked: true);
+          editorController.undo();
+          editorController.redo();
+          final actual = editorController.checkedHistory;
+          const expected = {0};
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter checkableHistory', () {
+      group('entries', () {
+        test('pixel', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0);
+          final actual = editorController.checkableHistory;
+          const expected = {0};
+          expect(actual, equals(expected));
+        });
+        test('multi-frame', () {
+          final document = filmDocument(
+            frames: [
+              [
+                [red],
+              ],
+              [
+                [green],
+              ],
+            ],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.setSelectingAllFrames(true);
+          editorController.selectAll();
+          editorController.deleteSelection();
+          final actual = editorController.checkableHistory;
+          const expected = {0};
+          expect(actual, equals(expected));
+        });
+        test('structure', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.addLayer();
+          final actual = editorController.checkableHistory;
+          const expected = <int>{};
+          expect(actual, equals(expected));
+        });
+        test('composite', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.layerizeHistory();
+          final actual = editorController.checkableHistory;
+          const expected = {0};
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('availability', () {
+        test('undone', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0);
+          editorController.undo();
+          final actual = editorController.checkableHistory;
+          const expected = <int>{};
+          expect(actual, equals(expected));
+        });
+        test('layer removed', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.addLayer();
+          strokePixel(editorController, x: 0);
+          editorController.removeLayer();
+          final actual = editorController.checkableHistory;
+          const expected = <int>{};
+          expect(actual, equals(expected));
+        });
+        test('resized', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0);
+          editorController.resizeImage(
+            width: 3,
+            height: 1,
+            offset: const PixelPoint(x: 0, y: 0),
+          );
+          final actual = editorController.checkableHistory;
+          const expected = <int>{};
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method setHistoryChecked', () {
+      group('checks', () {
+        test('check', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0);
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          final actual = [editorController.checkedHistory, notifications];
+          final expected = [
+            {0},
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('uncheck', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.setHistoryChecked(index: 0, checked: false);
+          final actual = editorController.checkedHistory;
+          const expected = <int>{};
+          expect(actual, equals(expected));
+        });
+        test('uncheckable item', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.addLayer();
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          final actual = [editorController.checkedHistory, notifications];
+          final expected = [<int>{}, 0];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter checkedHistory', () {
+      group('availability', () {
+        test('image removed after check', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.addLayer();
+          strokePixel(editorController, x: 0);
+          editorController.setHistoryChecked(index: 1, checked: true);
+          editorController.removeLayer();
+          final actual = editorController.checkedHistory;
+          const expected = <int>{};
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter canRevertHistory', () {
+      group('checks', () {
+        test('none checked', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0);
+          final actual = editorController.canRevertHistory;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('some checked', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          final actual = editorController.canRevertHistory;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('getter canLayerizeHistory', () {
+      group('checks', () {
+        test('none checked', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0);
+          final actual = editorController.canLayerizeHistory;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('one layer', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0);
+          strokePixel(editorController, x: 1);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.setHistoryChecked(index: 1, checked: true);
+          final actual = editorController.canLayerizeHistory;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+        test('two layers', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0);
+          editorController.addLayer();
+          strokePixel(editorController, x: 1);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.setHistoryChecked(index: 2, checked: true);
+          final actual = editorController.canLayerizeHistory;
+          const expected = false;
+          expect(actual, equals(expected));
+        });
+        test('frames of one per-frame layer', () {
+          final document = filmDocument(
+            frames: [
+              [
+                [transparent],
+              ],
+              [
+                [transparent],
+              ],
+            ],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0);
+          editorController.selectFrame(1);
+          strokePixel(editorController, x: 0);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.setHistoryChecked(index: 1, checked: true);
+          final actual = editorController.canLayerizeHistory;
+          const expected = true;
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method revertHistory', () {
+      group('pixels', () {
+        test('single stroke', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.revertHistory();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('later unchecked stroke', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectColor(const PixelColor(argb: red));
+          editorController.pointerDown(
+            point: const PixelPoint(x: 0, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.pointerMove(point: const PixelPoint(x: 1, y: 0));
+          editorController.pointerUp(point: const PixelPoint(x: 1, y: 0));
+          strokePixel(editorController, x: 1, color: blue);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.revertHistory();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [transparent, blue],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('erasure', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.selectTool(ToolKind.eraser);
+          strokePixel(editorController, x: 0);
+          editorController.setHistoryChecked(index: 1, checked: true);
+          editorController.revertHistory();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [red, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('targets', () {
+        test('several layers', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.addLayer();
+          strokePixel(editorController, x: 1, color: blue);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.setHistoryChecked(index: 2, checked: true);
+          editorController.revertHistory();
+          final actual = [
+            pixelRows(document.layers[0].images[0]),
+            pixelRows(document.layers[1].images[0]),
+            editorController.history.entries.map((entry) => entry.name),
+          ];
+          const expected = [
+            [
+              [transparent, transparent],
+            ],
+            [
+              [transparent, transparent],
+            ],
+            ['Pen', 'Add layer', 'Pen', 'Revert'],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('per-frame frames', () {
+          final document = filmDocument(
+            frames: [
+              [
+                [transparent],
+              ],
+              [
+                [transparent],
+              ],
+            ],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.selectFrame(1);
+          strokePixel(editorController, x: 0, color: green);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.setHistoryChecked(index: 1, checked: true);
+          editorController.revertHistory();
+          final actual = framePixelRows(document);
+          const expected = [
+            [
+              [transparent],
+            ],
+            [
+              [transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('history', () {
+        test('recorded', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.revertHistory();
+          final actual = [
+            editorController.history.entries.map((entry) => entry.name),
+            editorController.history.position,
+          ];
+          const expected = [
+            ['Pen', 'Revert'],
+            2,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('undo', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.revertHistory();
+          editorController.undo();
+          final actual = pixelRows(document.activeLayer);
+          const expected = [
+            [red, transparent],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('revert of revert', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.revertHistory();
+          editorController.setHistoryChecked(index: 1, checked: true);
+          editorController.revertHistory();
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.history.entries.map((entry) => entry.name),
+          ];
+          const expected = [
+            [
+              [red, transparent],
+            ],
+            ['Pen', 'Revert', 'Revert'],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('nothing to revert', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          strokePixel(editorController, x: 0, color: blue);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.revertHistory();
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.history.entries.map((entry) => entry.name),
+            editorController.checkedHistory,
+          ];
+          const expected = [
+            [
+              [blue, transparent],
+            ],
+            ['Pen', 'Pen'],
+            <int>{},
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('checks', () {
+        test('none checked', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.selectAll();
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.revertHistory();
+          final actual = [
+            editorController.selectionArea,
+            editorController.history.entries.length,
+            notifications,
+          ];
+          const expected = [
+            PixelRectangle(left: 0, top: 0, width: 2, height: 1),
+            1,
+            0,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('cleared', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.revertHistory();
+          final actual = [editorController.checkedHistory, notifications];
+          final expected = [<int>{}, 1];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('selection', () {
+        test('cleared', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.selectAll();
+          editorController.revertHistory();
+          final actual = editorController.selectionArea;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('stroke', () {
+        test('during stroke', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.revertHistory();
+          final actual = [
+            pixelRows(document.activeLayer),
+            editorController.checkedHistory,
+          ];
+          const expected = [
+            [
+              [red, red],
+            ],
+            {0},
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+    });
+
+    group('method layerizeHistory', () {
+      group('layers', () {
+        test('new layer above source', () {
+          final document = layeredDocument(
+            names: ['Background', 'Ink'],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.layerizeHistory();
+          final actual = layerStructure(document);
+          const expected = [
+            ['Background', 'Background layerized', 'Ink'],
+            1,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('source properties', () {
+          final document = Document(
+            width: 2,
+            height: 1,
+            layers: [
+              DocumentLayer(
+                name: 'Ink',
+                images: [
+                  Layer.filled(
+                    width: 2,
+                    height: 1,
+                    color: PixelColor.transparent,
+                  ),
+                ],
+                visible: false,
+                opacity: 50,
+              ),
+            ],
+            activeLayerIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.layerizeHistory();
+          final actual = document.layers[1];
+          final expected = DocumentLayer(
+            name: 'Ink layerized',
+            images: [
+              layerFromRows([
+                [red, transparent],
+              ]),
+            ],
+            visible: false,
+            opacity: 50,
+          );
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('pixels', () {
+        test('source fallback', () {
+          final document = Document.blank(
+            width: 2,
+            height: 1,
+            background: const PixelColor(argb: blue),
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.layerizeHistory();
+          final actual = [
+            pixelRows(document.layers[0].images[0]),
+            pixelRows(document.layers[1].images[0]),
+          ];
+          const expected = [
+            [
+              [blue, blue],
+            ],
+            [
+              [red, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('erasure', () {
+          final document = Document.blank(
+            width: 2,
+            height: 1,
+            background: const PixelColor(argb: blue),
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 1, color: red);
+          editorController.selectTool(ToolKind.eraser);
+          strokePixel(editorController, x: 0);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.setHistoryChecked(index: 1, checked: true);
+          editorController.layerizeHistory();
+          final actual = [
+            pixelRows(document.layers[0].images[0]),
+            pixelRows(document.layers[1].images[0]),
+          ];
+          const expected = [
+            [
+              [transparent, blue],
+            ],
+            [
+              [transparent, red],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('semi-transparent over content', () {
+          final document = Document.blank(
+            width: 2,
+            height: 1,
+            background: const PixelColor(argb: blue),
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: grey);
+          strokePixel(editorController, x: 1, color: red);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.setHistoryChecked(index: 1, checked: true);
+          editorController.layerizeHistory();
+          final actual = [
+            pixelRows(document.layers[0].images[0]),
+            pixelRows(document.layers[1].images[0]),
+          ];
+          const expected = [
+            [
+              [grey, blue],
+            ],
+            [
+              [transparent, red],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('per-frame layer', () {
+          final document = filmDocument(
+            frames: [
+              [
+                [transparent, transparent],
+              ],
+              [
+                [transparent, transparent],
+              ],
+            ],
+            activeFrameIndex: 0,
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.selectFrame(1);
+          strokePixel(editorController, x: 1, color: green);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.setHistoryChecked(index: 1, checked: true);
+          editorController.layerizeHistory();
+          final actual = [
+            [for (final image in document.layers[0].images) pixelRows(image)],
+            [for (final image in document.layers[1].images) pixelRows(image)],
+            document.layers[1].timeframe,
+          ];
+          const expected = [
+            [
+              [
+                [transparent, transparent],
+              ],
+              [
+                [transparent, transparent],
+              ],
+            ],
+            [
+              [
+                [red, transparent],
+              ],
+              [
+                [transparent, green],
+              ],
+            ],
+            LayerTimeframe.perFrame,
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('history', () {
+        test('recorded', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.layerizeHistory();
+          final actual = [
+            editorController.history.entries.map((entry) => entry.name),
+            editorController.history.position,
+          ];
+          const expected = [
+            ['Pen', 'Layerize'],
+            2,
+          ];
+          expect(actual, equals(expected));
+        });
+        test('undo', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.layerizeHistory();
+          editorController.undo();
+          final actual = [
+            layerStructure(document),
+            pixelRows(document.layers[0].images[0]),
+          ];
+          const expected = [
+            [
+              ['Background'],
+              0,
+            ],
+            [
+              [red, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('redo', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.layerizeHistory();
+          editorController.undo();
+          editorController.redo();
+          final actual = [
+            layerStructure(document),
+            pixelRows(document.layers[0].images[0]),
+            pixelRows(document.layers[1].images[0]),
+          ];
+          const expected = [
+            [
+              ['Background', 'Background layerized'],
+              1,
+            ],
+            [
+              [transparent, transparent],
+            ],
+            [
+              [red, transparent],
+            ],
+          ];
+          expect(actual, equals(expected));
+        });
+        test('nothing lifts', () {
+          final document = Document.blank(
+            width: 2,
+            height: 1,
+            background: const PixelColor(argb: blue),
+          );
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          editorController.selectTool(ToolKind.eraser);
+          strokePixel(editorController, x: 0);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.layerizeHistory();
+          final actual = [
+            layerStructure(document),
+            pixelRows(document.layers[0].images[0]),
+            editorController.history.entries.map((entry) => entry.name),
+            editorController.checkedHistory,
+          ];
+          const expected = [
+            [
+              ['Background'],
+              0,
+            ],
+            [
+              [transparent, blue],
+            ],
+            ['Eraser'],
+            <int>{},
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('checks', () {
+        test('cleared', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          var notifications = 0;
+          editorController.addListener(() => notifications++);
+          editorController.layerizeHistory();
+          final actual = [editorController.checkedHistory, notifications];
+          final expected = [<int>{}, 1];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('targets', () {
+        test('two layers', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.addLayer();
+          strokePixel(editorController, x: 1, color: blue);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.setHistoryChecked(index: 2, checked: true);
+          editorController.layerizeHistory();
+          final actual = [
+            layerStructure(document),
+            editorController.history.entries.map((entry) => entry.name),
+          ];
+          const expected = [
+            [
+              ['Background', 'Layer 2'],
+              1,
+            ],
+            ['Pen', 'Add layer', 'Pen'],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('selection', () {
+        test('cleared', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.selectAll();
+          editorController.layerizeHistory();
+          final actual = editorController.selectionArea;
+          const expected = null;
+          expect(actual, equals(expected));
+        });
+      });
+
+      group('stroke', () {
+        test('during stroke', () {
+          final document = Document.blank(width: 2, height: 1);
+          final editorController = EditorController.forDocument(
+            document: document,
+          );
+          strokePixel(editorController, x: 0, color: red);
+          editorController.setHistoryChecked(index: 0, checked: true);
+          editorController.pointerDown(
+            point: const PixelPoint(x: 1, y: 0),
+            button: PointerButton.primary,
+          );
+          editorController.layerizeHistory();
+          final actual = [
+            layerStructure(document),
+            editorController.checkedHistory,
+          ];
+          const expected = [
+            [
+              ['Background'],
+              0,
+            ],
+            {0},
           ];
           expect(actual, equals(expected));
         });

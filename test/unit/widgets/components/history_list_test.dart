@@ -18,7 +18,12 @@ void main() {
         testWidgets('none', (tester) async {
           await tester.pumpWidget(
             MaterialApp(
-              home: HistoryList(items: const [], position: 0, onSelect: (_) {}),
+              home: HistoryList(
+                items: const [],
+                position: 0,
+                onSelect: (_) {},
+                onCheckedChanged: ({required index, required checked}) {},
+              ),
             ),
           );
           final actual = tester
@@ -41,6 +46,7 @@ void main() {
                 ],
                 position: 0,
                 onSelect: (_) {},
+                onCheckedChanged: ({required index, required checked}) {},
               ),
             ),
           );
@@ -74,6 +80,7 @@ void main() {
                 ],
                 position: 2,
                 onSelect: (_) {},
+                onCheckedChanged: ({required index, required checked}) {},
               ),
             ),
           );
@@ -109,6 +116,7 @@ void main() {
                 ],
                 position: 0,
                 onSelect: (_) {},
+                onCheckedChanged: ({required index, required checked}) {},
               ),
             ),
           );
@@ -151,6 +159,7 @@ void main() {
                 ],
                 position: 1,
                 onSelect: (_) {},
+                onCheckedChanged: ({required index, required checked}) {},
               ),
             ),
           );
@@ -193,6 +202,7 @@ void main() {
                 ],
                 position: 2,
                 onSelect: (_) {},
+                onCheckedChanged: ({required index, required checked}) {},
               ),
             ),
           );
@@ -213,9 +223,213 @@ void main() {
           expect(actual, equals(expected));
         });
       });
+      group('checks', () {
+        testWidgets('unchecked', (tester) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: HistoryList(
+                items: [
+                  HistoryListItem(
+                    name: 'Pen',
+                    thumbnail: stubThumbnail,
+                    outline: null,
+                    checkable: true,
+                  ),
+                ],
+                position: 0,
+                onSelect: (_) {},
+                onCheckedChanged: ({required index, required checked}) {},
+              ),
+            ),
+          );
+          final actual = [
+            for (final checkbox in tester.widgetList<Checkbox>(
+              find.byType(Checkbox),
+            ))
+              [checkbox.value, checkbox.onChanged != null],
+          ];
+          const expected = [
+            [false, true],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('checked', (tester) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: HistoryList(
+                items: [
+                  HistoryListItem(
+                    name: 'Pen',
+                    thumbnail: stubThumbnail,
+                    outline: null,
+                    checkable: true,
+                    checked: true,
+                  ),
+                ],
+                position: 0,
+                onSelect: (_) {},
+                onCheckedChanged: ({required index, required checked}) {},
+              ),
+            ),
+          );
+          final actual = [
+            for (final checkbox in tester.widgetList<Checkbox>(
+              find.byType(Checkbox),
+            ))
+              [checkbox.value, checkbox.onChanged != null],
+          ];
+          const expected = [
+            [true, true],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('disabled', (tester) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: HistoryList(
+                items: [
+                  HistoryListItem(
+                    name: 'Start',
+                    thumbnail: stubThumbnail,
+                    outline: null,
+                  ),
+                ],
+                position: 0,
+                onSelect: (_) {},
+                onCheckedChanged: ({required index, required checked}) {},
+              ),
+            ),
+          );
+          final actual = [
+            for (final checkbox in tester.widgetList<Checkbox>(
+              find.byType(Checkbox),
+            ))
+              [checkbox.value, checkbox.onChanged != null],
+          ];
+          const expected = [
+            [false, false],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
     });
 
     group('interactions', () {
+      group('check', () {
+        testWidgets('checkable item', (tester) async {
+          final changes = <({int index, bool checked})>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: HistoryList(
+                items: [
+                  HistoryListItem(
+                    name: 'Start',
+                    thumbnail: stubThumbnail,
+                    outline: null,
+                  ),
+                  HistoryListItem(
+                    name: 'Pen',
+                    thumbnail: stubThumbnail,
+                    outline: null,
+                    checkable: true,
+                  ),
+                ],
+                position: 1,
+                onSelect: (_) {},
+                onCheckedChanged: ({required index, required checked}) =>
+                    changes.add((index: index, checked: checked)),
+              ),
+            ),
+          );
+          await tester.tap(find.byType(Checkbox).last);
+          final actual = changes;
+          const expected = [(index: 1, checked: true)];
+          expect(actual, equals(expected));
+        });
+        testWidgets('checked item', (tester) async {
+          final changes = <({int index, bool checked})>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: HistoryList(
+                items: [
+                  HistoryListItem(
+                    name: 'Pen',
+                    thumbnail: stubThumbnail,
+                    outline: null,
+                    checkable: true,
+                    checked: true,
+                  ),
+                ],
+                position: 0,
+                onSelect: (_) {},
+                onCheckedChanged: ({required index, required checked}) =>
+                    changes.add((index: index, checked: checked)),
+              ),
+            ),
+          );
+          await tester.tap(find.byType(Checkbox));
+          final actual = changes;
+          const expected = [(index: 0, checked: false)];
+          expect(actual, equals(expected));
+        });
+        testWidgets('disabled checkbox', (tester) async {
+          final changes = <({int index, bool checked})>[];
+          final selected = <int>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: HistoryList(
+                items: [
+                  HistoryListItem(
+                    name: 'Start',
+                    thumbnail: stubThumbnail,
+                    outline: null,
+                  ),
+                ],
+                position: 0,
+                onSelect: selected.add,
+                onCheckedChanged: ({required index, required checked}) =>
+                    changes.add((index: index, checked: checked)),
+              ),
+            ),
+          );
+          await tester.tap(find.byType(Checkbox));
+          final actual = [changes, selected];
+          const expected = [
+            <({int index, bool checked})>[],
+            [0],
+          ];
+          expect(actual, equals(expected));
+        });
+        testWidgets('row', (tester) async {
+          final changes = <({int index, bool checked})>[];
+          final selected = <int>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: HistoryList(
+                items: [
+                  HistoryListItem(
+                    name: 'Pen',
+                    thumbnail: stubThumbnail,
+                    outline: null,
+                    checkable: true,
+                  ),
+                ],
+                position: 0,
+                onSelect: selected.add,
+                onCheckedChanged: ({required index, required checked}) =>
+                    changes.add((index: index, checked: checked)),
+              ),
+            ),
+          );
+          await tester.tap(find.text('Pen'));
+          final actual = [changes, selected];
+          const expected = [
+            <({int index, bool checked})>[],
+            [0],
+          ];
+          expect(actual, equals(expected));
+        });
+      });
       group('tap', () {
         testWidgets('earlier item', (tester) async {
           final selected = <int>[];
@@ -241,6 +455,7 @@ void main() {
                 ],
                 position: 2,
                 onSelect: selected.add,
+                onCheckedChanged: ({required index, required checked}) {},
               ),
             ),
           );
@@ -273,6 +488,7 @@ void main() {
                 ],
                 position: 0,
                 onSelect: selected.add,
+                onCheckedChanged: ({required index, required checked}) {},
               ),
             ),
           );
@@ -296,6 +512,7 @@ void main() {
                 ],
                 position: 0,
                 onSelect: (_) {},
+                onCheckedChanged: ({required index, required checked}) {},
               ),
             ),
           );

@@ -13,11 +13,14 @@ import 'canvas/pixel_color.dart';
 import 'canvas/pixel_point.dart';
 import 'canvas/pixel_rectangle.dart';
 import 'files/save_status.dart';
+import 'history/composite_history_entry.dart';
 import 'history/document_structure.dart';
 import 'history/history.dart';
+import 'history/image_edit.dart';
 import 'history/layer_snapshot.dart';
 import 'history/multi_frame_history_entry.dart';
 import 'history/pixel_history_entry.dart';
+import 'history/pixel_ownership.dart';
 import 'history/structure_history_entry.dart';
 import 'pointer_button.dart';
 import 'pointer_preview.dart';
@@ -103,6 +106,7 @@ class EditorController extends ChangeNotifier {
   _ToolSettings? _temporarySettings;
   var _temporarySelectionMade = false;
   final _strokeProgress = _StrokeProgress();
+  final _checkedHistory = <int>{};
   late final layersChanged = Listenable.merge([this, _strokeProgress]);
 
   static const _noArea = PixelRectangle(left: 0, top: 0, width: 0, height: 0);
@@ -1053,8 +1057,193 @@ class EditorController extends ChangeNotifier {
     _selection = null;
     _structureBeforePreview = null;
     history.jumpTo(position);
+    _checkedHistory.removeWhere((index) => index >= history.position);
     _fitPointerPreview();
     notifyListeners();
+  }
+
+  Set<int> get checkableHistory {
+    final entries = history.entries;
+    final images = _documentImages;
+    return {
+      for (final edit in history.imageEdits)
+        if (entries[edit.entryIndex]
+            case PixelHistoryEntry() || MultiFrameHistoryEntry()
+            when images.contains(edit.image))
+          edit.entryIndex,
+    };
+  }
+
+  Set<int> get checkedHistory => _checkedHistory.intersection(checkableHistory);
+
+  bool get canRevertHistory => checkedHistory.isNotEmpty;
+
+  bool get canLayerizeHistory =>
+      {
+        for (final target in _checkedTargets(
+          edits: history.imageEdits,
+          checked: checkedHistory,
+        ))
+          target.layerIndex,
+      }.length ==
+      1;
+
+  void setHistoryChecked({required int index, required bool checked}) {
+    if (checked && !checkableHistory.contains(index)) return;
+    if (checked) {
+      _checkedHistory.add(index);
+    } else {
+      _checkedHistory.remove(index);
+    }
+    notifyListeners();
+  }
+
+  void revertHistory() {
+    if (_strokePoint != null || !canRevertHistory) return;
+    final edits = history.imageEdits;
+    final checked = checkedHistory;
+    final entries = [
+      for (final target in _checkedTargets(edits: edits, checked: checked))
+        if (PixelOwnership.resolved(
+              image: target.image,
+              edits: edits,
+              checkedEntries: checked,
+            )
+            case final ownership when !ownership.isEmpty)
+          _appliedPixels(
+            name: 'Revert',
+            target: target,
+            after: ownership.reverted(),
+          ),
+    ];
+    _checkedHistory.clear();
+    _selection = null;
+    _recordPixelEntries(entries);
+    notifyListeners();
+  }
+
+  void layerizeHistory() {
+    if (_strokePoint != null || !canLayerizeHistory) return;
+    final edits = history.imageEdits;
+    final checked = checkedHistory;
+    final targets = _checkedTargets(edits: edits, checked: checked);
+    final sourceIndex = targets.first.layerIndex;
+    final source = document.layers[sourceIndex];
+    final liftedImages = [
+      for (final _ in source.images)
+        Layer.filled(
+          width: document.width,
+          height: document.height,
+          color: PixelColor.transparent,
+        ),
+    ];
+    final entries = <PixelHistoryEntry>[];
+    for (final target in targets) {
+      final layerized = PixelOwnership.resolved(
+        image: target.image,
+        edits: edits,
+        checkedEntries: checked,
+      ).layerized();
+      final entry = _appliedPixels(
+        name: 'Layerize',
+        target: target,
+        after: layerized.source,
+      );
+      if (entry.before == entry.after) continue;
+      layerized.lifted.restore(liftedImages[target.frameIndex]);
+      entries.add(entry);
+    }
+    _checkedHistory.clear();
+    if (entries.isEmpty) {
+      notifyListeners();
+      return;
+    }
+    _selection = null;
+    final before = DocumentStructure.capture(document: document);
+    document.layers.insert(
+      sourceIndex + 1,
+      source.copyWith(name: '${source.name} layerized', images: liftedImages),
+    );
+    document.activeLayerIndex = sourceIndex + 1;
+    final thumbnail = Layer.thumbnail(
+      layer: document.activeLayer,
+      maximumSize: History.thumbnailSize,
+    );
+    history.record(
+      CompositeHistoryEntry(
+        name: 'Layerize',
+        thumbnail: thumbnail,
+        entries: [
+          StructureHistoryEntry(
+            name: 'Layerize',
+            before: before,
+            after: DocumentStructure.capture(document: document),
+            thumbnail: thumbnail,
+          ),
+          ...entries,
+        ],
+      ),
+    );
+    notifyListeners();
+  }
+
+  Set<Layer> get _documentImages =>
+      Set.identity()
+        ..addAll([for (final layer in document.layers) ...layer.images]);
+
+  List<_HistoryTarget> _checkedTargets({
+    required List<ImageEdit> edits,
+    required Set<int> checked,
+  }) {
+    final images = Set<Layer>.identity()
+      ..addAll([
+        for (final edit in edits)
+          if (checked.contains(edit.entryIndex)) edit.image,
+      ]);
+    return [
+      for (
+        var layerIndex = 0;
+        layerIndex < document.layers.length;
+        layerIndex++
+      )
+        for (final (frameIndex, image)
+            in document.layers[layerIndex].images.indexed)
+          if (images.contains(image))
+            (layerIndex: layerIndex, frameIndex: frameIndex, image: image),
+    ];
+  }
+
+  PixelHistoryEntry _appliedPixels({
+    required String name,
+    required _HistoryTarget target,
+    required LayerSnapshot after,
+  }) {
+    final before = LayerSnapshot.capture(layer: target.image, area: after.area);
+    after.restore(target.image);
+    return PixelHistoryEntry.recorded(
+      name: name,
+      layerIndex: target.layerIndex,
+      frameIndex: target.frameIndex,
+      before: before,
+      after: after,
+      thumbnail: Layer.thumbnail(
+        layer: target.image,
+        maximumSize: History.thumbnailSize,
+      ),
+      canvasWidth: document.width,
+      canvasHeight: document.height,
+    );
+  }
+
+  void _recordPixelEntries(List<PixelHistoryEntry> entries) {
+    switch (entries) {
+      case []:
+        return;
+      case [final entry]:
+        history.record(entry);
+      default:
+        history.record(MultiFrameHistoryEntry(entries: entries));
+    }
   }
 
   void pointerDown({required PixelPoint point, required PointerButton button}) {
@@ -1369,14 +1558,7 @@ class EditorController extends ChangeNotifier {
           canvasHeight: document.height,
         ),
     ].where((entry) => entry.before != entry.after).toList();
-    switch (entries) {
-      case []:
-        return;
-      case [final entry]:
-        history.record(entry);
-      default:
-        history.record(MultiFrameHistoryEntry(entries: entries));
-    }
+    _recordPixelEntries(entries);
   }
 
   void _sampleColor({required PixelPoint point}) {
@@ -1400,6 +1582,8 @@ class EditorController extends ChangeNotifier {
     pointerPreview.draw(tool: _tool, point: point, color: color);
   }
 }
+
+typedef _HistoryTarget = ({int layerIndex, int frameIndex, Layer image});
 
 typedef _ToolSettings = ({
   ToolKind toolKind,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:paint/widgets/components/paint_scroll_behavior.dart';
 import 'package:paint/widgets/components/paint_bar.dart';
 import 'package:paint/editor/canvas/layer.dart';
@@ -94,6 +95,26 @@ List<Object> historyState(WidgetTester tester) {
     historyList.position,
   ];
 }
+
+List<List<bool>> historyChecks(WidgetTester tester) => [
+  for (final item in tester.widget<HistoryList>(find.byType(HistoryList)).items)
+    [item.checked, item.checkable],
+];
+
+List<bool> historyActionsEnabled(WidgetTester tester) => [
+  for (final icon in const [
+    FontAwesomeIcons.layerGroup,
+    FontAwesomeIcons.clockRotateLeft,
+  ])
+    tester
+            .widget<PaintIconButton>(
+              find.byWidgetPredicate(
+                (widget) => widget is PaintIconButton && widget.icon == icon,
+              ),
+            )
+            .onPressed !=
+        null,
+];
 
 List<List<Object?>> historyThumbnails(WidgetTester tester) => [
   for (final item in tester.widget<HistoryList>(find.byType(HistoryList)).items)

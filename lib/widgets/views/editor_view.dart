@@ -274,19 +274,25 @@ class _EditorViewState extends State<EditorView> {
     return '${offset.x} × ${offset.y}';
   }
 
-  List<HistoryListItem> _historyItems() => [
-    HistoryListItem(
-      name: 'Start',
-      thumbnail: controller.history.startThumbnail,
-      outline: null,
-    ),
-    for (final entry in controller.history.entries)
+  List<HistoryListItem> _historyItems() {
+    final checkable = controller.checkableHistory;
+    final checked = controller.checkedHistory;
+    return [
       HistoryListItem(
-        name: entry.name,
-        thumbnail: entry.thumbnail,
-        outline: _thumbnailOutline(entry),
+        name: 'Start',
+        thumbnail: controller.history.startThumbnail,
+        outline: null,
       ),
-  ];
+      for (final (index, entry) in controller.history.entries.indexed)
+        HistoryListItem(
+          name: entry.name,
+          thumbnail: entry.thumbnail,
+          outline: _thumbnailOutline(entry),
+          checkable: checkable.contains(index),
+          checked: checked.contains(index),
+        ),
+    ];
+  }
 
   List<LayerListItem> _layerItems() => [
     for (final layer in widget.document.layers)
@@ -1065,6 +1071,43 @@ class _EditorViewState extends State<EditorView> {
     );
   }
 
+  Widget _buildHistoryPane() {
+    final canLayerize = controller.canLayerizeHistory;
+    final canRevert = controller.canRevertHistory;
+    return Column(
+      children: [
+        Expanded(
+          child: HistoryList(
+            items: _historyItems(),
+            position: controller.history.position,
+            onSelect: controller.jumpToHistory,
+            onCheckedChanged: ({required index, required checked}) => controller
+                .setHistoryChecked(index: index - 1, checked: checked),
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            PaintIconButton(
+              icon: FontAwesomeIcons.layerGroup,
+              tooltip: canLayerize
+                  ? 'Layerize checked items'
+                  : 'Check items on a single layer to layerize',
+              onPressed: canLayerize ? controller.layerizeHistory : null,
+            ),
+            PaintIconButton(
+              icon: FontAwesomeIcons.clockRotateLeft,
+              tooltip: canRevert
+                  ? 'Revert checked items'
+                  : 'Check items to revert',
+              onPressed: canRevert ? controller.revertHistory : null,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildLayersPane() {
     return Column(
       children: [
@@ -1746,14 +1789,7 @@ class _EditorViewState extends State<EditorView> {
                 panels: [
                   (title: 'Layers', child: _buildLayersPane()),
                   (title: 'Frames', child: _buildFramesPane()),
-                  (
-                    title: 'History',
-                    child: HistoryList(
-                      items: _historyItems(),
-                      position: controller.history.position,
-                      onSelect: controller.jumpToHistory,
-                    ),
-                  ),
+                  (title: 'History', child: _buildHistoryPane()),
                 ],
               ),
             ],
